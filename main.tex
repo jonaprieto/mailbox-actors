@@ -85,11 +85,24 @@ guarantees and correctness under concurrent message processing.
 
 \section{Model}\label{sec:model}
 
-The model used in this paper is an extended version of the actor model presented in
-\cite{engine-art}. The model mainly consists of \emph{engines}, our actor
-equivalent notion. Engines load more information than standard actors. However,
-this should not be considered a limitation, but rather an extension that
-allows a more fine-grained control over actor-level properties and
+The model used in this paper is an extended version of the actor model based on
+\emph{engines}~\cite{engine-art}. So this model mainly consists of engines,
+which are our actor equivalent notion. Engines load more information than standard
+actors. For example, an engine comprises a configuration, an execution context,
+and a processing logic referred to as \emph{behaviour}. The configuration
+includes, for example, the engine's name, network location, node, and an
+optional reference to the parent engine. The execution context includes an
+engine-specific local state and address book of other engines to communicate
+with, including the engine's own address. The behaviour includes a set of
+\emph{guarded actions} that specify how the engine reacts to incoming messages.
+An engine only reacts to a message if its behaviour contains a guarded action
+that satisfies a number of pre-conditions, these are called \emph{guards}. The
+actual processing logic is determined by the \emph{actions}, compounds of atomic
+effects such as sending a message or terminating an engine. 
+
+This version of the actor model provides more expressive power than the standard
+actor model, and should not be considered a limitation, but rather an extension
+that allows a more fine-grained control over engine-level properties and
 specifications.
 
 Engines interact within a system governed by a given message-passing mechanism
@@ -97,11 +110,37 @@ that enforces policies for message delivery, ordering, loss, and flow control.
 For example, this mechanism enforces that only engines send messages to other
 engines, and no other forms of communication are allowed.
 
+\subsection{Notation}
+
+For the sake of clarity, we recall notation and conventions used in this paper.
+We use type-theoretic notation for types and terms, meaning that a type is of
+type $\mathsf{Type}$ where $\mathsf{Type}$ is the type of types. A term $x$ of
+type $A$ is denoted as $x : A$. Capital letters or capitalized words are used for
+types, and lowercase letters or lowercase words are used for terms. 
+
+$\N$ denotes the type of natural numbers. The type of addresses is
+$\mathsf{Addr}$ and the type of engine names is $\mathsf{Name}$, both of which
+are type synonyms for $\N$, for simplicity.
+
+Types include sets, and we work with the following set-theoretic notation: for
+sets $A$ and $B$: $A \subseteq B$ denotes set inclusion, meaning every element
+of $A$ belongs to $B$; $\varnothing$ denotes the empty set; $A \times B$ denotes
+the Product type of $A$ and $B$, where $\langle a,b \rangle$ denotes an ordered
+pair where $a : A$ and $b : B$. A \emph{tuple} $\langle a_1, a_2, \dots, a_n
+\rangle$ is a generalisation of an ordered pair to an ordered $n$-tuple, where
+$n \in \N$, of type $A_1 \times \cdots \times A_n$, and $a_i$ is of type $A_i$
+for all $i \in \{1, \dots, n\}$. The projections are $\pi_1(a) :\equiv a_1$ and
+$\pi_2(a) :\equiv a_2$. Additionally, $A_1 \cup A_2 \cup \cdots \cup A_n$ denotes
+sum type of $A_1, \dots, A_n$, so $\mathsf{inj_1}(a_1)$ and $\mathsf{inj_2}(a_2)$
+are injections into $A_1 \cup A_2$ from $A_1$ and $A_2$ respectively.
+
+
+\subsubsection{Entities}
 
 \begin{definition}\label{def:processing-engine}
 A processing engine is defined by a tuple $\langle b,\, m,\, r,\, \mathsf{cfg},\, \mathsf{env} \rangle$ where:
 \begin{itemize}
-\item $b$ is the engine behavior (a set of guarded actions)
+\item $b$ is the engine behaviour (a set of guarded actions)
 \item $m$ is the address of the dedicated mailbox engine
 \item $r$ is the status flag ($\mathsf{ready}$, $\mathsf{busy}$, $\mathsf{terminated}$)
 \item $\mathsf{cfg}$ is the engine configuration including name, network location, node, and optional parent
@@ -159,15 +198,17 @@ A guard is a function $g$ of type $\mathsf{Msg} \times \mathsf{Env} \times \math
 \end{definition}
 
 \begin{definition}\label{def:effects}
-Effects (denoted by $\mathcal{E}$) include:
-\begin{itemize}
-\item $\mathsf{send}$ for message dispatch
-\item $\mathsf{update}$ for engine-specific environment change
-\item $\mathsf{spawn}$ for engine creation
-\item $\mathsf{chain}$ for sequential composition of effects
-\item $\mathsf{terminate}$ for engine termination
-\item $\mathsf{nop}$ for no operation
-\end{itemize}
+Effects $\mathcal{E}$ are defined by the grammar:
+\begin{equation}\label{eq:effects}
+\begin{aligned}
+\mathcal{E} &::= \mathsf{send}(\mathsf{Addr}, \mathsf{Msg}) & &\text{\% Message dispatch} \\
+&\mid \mathsf{update}(\mathsf{Env} \to \mathsf{Env}) & &\text{\% Environment modification} \\
+&\mid \mathsf{spawn}(\mathsf{Cfg}, \mathsf{Env}) & &\text{\% Engine creation} \\
+&\mid \mathsf{chain}(\mathcal{E}, \mathcal{E}) & &\text{\% Sequential composition} \\
+&\mid \mathsf{terminate} & &\text{\% Engine termination} \\
+&\mid \mathsf{nop} & &\text{\% No operation}
+\end{aligned}
+\end{equation}
 \end{definition}
 
 \begin{definition}[Global System Configuration]\label{def:global-config}
@@ -192,25 +233,162 @@ With the system defined, there are several associated functions:
 
 \item $\mathsf{freshId}$: A function that returns a fresh engine address
 \item $\mathsf{freshName}$: A function that returns a fresh engine name
-\item $\mathsf{execEffect}(E, e, (\alpha, \mu))$: A function that executes/runs an effect $E$ for engine $e$ and returns an updated configuration and a new engine status. The engine status could be $\mathsf{ready}$, $\mathsf{busy}$, or $\mathsf{terminated}$. The latter is achieved when the effect is $\mathsf{terminate}$, $\mathsf{ready}$ when everything goes well, and $\mathsf{busy}$ is not expected to happen.
+\item $\execEffect(E, e, (\alpha, \mu))$: A function that executes/runs an effect $E$ for engine $e$ and returns an updated configuration and a new engine status. The engine status could be $\mathsf{ready}$, $\mathsf{busy}$, or $\mathsf{terminated}$. The latter is achieved when the effect is $\mathsf{terminate}$, $\mathsf{ready}$ when everything goes well, and $\mathsf{busy}$ is not expected to happen.
 \end{itemize}
 \end{definition}
 
 \section{Operational Semantics}\label{sec:semantics}
 
+We formalise the reduction rules for our operational semantics through the relation $\kappa_n \to \kappa_{n+1}$, where $\kappa_n \equiv (\alpha_n, \mu_n)$ represents the system state. Mailbox engines are modeled as sets for notational convenience, with message operations handled through message passing.
+
+\subsection{System Transition Rules}
+
+\begin{definition}[\textsf{Send}]\label{rule:send}
+Processing engine $e$ sends message $v$ to target $e_{\mathsf{target}}$:
+\begin{equation}\label{eq:send}
+\frac{
+  \alpha(e) \equiv \langle b, m_e, r, \mathsf{cfg}, \mathsf{env} \rangle \quad
+  m_{\mathsf{target}} \equiv \mathsf{mailboxOf}(e_{\mathsf{target}}) \quad
+  v : \mathsf{Msg}
+}{
+  (\alpha, \mu) \to (\alpha, \mu \cup \{ \langle e, m_{\mathsf{target}}, v \rangle \})
+}
+\end{equation}
+\end{definition}
+
+\begin{definition}[\textsf{Append}]\label{rule:append}
+Mailbox engine $e$ enqueues message $v$:
+\begin{equation}\label{eq:append}
+\frac{
+  \alpha(e) \equiv q \quad
+  \langle s, e, v \rangle \in \mu
+}{
+  (\alpha, \mu) \to (\alpha[e \mapsto q \cup \{v\}], \mu \setminus \{\langle s, e, v \rangle\})
+}
+\end{equation}
+\end{definition}
+
+\begin{definition}[\textsf{Pull}]\label{rule:pull}
+Processing engine retrieves message from mailbox:
+\begin{equation}\label{eq:pull}
+\frac{
+  \alpha(e) \equiv \langle b, m_e, \mathsf{ready}, \mathsf{cfg}, \mathsf{env} \rangle \quad
+  \alpha(m_e) \equiv \{v\} \cup q
+}{
+  (\alpha, \mu) \to (\alpha', \mu)
+}
+\end{equation}
+where $\alpha' \equiv \alpha[e \mapsto \langle b, m_e, \mathsf{busy}, \mathsf{cfg}, \mathsf{env} \rangle] \cup \{ m_e \mapsto q \}$.
+\end{definition}
+
+\begin{definition}[\textsf{Clean}]\label{rule:clean}
+Remove terminated engine:
+\begin{equation}\label{eq:clean}
+\frac{
+  \alpha(e) \equiv \langle b, m_e, \mathsf{terminated}, \mathsf{cfg}, \mathsf{env} \rangle
+}{
+  (\alpha, \mu) \to (\alpha \setminus \{e\}, \mu)
+}
+\end{equation}
+\end{definition}
+
+\begin{definition}[\textsf{Process}]\label{rule:process}
+Engine processes message:
+\begin{equation}\label{eq:process}
+\frac{
+  \alpha(e) \equiv \langle b, m_e, \mathsf{busy}, \mathsf{cfg}, \mathsf{env} \rangle \quad
+  b, \mathsf{env} \vdash v \Downarrow E \quad
+  \execEffect(E, e, (\alpha, \mu)) \equiv (\alpha', \mu', r')
+}{
+  (\alpha, \mu) \to (\alpha', \mu')
+}
+\end{equation}
+where $r' \equiv \mathsf{ready}$ if $r' \neq \mathsf{terminated}$.
+\end{definition}
+
+\subsection{Effect Execution Rules}
+
+The function $\execEffect(E, a, (\alpha, \mu))$ is defined recursively:
+
+\begin{definition}[\textsf{E-sendMsg}]\label{rule:e-send}
+\begin{equation}\label{eq:e-send}
+\frac{
+  \mathsf{msg} \equiv \langle e_{\mathsf{sender}}, e_{\mathsf{target}}, v \rangle \quad
+  m_{\mathsf{target}} \equiv \mathsf{mailboxOf}(e_{\mathsf{target}})
+}{
+  \execEffect(\mathsf{sendMsg}(\mathsf{msg}), a, (\alpha, \mu)) \equiv ((\alpha, \mu \cup \{ \mathsf{msg} \}), \mathsf{ready})
+}
+\end{equation}
+\end{definition}
+
+\begin{definition}[\textsf{E-updateEnv}]\label{rule:e-update}
+\begin{equation}\label{eq:e-update}
+\frac{
+  \alpha(e) \equiv \langle b, m_e, r, \mathsf{cfg}, \mathsf{env} \rangle \quad
+  \mathsf{env}^{*} : \mathsf{ofType}(\mathsf{env})
+}{
+  \execEffect(\mathsf{updateEnv}(\mathsf{env}^{*}), e, (\alpha, \mu)) \equiv (\alpha[e \mapsto \langle b, m_e, r, \mathsf{cfg}, \mathsf{env}^{*} \rangle], \mathsf{ready})
+}
+\end{equation}
+\end{definition}
+
+\begin{definition}[\textsf{E-spawnEngine}]\label{rule:e-spawn}
+Create new engine:
+\begin{equation}\label{eq:e-spawn}
+\frac{
+  n \equiv \mathsf{freshId}(\alpha, \mu) \quad
+  m \equiv \mathsf{freshId}(\alpha, \mu) \quad
+  \alpha(e) \equiv \langle b, m_e, r, \mathsf{cfg}, \mathsf{env} \rangle
+}{
+  \execEffect(\mathsf{spawnEngine}(e), a, (\alpha, \mu)) \equiv (\alpha \cup \{ n \mapsto \langle b, m, \mathsf{ready}, \mathsf{cfg}, \mathsf{env} \rangle \}, \mathsf{ready})
+}
+\end{equation}
+\end{definition}
+
+\begin{definition}[\textsf{E-chain}]\label{rule:e-chain}
+Sequential composition:
+
+\begin{equation}\label{eq:e-chain}
+\frac{
+  \execEffect(e_1, a, (\alpha, \mu)) \equiv (\alpha_1, \mu_1, s_1) \quad
+  \execEffect(\mathsf{chain}(e_2; \dots; e_n), a, (\alpha_1, \mu_1)) \equiv (\alpha', \mu', s')
+}{
+  \execEffect(\mathsf{chain}(e_1; \dots; e_n), e, (\alpha, \mu)) \equiv (\alpha', \mu', s')
+}
+\end{equation}
+\end{definition}
+
+The complete operational semantics comprises three components:
+\begin{enumerate}
+\item Configuration transitions via Rules \textsf{Send}--\textsf{Process}
+\item Effect execution through Rules \textsf{E-sendMsg}--\textsf{E-chain}
+\item Type safety through Definition~\ref{def:effects}
+\end{enumerate}
+
+This system formalises message passing (via Rules~\ref{rule:send}--\ref{rule:append}), message processing (Rule~\ref{rule:process}), and effect-driven state changes as defined in Section~\ref{sec:semantics}.
 
 \section{Related Work}\label{sec:related}
 
-\section{Concluding remarks}\label{sec:conclusion}
+Prior work has explored decoupling mailboxes from actors, primarily through
+techniques like work-queues where actors pull messages when ready to process
+them. Libraries like WeChaty in JavaScript have implemented similar mailbox
+separation patterns. However, our work is novel in treating mailboxes as
+first-class primitives within the actor model itself.
+
+% \section{Concluding remarks}\label{sec:conclusion}
 
 \section{Acknowledgements}
+The inspiration for this work comes from a discussion initiated by Jeremy Ornelas
+and Christophe De Troyer, and continued by Tobias Heindel. Thank them for their
+feedback and their questions that motivated this work.
 
-\nocite{*} % include all refs, even if not cited
 \bibliography{art.bib,ref.bib}
 
 \appendix
 
-\section{Some extra stuff}
+% \section{Some extra stuff}
+% The lean formalization of this work is available at
+% \url{https://github.com/anoma/ART-mailboxes-actors}.
 
 
 \end{document}
