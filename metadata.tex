@@ -1,17 +1,17 @@
 
 % Title
-\newcommand{\pubtitle}{Awesome Title}
+\newcommand{\pubtitle}{Mailbox Actors}
 
-\newcommand{\pubauthA}{Sherlock Holmes}
+\newcommand{\pubauthA}{Jonathan Prieto-Cubides}
 \newcommand{\pubaffilA}{a}
 % \newcommand{\orcidA}{0000-0001-5477-1503}
-\newcommand{\authemailA}{sherlock@heliax.dev}
+\newcommand{\authemailA}{jonathan@heliax.dev}
 % \newcommand{\eqcontribA}{}
 
-\newcommand{\pubauthB}{Poison Ivy}
-\newcommand{\pubaffilB}{a}
+% \newcommand{\pubauthB}{Poison Ivy}
+% \newcommand{\pubaffilB}{a}
 % \newcommand{\orcidB}{0000-0001-0000-0000}
-\newcommand{\authemailB}{poison@heliax.dev}
+% \newcommand{\authemailB}{poison@heliax.dev}
 % \newcommand{\eqcontribB}{}
 
 % \newcommand{\pubauthC}{Last Author}
@@ -25,9 +25,22 @@
 % Corresponding author mail
 \newcommand{\pubemail}{\authemailA}
 
-\newcommand{\pubabstract}{
-This is the abstract of the paper. It should be a single paragraph.
+\newcommand{\pubabstract}{%
+%
+This paper presents a novel architectural approach to
+actor systems by decoupling mailboxes from processing actors. We propose
+modeling mailboxes as independent actor entities that specialize in message
+management, while processing actors focus solely on their core functionality.
+This separation enables flexible message scheduling, modular mailbox
+implementations, and improved scalability. We provide a formal specification of
+the message-passing mechanism and operational semantics for this decoupled
+architecture. The design addresses challenges in message flow management under
+high volumes while maintaining clear separation of concerns. Although the
+approach may introduce additional system complexity and latency, we believe
+the benefits in terms of flexibility, scalability, and maintainability of
+actor-based systems are worth of the possible trade-offs.
 }
+
 
 % Description of the SI file, placed as a footnote
 % \newcommand{\pubSI}{Electronic Supplementary Information (ESI) available:
@@ -35,7 +48,13 @@ This is the abstract of the paper. It should be a single paragraph.
 
 % Any keywords to be displayed under the abstract
 \keywords{
-keyword1 \sep keyword2 \sep keyword3 \sep
+Actor Model \sep
+Message-Passing Systems \sep
+Mailbox Actors \sep
+Operational Semantics \sep
+System Architecture \sep
+Formal Methods \sep
+Scalability
 }
 
 % Supplementary space between title/abstract and text, if needed
@@ -45,5 +64,5 @@ keyword1 \sep keyword2 \sep keyword3 \sep
 \input{aux-preamble.tex}
 % The preprint DOI to be used as an link in the paper
 \pubdoi{10.5281/zenodo.8262747}
-\history{(Received Month DD, YYYY; Revised Month DD, YYYY ; Published: August 21, 2023)}
+% \history{(Received Month DD, YYYY; Revised Month DD, YYYY ; Published: August 21, 2023)}
 \pubdate{\today}

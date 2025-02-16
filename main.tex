@@ -19,15 +19,189 @@
 \maketitle
 
 \tableofcontents
-
 \section{Introduction}
 
-This document is an example of using various LaTeX features for writing ARTs.
+% Introduction to actor models and their communication mechanism.
+Actor models provide a computational framework for concurrent systems through
+asynchronous message-passing mechanisms. In these systems, actors are
+independent computational units that encapsulate the execution environment of
+their processing logic. Communication between actors occurs solely through
+asynchronous message passing, where messages are stored in the recipient's
+mailbox ---a dedicated piece of storage that preserves message order while
+remaining separate from the actor's core logic.
 
-\input{examples/test.tex}
-%\input{examples/code.tex}
+% Challenges in actor system message flow management
+Actor systems face challenges managing message flow under high volumes. While
+message delivery is often assumed reliable, practical implementations must
+handle message loss/delays from processing bottlenecks. As in theory, conventional
+implementations couple mailboxes with actors, causing overflow risks without
+flow control. Though \emph{backpressure} techniques may help regulate message
+rates, these control mechanisms may also fail under heavy load, particularly
+with high-volume producers serving multiple consumers.
 
-\section{Concluding remarks}
+% Proposes a solution by decoupling mailboxes from processing actors.
+To address these challenges, here we propose decoupling mailboxes from their
+processing actors by implementing each mailbox as a separate actor entity.
+In this design, communication occurs through message passing to dedicated
+mailbox actors, with processing actors pulling messages only when ready to
+handle them. We give an explicit specification of the message-passing mechanism,
+so the mailbox actors remain opaque to both senders and receivers.
+
+% Outlines the benefits of the proposed architectural separation.
+This architectural separation of mailboxes from processing actors provides
+several key benefits. First, it cleanly separates message management from
+processing logic, allowing mailbox actors to specialize in queue management
+while processing actors focus on their core functionality. Second, it enables
+flexible message scheduling—different mailbox implementations can support
+priority queues, batch processing, or custom dispatch strategies without affecting
+processing actors. Third, mailbox actors become modular components that can be
+modified or replaced independently.
+
+% Discusses the trade-offs and potential drawbacks of the design.
+This design may come with some trade-offs. The primary drawback we foresee is
+the increased system complexity due to additional actors and message passing
+overhead. That is, higher resource usage from running more actors, and potential
+latency increases when mailbox actors run on different nodes of the system than
+their processing actors. However, with careful design, these costs can be
+outweighed by the benefits of a more flexible and scalable system.
+
+% Mentions the potential for future work in extending the design.
+The design also naturally extends to support multiple mailbox actors per
+processing actor if needed, with minimal additional complexity due to the
+simplicity of mailbox actors and their well-defined interfaces. However, we
+leave this as future work, as it is not a requirement for the core design.
+
+% How this paper is organized and what is the contribution.
+
+\paragraph{Contributions} We propose a new architectural
+separation between processing actors and their mailboxes in \Cref{sec:model},
+which enables improved flexibility and scalability for message management. Second,
+we formulate operational semantics in \Cref{sec:semantics} for both the decoupled
+architecture and its explicit message-passing mechanism, making the system's
+communication patterns formally explicit. This description provides sufficient
+grounding to implement a library on top of a compatible system/platform such
+as Erlang, and formalise and prove key system properties such as liveness
+guarantees and correctness under concurrent message processing. 
+
+\section{Model}\label{sec:model}
+
+The model used in this paper is an extended version of the actor model presented in
+\cite{engine-art}. The model mainly consists of \emph{engines}, our actor
+equivalent notion. Engines load more information than standard actors. However,
+this should not be considered a limitation, but rather an extension that
+allows a more fine-grained control over actor-level properties and
+specifications.
+
+Engines interact within a system governed by a given message-passing mechanism
+that enforces policies for message delivery, ordering, loss, and flow control.
+For example, this mechanism enforces that only engines send messages to other
+engines, and no other forms of communication are allowed.
+
+
+\begin{definition}\label{def:processing-engine}
+A processing engine is defined by a tuple $\langle b,\, m,\, r,\, \mathsf{cfg},\, \mathsf{env} \rangle$ where:
+\begin{itemize}
+\item $b$ is the engine behavior (a set of guarded actions)
+\item $m$ is the address of the dedicated mailbox engine
+\item $r$ is the status flag ($\mathsf{ready}$, $\mathsf{busy}$, $\mathsf{terminated}$)
+\item $\mathsf{cfg}$ is the engine configuration including name, network location, node, and optional parent
+\item $\mathsf{env}$ is the execution context including local state $\sigma$ and address book
+\end{itemize}
+\end{definition}
+
+\begin{definition}\label{def:mailbox-engine}
+A mailbox engine is a specialized processing engine that acts as a message buffer between engines. Its primary responsibilities are:
+
+\begin{enumerate}
+\item Receiving and storing messages sent to its associated processing engine
+\item Forwarding stored messages to the processing engine when it is ready to receive them
+\item Preventing message loss and managing load on the processing engine
+\end{enumerate}
+
+There are only two operations allowed on a mailbox engine:
+
+\begin{itemize}
+\item $\mathsf{append}$: Append a message to the mailbox
+\item $\mathsf{pull}$: Pull a message from the mailbox
+\end{itemize}
+
+The mailbox engine's state can be implemented using various data structures depending on the desired message handling semantics, for example:
+
+\begin{itemize}
+\item FIFO queues for standard first-in-first-out processing
+\item Priority queues for message prioritization
+\end{itemize}
+
+For the processing engine, the mailbox engine is an opaque object. The
+processing engine only reads messages, one by one, from the mailbox engine when
+it is ready to receive them.
+\end{definition}
+
+\begin{definition}\label{def:messages}
+$\mathsf{Msg}$ refers to the type of message payloads/interfaces, which is a disjoint union of all engine-specific message interfaces. For example, a mailbox engine accepts messages like $\mathsf{append}$ and $\mathsf{pull}$, while a processing engine accepts domain-specific messages.
+
+Messages are formulated as triples $\langle s,\, t,\, v \rangle$ where:
+\begin{itemize}
+\item $s$ is the sender engine's address
+\item $t$ is the target engine's address 
+\item $v$ is the payload of type $\mathsf{Msg}$
+\end{itemize}
+\end{definition}
+
+\begin{definition}\label{def:guards}
+A guard is a function $g$ of type $\mathsf{Msg} \times \mathsf{Env} \times \mathsf{Cfg} \to \mathsf{R}$ where:
+\begin{itemize}
+\item $\mathsf{Msg}$ is the type of messages
+\item $\mathsf{Env}$ is the type of engine environments
+\item $\mathsf{Cfg}$ is the type of engine configurations
+\item $\mathsf{R}$ is the type of guard results. In case it is nothing, it is represented as $\bot$, meaning that the guard does not match
+\end{itemize}
+\end{definition}
+
+\begin{definition}\label{def:effects}
+Effects (denoted by $\mathcal{E}$) include:
+\begin{itemize}
+\item $\mathsf{send}$ for message dispatch
+\item $\mathsf{update}$ for engine-specific environment change
+\item $\mathsf{spawn}$ for engine creation
+\item $\mathsf{chain}$ for sequential composition of effects
+\item $\mathsf{terminate}$ for engine termination
+\item $\mathsf{nop}$ for no operation
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Global System Configuration]\label{def:global-config}
+We need a system to track the in-transit messages. A pair $\kappa :\equiv (\alpha, \mu)$ with:
+
+\begin{itemize}
+\item $\alpha$: A mapping from engine addresses to the actual engine instance. If the engine is a mailbox engine, as an abuse of notation, we treat it as its local state, that is, the data structure storing the messages.
+\item $\mu$: A (multi)set of in-transit messages.
+\end{itemize}
+
+With the system defined, there are several associated functions:
+
+\begin{itemize}
+\item $\mathsf{mailboxOf}$: The address of the mailbox engine for engine $e$.
+
+\[
+\mathsf{mailboxOf}(e) :\equiv \begin{cases}
+  m_e & \text{if } e\equiv\langle b,\, m_e,\, r,\, \mathsf{cfg},\, \mathsf{env} \rangle \text{ is a processing engine} \\
+  \bot & \text{otherwise}
+\end{cases}
+\]
+
+\item $\mathsf{freshId}$: A function that returns a fresh engine address
+\item $\mathsf{freshName}$: A function that returns a fresh engine name
+\item $\mathsf{execEffect}(E, e, (\alpha, \mu))$: A function that executes/runs an effect $E$ for engine $e$ and returns an updated configuration and a new engine status. The engine status could be $\mathsf{ready}$, $\mathsf{busy}$, or $\mathsf{terminated}$. The latter is achieved when the effect is $\mathsf{terminate}$, $\mathsf{ready}$ when everything goes well, and $\mathsf{busy}$ is not expected to happen.
+\end{itemize}
+\end{definition}
+
+\section{Operational Semantics}\label{sec:semantics}
+
+
+\section{Related Work}\label{sec:related}
+
+\section{Concluding remarks}\label{sec:conclusion}
 
 \section{Acknowledgements}
 
