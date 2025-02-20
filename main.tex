@@ -22,32 +22,36 @@
 \section{Introduction}
 
 % Introduction to actor models and their communication mechanism.
-Actor models provide a computational framework for concurrent systems through
-asynchronous message-passing mechanisms. In these systems, actors are
+Actor models provide a computational framework for concurrent systems. In these
+systems, the main construct is the notion of an \emph{actor}. Actors are
 independent computational units that encapsulate the execution environment of
-their processing logic. Communication between actors occurs solely through
-asynchronous message passing, where messages are stored in the recipient's
-mailbox ---a dedicated piece of storage that preserves message order while
-remaining separate from the actor's core logic.
+their processing logic. Asynchronous communication between actors occurs
+solely via messages. A message is defined as any piece of data sent from one
+actor to another. The reception of these messages is handled by the recipient
+actor's \emph{mailbox}, a dedicated piece of storage that preserves message
+order while remaining separate from the actor's core logic.
 
 % Challenges in actor system message flow management
-Actor systems may face challenges such as managing message flow under high
-volumes. That is, while message delivery is often assumed reliable, practical
-implementations must handle message loss/delays from processing bottlenecks or
-crashing actors. Although some techniques such as \emph{backpressure} may help,
-for example, regulate message rates, these control mechanisms may also fail under
-heavy load systems. % I need examples of heavy load systems here.
+One challenge in actor systems is managing message flow under high volumes.
+Although some techniques such as rate limiting and \emph{backpressure} help regulate
+message rates, these control mechanisms may also fail under heavily loaded
+systems. Message delivery is often assumed to be reliable, but practical
+implementations really need to consider the possibility of message loss and
+delays from processing bottlenecks or crashing actors.
 
 % Proposes a solution by decoupling mailboxes from processing actors.
-To address some of these challenges, here we propose decoupling mailboxes from
-their actors by considering each mailbox as a separate actor entity.
-In this design, communication occurs through message passing to dedicated
-mailbox actors, with processing actors pulling messages only when ready to
-handle them. We give an explicit specification of the message-passing mechanism,
-where the mailbox actors remain opaque to both senders and receivers.
+To address some of these challenges, in particular the need to handle message
+loss and delays in processing messages, we propose decoupling mailboxes
+from \emph{processing actors}, which are the actors that carry out the processing
+logic. In this design, communication occurs through message passing to
+dedicated \emph{mailbox actors}, with processing actors pulling messages only
+when ready to handle them. This approach is simple, allowing us to give an explicit
+specification of the message-passing mechanism, where the mailbox actors remain
+opaque to both senders and receivers to maintain compatibility with existing actor
+frameworks.
 
 % Outlines the benefits of the proposed architectural separation.
-This architectural separation of mailboxes from processing actors provides
+The architectural separation of mailboxes from processing actors provides
 several key benefits. First, it cleanly separates message management from
 processing logic, allowing mailbox actors to specialize in queue management
 while processing actors focus on their core functionality. Second, it enables
@@ -58,30 +62,30 @@ modified or replaced independently.
 
 % Discusses the trade-offs and potential drawbacks of the design.
 This design may come with some trade-offs. The primary drawback we foresee is
-the increased system complexity due to additional actors and message passing
-overhead. That is, higher resource usage from running more actors, and potential
-latency increases when mailbox actors run on different nodes of the system than
+increased system complexity due to additional actors and message-passing
+overhead. This manifests as higher resource usage from running more actors and
+potential latency increases when mailbox actors run on different nodes than
 their processing actors. However, with careful design, these costs can be
 outweighed by the benefits of a more flexible and scalable system.
 
 % Mentions the potential for future work in extending the design.
-The design also naturally extends to support multiple mailbox actors per
-processing actor if needed, with minimal additional complexity due to the
-simplicity of mailbox actors and their well-defined message interface. However,
-we leave this as future work, as it is not a requirement to convey the core
-design.
+The design could be extended to support multiple mailbox actors per processing
+actor, with minimal additional complexity due to the mailbox actors' simplicity
+and well-defined message interface. However, we leave this extension as future
+work since it is not required to convey the core design.
 
 % How this paper is organized and what is the contribution.
 
-\paragraph{Contributions} We propose a new architectural
+\paragraph{Contributions}
+First, we propose a new architectural
 separation between processing actors and their mailboxes in \Cref{sec:model},
 which enables improved flexibility and scalability for message management. Second,
 we formulate operational semantics in \Cref{sec:semantics} for both the decoupled
 architecture and its explicit message-passing mechanism, making the system's
 communication patterns formally explicit. This description provides sufficient
 grounding to implement a library on top of a compatible system/platform such
-as Erlang, and formalise and prove key system properties such as liveness
-guarantees and correctness under concurrent message processing. 
+as Erlang, and to formalize and prove key system properties such as liveness
+guarantees and correctness under concurrent message processing.
 
 \section{Notation}\label{sec:notation}
 
@@ -92,21 +96,22 @@ of types $U$, so if $A$ is a type, then $A : U$. We also work with inductive
 types presented in the following form:
 
 \begin{align*}
-  A ::= \cdots \mid \mathsf{C}(A_1, \dots, A_n)
+  A ::= \cdots \mid \mathsf{C}(A_1, \dots, A_n) \, ,
 \end{align*}
 
 where $\mathsf{C}$ is a constructor of the type $A$, and $A_1, \dots, A_n$ are
 the types of the constructor arguments. The inductive type of natural numbers is
-denoted as $\N$. The terms of this type are denoted by number as usual. A
-definition of a term $x$ is denoted as $x :\equiv y$. Definitionally equal terms
-are denoted as $a \equiv b$.
+denoted as $\N$. The terms of this type are denoted by number as usual. Another
+recurrent type is the type of parametric lists, denoted as $\mathsf{List}(A)$.
+The definition that term $x$ \emph{is} $y$ is denoted as $x :\equiv y$.
+Definitionally equal terms are denoted as $a \equiv b$.
 
 Some types are equipped with structure that behave as sets, and here are common
-set-theoretic notation we use: the membership relation is denoted as $\in$, so $a
-\in A$ is a proposition that $a$ is an element of $A$ (do not confuse with typing
-$a : A$). For $A$ and $B$: $A \subseteq B$ denotes set inclusion, meaning every
-element of $A$ belongs to $B$; $\varnothing$ denotes the empty set; union is
-denoted as $A \cup B$; intersection is denoted as $A \cap B$; the difference
+set-theoretic notation we use: the membership relation is denoted as $\in$, so
+$a \in A$ is a proposition that $a$ is an element of $A$ (do not confuse with
+typing $a : A$). For $A$ and $B$: $A \subseteq B$ denotes set inclusion, meaning
+every element of $A$ belongs to $B$; $\varnothing$ denotes the empty set; union
+is denoted as $A \cup B$; intersection is denoted as $A \cap B$; the difference
 intersection is denoted as $A \cap B$; the difference between $A$ and $B$ is
 denoted as $A \setminus B$; and $A \times B$ denotes the Cartesian product of
 $A$ and $B$, and their terms are denoted as $\langle a,b \rangle$, where $a : A$
@@ -115,48 +120,69 @@ generalisation of an ordered pair to an ordered $n$-tuple, where $n \in \N$, of
 type $A_1 \times \cdots \times A_n$, and $a_i$ is of type $A_i$ for all $i \in
 \{1, \dots, n\}$. If the tuple components are named using sans-serif letters,
 these names are used as projections, otherwise, the projections are $\pi_i(a)
-:\equiv a_i$ for all $i \in \{1, \dots, n\}$. For example, if $x :\equiv \langle \mathsf{fst},
-\mathsf{snd} \rangle$ denotes a tuple with components values can be projected
-using $\mathsf{fst}$ and $\mathsf{snd}$ via $\mathsf{fst}(x)$ and
+:\equiv a_i$ for all $i \in \{1, \dots, n\}$. For example, if $x :\equiv \langle
+\mathsf{fst}, \mathsf{snd} \rangle$ denotes a tuple with components values can
+be projected using $\mathsf{fst}$ and $\mathsf{snd}$ via $\mathsf{fst}(x)$ and
 $\mathsf{snd}(x)$, respectively. Additionally, $A_1 + \cdots + A_n$ denotes the
-disjoint union of $A_1, \dots, A_n$, so $\mathsf{inj_i}(a_i)$ are the corresponding
-injections into $A_1 + \cdots + A_n$ from $A_i$ for all $i \in \{1, \dots, n\}$.
-Given a type $A$, we can define the optional type $\Option{A}$ as $A + \bot$,
-where $\bot$ is the bottom type.
+disjoint union of $A_1, \dots, A_n$, so $\mathsf{inj_i}(a_i)$ are the
+corresponding injections into $A_1 + \cdots + A_n$ from $A_i$ for all $i \in
+\{1, \dots, n\}$. Given a type $A$, we can define the optional type $\Option{A}$
+as $A + \bot$, where $\bot$ is the bottom type.
 
 \section{Model}\label{sec:model}
 
-The model used in this paper is an extended version of the Engine Model
-\cite{engine-art}, in which the systems the model describes consists of \emph{engines},
-an actor equivalent notion equipped with more information than standard actors.
-Informally, an engine comprises a \emph{configuration}, an \emph{execution context},
-and a \emph{behaviour}. The configuration includes, among other things, the engine's
-name, location within the system, and an optional reference to the parent engine. The
-execution context includes an \emph{address book} of other engines to communicate
-with, including the engine's own address. How engines react to incoming messages
-is specified by their \emph{behaviour}, a set of \emph{guarded actions}, pairs
-of pre-conditions to execute an action, and the action to execute. Finally, upon
-receiving a message, an engine checks which of its guarded actions is satisfied,
-and if so, the engine executes the corresponding action.
+This section presents a version based on the Engine Model \cite{engine-art}. In
+this actor-like model, the system consists of \emph{engines}, which are similar
+to actors but are equipped with more context. An engine comprises three main
+components: a \emph{configuration}, an \emph{execution environment}, and a
+\emph{behaviour}. The configuration includes, among other things, the engine's
+name, location within the system, and an optional reference to the parent
+engine. The execution environment includes an \emph{address book} of other engines
+to communicate with, including the engine's own address. Finally, the behaviour
+defines how the engine reacts to messages that follow the engine's \emph{message
+interface}, which is simply a set of message types that the engine can process.
+The engine's behaviour is a set of \emph{guarded actions} consisting of pairs
+of pre-conditions and actions to execute. When an engine receives a message, it
+checks which of its guarded actions have satisfied pre-conditions, and executes
+the corresponding action.
 
-\subsection{Definitions}
+\begin{remark}
+  The way engine behaviour is defined is similar to the Event-B formalism in
+  that event-driven system transitions are specified by a set of pre-conditions
+  on sets that form the current system state and the actions to execute if those
+  pre-conditions are satisfied. The actions are defined using a language derived
+  from process calculi, which often include operations such as parallel composition,
+  a null operation, sequencing, nondeterministic choice, and recursion. Here, we
+  have a more restricted set of actions, as will be seen in \Cref{def:effects}.
+\end{remark}
 
-The model assumes there is an ambient \emph{system} $\kappa$ that
-consists of a set of \emph{nodes} $\mathcal{N}$ and a set of \emph{engines}
-$\mathcal{E}$. Engines are distributed across nodes. Each of these entities is
-indexed by a unique identifier and so, nodes and engines can be denoted as $n_i$
-and $e_j$ for $i, j \in \N$. 
+\subsection{Definitions}\label{sec:definitions}
 
-The system also comes with a \emph{message-passing mechanism} (MPM for short) that enforces
-policies for message delivery and flow control. This MPM operates on a set of
-\emph{messages} denoted as $\mu$, equipped with information about the sender and
-receiver of the message. To reason about the system at a given time, we consider
-the set of messages in the system at that time, denoted as $\mu^i$. Similarly,
-the system at time $i$ is denoted as $\kappa^i$.
+The model assumes an ambient \emph{system} $\kappa$ consisting of a set of
+\emph{nodes} $\mathcal{N}$, a set of \emph{engines} $\mathcal{E}$, following a
+specific \emph{message-passing mechanism} (MPM for short) that will be described
+later, among other components.
 
-Referring to an engine within the system, we can do so by the node where it is
-running, and the engine's unique identifier. Additionally, each engine has a
-name with can be used in context that do not rise confusion.
+Engines are distributed across the nodes of the system, with each engine being
+associated with a unique node. Each entity in the system has a unique identifier,
+allowing nodes and engines to be denoted as $n_i$ and $e_j$ respectively, where
+$i, j \in \N$.
+
+Following the message-passing paradigm, the MPM enforces policies for message
+delivery and flow control. This mechanism operates on a set of \emph{messages}
+that we denote here as $\mu$. Each message contains information about its
+sender and receiver. 
+
+To reason about the system, we use a state machine that evolves in discrete steps.
+This means, for each step/transition of the state machine, we have a new state
+$\kappa^{i+1}$ from the previous state $\kappa^i$. This also entails that we
+can refer to \say{previous} messages $\mu^i$ or the next ones.
+
+Within the system, each entity has a unique identifier. However, engines can also be
+referenced by name rather than by address. Engine names provide a more legible way
+to refer to engines in the system, making them easier to work with. Since names
+are unique and unambiguous, they can be used interchangeably with addresses when
+referring to engines.
 
 \begin{definition}\label{def:address}
 An \textbf{address} for an entity $a$ is a tuple $\langle n_i, \mathsf{id}_j \rangle$, where
@@ -189,16 +215,22 @@ is the engine's name, $\mathsf{location}$ is the engine's location, and $\mathsf
 is the engine's parent.
 \end{definition}
 
-\begin{definition}\label{def:engine-environment} The \textbf{environment} of an
-engine $e_j$ often denoted by $\mathsf{env}_j$ is a tuple $\langle S, A
-\rangle$, where $S$ is an engine-specific type for the local state, and $A$ is
-the engine's address book, a set of addresses of other engines, including the
-engine's own address.
+Recall engines are isolated from each other, and process messages in isolation.
+To properly function, the configuration of an engine is not enough. Engines
+encapsulate their own state, as that is part of its execution context, also
+called the \emph{environment} of the engine.
+
+\begin{definition}\label{def:engine-environment} 
+  Given a type $S_j$ representing the local state of an engine $e_j$, an execution
+  \textbf{environment} of $e_j$ is a tuple $\langle s_j, a_j \rangle$, where $s_j$ is 
+  the engine's local state of type $S_j$, and $a_j$ is the engine's address book containing 
+  name of other engines, including its own. $a_j$ is of type $\mathsf{List}(\mathsf{Name})$, 
+  The type of such an environment is denoted 
+  as $\mathsf{Env}_j(S_j)$.
 \end{definition}
 
 
 \subsubsection{Execution directives}
-
 
 \begin{definition}\label{def:effects}
 An \textbf{action} is of type $\mathsf{Effect}$, which considers all the
@@ -207,10 +239,10 @@ possible ways an engine can modify the system.
 
 \begin{equation}\label{eq:effects}
 \begin{aligned} %TODO: fix this grammar
-\mathsf{Effect} ::= &\quad \mathsf{send}(\mathsf{Addr}, \mathsf{Msg}) & &\text{(Message dispatch)} \\
-\mid & \quad \mathsf{update}(\mathsf{Env} \to \mathsf{Env}) & &\text{(State modification)} \\
-\mid & \quad \mathsf{spawn}(\mathsf{Cfg}, \mathsf{Env}) & &\text{(Engine creation)} \\
-\mid & \quad \mathsf{chain}(\mathcal{E}, \mathcal{E}) & &\text{(Action sequencing)} \\
+\mathsf{Effect} ::= &\quad \mathsf{send}(\mathsf{Addr}, \mathsf{Msg}) & &\text{(message dispatch)} \\
+\mid & \quad \mathsf{update}(\mathsf{Env}) & &\text{(engine state modification)} \\
+\mid & \quad \mathsf{spawn}(\mathsf{Cfg}, \mathsf{Env}) & &\text{(engine creation)} \\
+\mid & \quad \mathsf{chain}(\mathsf{Effect}, \mathsf{Effect}) & &\text{(action sequencing)} \\
 \mid & \quad \mathsf{terminate} & &\text{(Engine shutdown)} \\
 \mid & \quad \mathsf{nop} & &\text{(Null operation)\, .}
 \end{aligned}
@@ -287,33 +319,53 @@ Engine communication occurs through typed messages where:
 \end{itemize}
 \end{definition}
 
-
-\begin{definition}\label{def:node} A \textbf{node} $n_i$ is a tuple $\langle
-\mathsf{id}_i, \mathcal{E}_i  \rangle$ where $\mathsf{id}_i$ is the node's
-unique identifier and $\mathcal{E}_i$ is the set of engines living on the node.
-For convenience, as part of the node, we derive the following functions:
-\begin{itemize}
-\item $\alpha_i$ as the mapping of engines to their addresses, and
-\item $\mathsf{mailboxOf}$ as the mapping of engines to the address of the dedicated mailbox engine.
-\end{itemize}
+\begin{definition}\label{def:node} 
+A \textbf{node} $n_i$ is a tuple $\langle \mathsf{id}_i, \mathcal{E}_i
+\rangle$ where $\mathsf{id}_i$ is the node's unique identifier and
+$\mathcal{E}_i$ is the set of engines living on the node.
 \end{definition}
+
+\begin{remark}\label{rem:node-functions}
+Given a node $n_i$, we derive the following functions:
+\begin{itemize}
+\item $\alpha_i : \mathcal{E}_i \to \mathsf{Addr}$ as the mapping that projects out the addresses of the engines
+living on node $n_i$, and
+\item $\mathsf{mailboxOf} : \mathcal{E} \to \mathsf{Addr}$ as the mapping that projects out the address of the
+dedicated mailbox engine for a given processing engine instance.
+\end{itemize}
+\end{remark}
 
 \begin{definition}\label{def:global-config}
-A \textbf{system state} $\kappa$ is a tuple $\langle \mathcal{N},  \mu, \omega \rangle$ where:
+A \textbf{system state} $\kappa$ is a tuple $\langle \mathcal{N}, \mu, \omega
+\rangle$ where $\mathcal{N}$ is the set of nodes, $\mu$ is the in-transit
+communications consisting of messages, and $\omega$ is the system capabilities
+and operations.
+\end{definition}
+
+\noindent It is up-to the discretion of the system designer to define and update
+the components of $\omega$. That is, the system can evolve over time, including
+the set of nodes, engines, and the included services provided by the system.
+
+We expect at least the following functions to be defined:
 \begin{itemize}
-\item $\mathcal{N}$ is the set of nodes,
-\item $\mu$ is the in-transit communications consisting of messages, and
-\item $\omega$ is the system capabilities and operations.
+\item $\mathsf{freshId} : \mathcal{N} \to \mathsf{Id}$ is the function that
+generates a fresh identifier for a node.
+
+\item $\mathsf{freshName} : \mathcal{N} \to \mathsf{Name}$ is the function that
+generates a fresh name for an engine.
+
+\item $\execEffect$ is the function that executes effects as defined in
+\Cref{def:effects} and outputs the new system state after the effect has been
+executed.
 \end{itemize}
 
-The $\omega$ component includes functions, some of which can be derived, these are:
-\begin{itemize}
-\item $\alpha$ a mapping of engines to their addresses,
-\item $\mathsf{mailboxOf}$ a mapping of processing engines to their dedicated mailbox engines,
-\item $\mathsf{freshId}$ and $\mathsf{freshName}$ for generating unique identifiers, and
-\item $\execEffect$ which executes effects and transitions the system state.
-\end{itemize}
-\end{definition}
+We now extend the functions defined in \Cref{rem:node-functions}. The
+node-specific functions $\alpha_i$ and $\mathsf{mailboxOf}_i$ can be used to
+construct global versions $\alpha$ and $\mathsf{mailboxOf}$ that operate over
+all engines $\mathcal{E}$ in $\kappa$, functions of type $\mathcal{E} \to
+\mathsf{Addr}$. These global functions are defined by combining the
+node-specific functions across all nodes, allowing us to look up addresses for
+any engine in the system regardless of which node it resides on.
 
 \section{Operational Semantics}\label{sec:semantics}
 
