@@ -213,7 +213,8 @@ process.
 \end{definition}
 
 To refer to an arbitrary message type, we use the type $\mathsf{Msg}$, which is
-the union of all valid message types, that is, $\mathsf{Msg} = \bigoplus_{j \in \mathcal{E}} \mathsf{Msg_j}$.
+the union of all valid message types, that is, $\mathsf{Msg} :\equiv
+\bigoplus_{j} \mathsf{Msg_j}$ where $j$ ranges over all engines in the system.
 
 \subsubsection{Engine components}
 
