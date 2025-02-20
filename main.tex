@@ -123,11 +123,11 @@ these names are used as projections, otherwise, the projections are $\pi_i(a)
 :\equiv a_i$ for all $i \in \{1, \dots, n\}$. For example, if $x :\equiv \langle
 \mathsf{fst}, \mathsf{snd} \rangle$ denotes a tuple with components values can
 be projected using $\mathsf{fst}$ and $\mathsf{snd}$ via $\mathsf{fst}(x)$ and
-$\mathsf{snd}(x)$, respectively. Additionally, $A_1 + \cdots + A_n$ denotes the
+$\mathsf{snd}(x)$, respectively. Additionally, $A_1 \oplus \cdots \oplus A_n$ denotes the
 disjoint union of $A_1, \dots, A_n$, so $\mathsf{inj_i}(a_i)$ are the
-corresponding injections into $A_1 + \cdots + A_n$ from $A_i$ for all $i \in
+corresponding injections into $A_1 \oplus \cdots \oplus A_n$ from $A_i$ for all $i \in
 \{1, \dots, n\}$. Given a type $A$, we can define the optional type $\Option{A}$
-as $A + \bot$, where $\bot$ is the bottom type.
+as $A \oplus \bot$, where $\bot$ is the bottom type.
 
 \section{Model}\label{sec:model}
 
@@ -186,7 +186,7 @@ $\mu^i$ is the set of messages in the $i$-th step.
 % referring to engines.
 
 
-\subsubsection{Addresses and names}
+\subsubsection{Addresses and names}\label{sec:addresses-and-names}
 
 \begin{definition}\label{def:address}
 An \textbf{address} for an engine $e_j$ within the system is a tuple $\langle n_i, \mathsf{id}_j \rangle$, where
@@ -196,6 +196,24 @@ $n_i$ is the node identifier where the engine lives, and $\mathsf{id}_j$ is the 
 \begin{axiom}\label{ax:address}
 Each engine is uniquely identified by an \emph{address} in the system.
 \end{axiom}
+
+
+\subsubsection{Message Structure}\label{sec:message-structure}
+
+\begin{definition}\label{def:messages} Engine communication occurs through typed
+messages. A message is a triple $\langle s,\, t,\, v \rangle$ where $s$ is the
+sender address, $t$ is the target address, and $v$ is the payload of type
+$\mathsf{Msg_j}$ that is specific to the message types the target engine can
+process.
+\end{definition}
+
+\begin{definition}\label{def:message-interface}
+  The \textbf{message interface} of an engine $e_j$ is the set of message types
+  $\mathsf{Msg_j}$ that the engine can process.
+\end{definition}
+
+To refer to an arbitrary message type, we use the type $\mathsf{Msg}$, which is
+the union of all valid message types, that is, $\mathsf{Msg} = \bigoplus_{j \in \mathcal{E}} \mathsf{Msg_j}$.
 
 \subsubsection{Engine components}
 
@@ -269,7 +287,7 @@ possible ways an engine can react to a message.
 
 \begin{equation}\label{eq:effects}
 \begin{aligned} %TODO: fix this grammar
-\mathsf{Effect}(S_j) ::= &\quad \mathsf{send}(\mathsf{Addr} + \mathsf{Name}, \mathsf{Msg}) & &\text{(message dispatch)} \\
+\mathsf{Effect}(S_j) ::= &\quad \mathsf{send}(\mathsf{Addr} \oplus \mathsf{Name}, \mathsf{Msg}) & &\text{(message dispatch)} \\
 \mid & \quad \mathsf{update}(\mathsf{Env}(S_j)) & &\text{(engine state modification)} \\
 \mid & \quad \mathsf{spawn}(\mathsf{Cfg}, \mathsf{Env}(S_j)) & &\text{(engine creation)} \\
 \mid & \quad \mathsf{chain}(\mathsf{Effect}(S_j), \mathsf{Effect}(S_j)) & &\text{(action sequencing)} \\
@@ -322,7 +340,7 @@ components of an engine's behaviour.
 
 \begin{definition}\label{def:guard-action}
   A \textbf{guard-action} is a mapping of type
-  $\mathsf{Msg} \times \mathsf{Env}_j(S_j) \times \mathsf{Cfg}_j \to \mathsf{Effect}(S_j)$,
+  $\mathsf{Msg} \times  \mathsf{Cfg}_j \times \mathsf{Env}_j(S_j) \to \mathsf{Effect}(S_j)$,
   which takes a message, an engine's environment, and an engine's configuration,
   and returns an action the system must execute if the guard is satisfied.
   Thus, a guard-action can be seen as a tuple $\langle g_j, a_j \rangle$, where $g_j$ is
@@ -375,20 +393,6 @@ representation remains implementation-defined to support different message
 handling strategies.
 \end{remark}
 
-\paragraph{Message Structure}
-
-\begin{definition}\label{def:messages}
-Engine communication occurs through typed messages where:
-\begin{itemize}
-\item $\mathsf{Msg}$ denotes the union of all valid message types
-\item Messages are triples $\langle s,\, t,\, v \rangle$ with:
-  \begin{itemize}
-  \item $s$: Sender address
-  \item $t$: Target address
-  \item $v$: Payload of type $\mathsf{Msg}$
-  \end{itemize}
-\end{itemize}
-\end{definition}
 
 \begin{definition}\label{def:node} 
 A \textbf{node} $n_i$ is a tuple $\langle \mathsf{id}_i, \mathcal{E}_i
