@@ -1,0 +1,23 @@
+# design discussion:
+
+- 
+% What properties does this design provide? Three core properties are provided.
+% First, processing engines remain stateless regarding message storage, allowing
+% crash recovery through mailbox replay. Second, the separation enables
+% independent scaling of message ingestion (via mailbox distribution) and
+% processing logic. Third, the pull-based mechanism implements automatic
+% backpressure ---mailboxes naturally throttle message flow when processing engines
+% become overloaded.
+
+
+% \begin{remark}[Idempotency]
+% The $\mathsf{append}$ operation is designed to be idempotent to support
+% reliable message delivery. Duplicate $\mathsf{append}$ messages from network
+% retries are safely absorbed by the mailbox's state management.
+% \end{remark}
+
+% \begin{remark}[Persistence]
+% While not required by the definition, practical implementations typically make
+% mailbox engines persistent through write-ahead logging or snapshotting to
+% prevent message loss during failures.
+% \end{remark}

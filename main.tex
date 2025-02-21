@@ -133,20 +133,22 @@ optional type when $a : A$.
 
 \section{Model}\label{sec:model}
 
-This section presents a version based on the Engine Model \cite{engine-art}. In
-this actor-like model, the system consists of \emph{engines}, which are similar
-to actors but are equipped with more context. An engine comprises three main
-components: a \emph{configuration}, an \emph{execution environment}, and a
-\emph{behaviour}. The configuration includes, among other things, the engine's
-name, location within the system, and an optional reference to the parent
-engine. The execution environment includes an \emph{address book} of other engines
-to communicate with, including the engine's own address. Finally, the behaviour
-defines how the engine reacts to messages that follow the engine's \emph{message
-interface}, which is simply a set of message types that the engine can process.
-The engine's behaviour is a set of \emph{guarded actions} consisting of pairs
-of pre-conditions and actions to execute. When an engine receives a message, it
-checks which of its guarded actions have satisfied pre-conditions, and executes
-the corresponding action.
+This section presents a version based on the Engine Model \cite{engine-art}
+without any time component. In this actor-like model, the system consists of
+\emph{engines}, which are similar to the notion of actor in Agha's Actor Model
+\cite{actor-model} but are equipped with more context.
+
+An engine comprises three main components: a \emph{configuration}, an
+\emph{execution environment}, and a \emph{behaviour}. The configuration
+includes, among other things, the engine's name, location within the system, and
+an optional reference to the parent engine. The execution environment includes
+an \emph{address book} of other engines to communicate with, including the
+engine's own address. Finally, the behaviour defines how the engine reacts to
+messages that follow the engine's \emph{message interface}, which is simply a
+set of message types that the engine can process. The engine's behaviour is a
+set of \emph{guarded actions} consisting of pairs of pre-conditions and actions
+to execute. When an engine receives a message, it checks which of its guarded
+actions have satisfied pre-conditions, and executes the corresponding action.
 
 \begin{remark}
   The way engine behaviour is defined is similar to the Event-B formalism in
@@ -420,101 +422,156 @@ actions, configurations and environments. Now we can provide a complete
 specification of the engine type.
 
 \begin{definition}\label{def:processing-engine}   
-An \textbf{engine} is the computational unit of the system, formally specified by a tuple,
-$\langle b, r, \mathsf{cfg}, \mathsf{env} \rangle$, where:
+An \textbf{engine} is the computational unit of the system, formally specified by a tuple
+$\langle b, r, \mathsf{cfg}, \mathsf{env} \rangle$ where:
 \begin{itemize}
-\item $b$ is the engine's behaviour, a set of guarded actions as in \Cref{def:guards},
-\item $r$ is the engine's status flag as in \Cref{def:engine-status},
-\item $\mathsf{cfg}$ is the engine's configuration as in \Cref{def:engine-configuration},
-\item $\mathsf{env}$ is the engine's execution context as in \Cref{def:engine-environment}.
+\item $b$ is the engine's behaviour --a set of guarded actions as defined in \Cref{def:guarded-action},
+\item $r$ is the engine's status flag as specified in \Cref{def:engine-status},
+\item $\mathsf{cfg}$ is the engine's configuration as described in
+\Cref{def:engine-configuration}, and
+\item $\mathsf{env}$ is the engine's execution environment as outlined in \Cref{def:engine-environment}.
 \end{itemize}
 \end{definition}
 
-In the system, not all engines are processing engines. Some engines are specialized
-in handling messages, and are referred to as \emph{mailbox engines} and treated
-differently by the system's message passing mechanism.
+% \begin{remark}\label{rem:engine-init}
+% No need to initialize an engine. Once declared, an engine is ready to process
+% messages.
+% \end{remark}
 
-\begin{definition}\label{def:mailbox-engine} A \emph{mailbox engine}, denoted as
-$\mathsf{m}_j$ by some address $j$, is a distinguished and at the same time
-opage engine within the system. It is created by the system automatically when
-a non-mailbox processing engine $e_j$ is created with the following specific properties:
+Two flavours of engines exist in our system: processing engines and mailbox
+engines. A processing engine is any engine marked as
+$\mathsf{processing}$ in its configuration via \textsf{mode}. Otherwise, the
+engine is a mailbox engine, however, we require a bit more.
+
+\begin{definition}\label{def:mailbox-engine} A \emph{mailbox engine} $m_j$
+paired with a processing engine $e_j$ is an engine that satisfies the following requirements:
 \begin{itemize}
-\item the parent of the mailbox engine is the processing engine $e_j$,
-\item the message interface of the mailbox engine is fixed and only supports two message types: 
-$\mathsf{append}$ and $\mathsf{pull}$.
-$\mathsf{Msg_{m_j}} := \mathsf{append}(\mathsf{Msg_j}) \mid \mathsf{pull}(\mathsf{Msg_j})$.
-\item the state of the mailbox engine is implemented as an abstract message
-store with implementation-defined ordering semantics
-\item the mailbox engine is created automatically with the parent processing engine
+\item the engine's operational mode is $\mathsf{mailbox}$,
+\item the engine's parent is the processing engine $e_j$,
+\item the engine's message interface is fixed and consists of only two message types: 
+$\mathsf{append}$ and $\mathsf{pull}$ both of which take a single message of
+type $\mathsf{Msg_j}$ as the payload the engine reads from and writes to,
+\item the state of the mailbox engine must implement a data structure that
+supports the two message types,
+\item the engine's behaviour must ensure that the $\mathsf{append}$ message
+is always executed before the $\mathsf{pull}$ message, and
+\item the engine's behaviour must ensure that the $\mathsf{pull}$ message is
+always executed after the $\mathsf{append}$ message.
 \end{itemize}
-
-Key responsibilities include:
-\begin{itemize}
-\item Buffering incoming messages for parent engine
-\item Preventing message loss through managed storage
-\item Regulating message flow to prevent overload
-\end{itemize}
-
 \end{definition}
-\begin{remark}
-While processing engines have domain-specific behaviours, mailbox engines
-maintain fixed semantics for reliable message management. The state
-representation remains implementation-defined to support different message
-handling strategies.
-\end{remark}
 
+With mailbox engines added to the system, we have a strict producer-consumer
+pattern introduced through explicit pull semantics, decoupling message storage
+from processing logic. This allows for independent scaling of message ingestion
+and core computation.
 
-\begin{definition}\label{def:node} 
-A \textbf{node} $n_i$ is a tuple $\langle \mathsf{id}_i, \mathcal{E}_i
-\rangle$ where $\mathsf{id}_i$ is the node's unique identifier and
-$\mathcal{E}_i$ is the set of engines living on the node.
+\subsubsection{Nodes}\label{sec:system-state}
+
+Before we little mention the system, $\kappa$,  mainly consisting of a set of
+nodes $\mathcal{N}$, a set of engines $\mathcal{E}$, following a specific
+message-passing mechanism, still unknown. To address this, we give explicit
+definitions to missing components, which are the nodes, and the global
+message-passing mechanism.
+
+\begin{definition}\label{def:node} A \textbf{node} in $\mathcal{N}$ is a tuple
+$\langle \mathsf{id}_i, \mathcal{E}_i, \omega_i \rangle$ where $\mathsf{id}_i$ is the
+node's unique identifier, $\mathcal{E}_i$ is the set of engines living on the
+node, and $\omega_i$ representing specific node's capabilities and non-derivable
+operations.
 \end{definition}
+
+% What could be the capabilities and non-derivable operations of a node?
+% 1. Distribute the system across multiple machines.
+% 2. Provide a specific message-passing mechanism.
+% 3. Provide a specific engine factory.
+% 4. Provide a specific engine configuration like putting information in the
+%    engine's configuration.
+% 5. Specific services like authentication, authorization, and accounting.
+% I'm guessing certain nodes would provide specific special-purpose services.
+
 
 \begin{remark}\label{rem:node-functions}
-Given a node $n_i$, we derive the following functions:
+Along with any node $n_i$, we derive the following functions:
 \begin{itemize}
 \item $\alpha_i : \mathcal{E}_i \to \mathsf{Addr}$ as the mapping that projects out the addresses of the engines
 living on node $n_i$, and
-\item $\mathsf{mailboxOf} : \mathcal{E} \to \mathsf{Addr}$ as the mapping that projects out the address of the
-dedicated mailbox engine for a given processing engine instance.
+\item $\mathsf{mailboxOf} : \mathcal{E} \to \mathsf{Addr}$ as the mapping that
+projects out the address of the dedicated mailbox engine for a given processing
+engine instance.
 \end{itemize}
 \end{remark}
 
-\begin{definition}\label{def:global-config}
-A \textbf{system state} $\kappa$ is a tuple $\langle \mathcal{N}, \mu, \omega
-\rangle$ where $\mathcal{N}$ is the set of nodes, $\mu$ is the in-transit
-communications consisting of messages, and $\omega$ is the system capabilities
-and operations.
+As mentioned, the model presented here is a variation of the Engine Model
+\cite{engine-art}, where the authors define the formal model \textsc{DETCs} which
+extends communication-based system models with a time component and dynamic
+process (engine) creation. While we retain the latter capability, we leave the
+temporal aspect for future work. \textsc{DETCs} employ a labelled transition
+system semantics and here we do too. Transitions in the state machine occur when
+a process/engine reacts to a message by updating its state, generating new
+messages and engines, or simply by doing nothing.
+
+To picture how the system evolves, as any state machine, we must define the state.
+The transition rules are then defined as the rules that govern how these states
+evolve, and we address this next.
+
+\begin{definition}\label{def:global-config} A \textbf{state} of the system
+$\kappa$ is a tuple $\kappa^{i} \equiv \langle \mathcal{N}^i, \mu^i, \omega^i
+\rangle$ where,
+\begin{itemize}
+\item $\mathcal{N}^i$ is the set of nodes,
+\item $\mu^i$ is the set of in-transit messages representing ongoing communications, and
+\item $\omega^i$ represents the system capabilities and operations.
+\end{itemize}
 \end{definition}
 
-\noindent It is up-to the discretion of the system designer to define and update
-the components of $\omega$. That is, the system can evolve over time, including
-the set of nodes, engines, and the included services provided by the system.
+The superscript $i$ in $\kappa^i$ denotes an instantiation of the system. This
+can be viewed as a snapshot of the system at a point in time denoted by that
+superscript, with the ability to evolve to a successor state $\kappa^{i+1}$.
 
-We expect at least the following functions to be defined:
+The associated state machine in a \textsc{DETC} is defined in terms of active
+processes and a set of messages $M$ awaiting delivery, assuming all get
+delivered. This is an assumption we also adopt here.
+
+\begin{axiom}\label{ax:message-delivery}
+For any engines $e, e' \in \mathcal{E}$ and message $m \in M$ in transit within
+system state $\kappa$, there exists a subsequent state $\kappa'$ where $m$ is
+eventually delivered to its intended recipient.
+\end{axiom}
+
+Transitioning from one state to a next state gives rise to a transition rule,
+and the opportunity to define new system capabilities and operations, add new,
+remove existing nodes, engines, and the included services provided by the
+system. To all this can happen, the system at any point in time provide
+functions such as the following.
+
 \begin{itemize}
 \item $\mathsf{freshId} : \mathcal{N} \to \mathsf{Id}$ is the function that
-generates a fresh identifier for a node.
-
+generates a fresh identifier for node creation.
 \item $\mathsf{freshName} : \mathcal{N} \to \mathsf{Name}$ is the function that
 generates a fresh name for an engine.
-
-\item $\execEffect$ is the function that executes effects as defined in
-\Cref{def:effects} and outputs the new system state after the effect has been
-executed.
+\item $\execEffect$ is the function that executes effects as in \Cref{def:effects}
+and outputs the new system state after the effect has been executed.
 \end{itemize}
 
-We now extend the functions defined in \Cref{rem:node-functions}. The
-node-specific functions $\alpha_i$ and $\mathsf{mailboxOf}_i$ can be used to
+Also, we extend the functions defined in \Cref{rem:node-functions}. That is,
+the node-specific functions $\alpha_i$ and $\mathsf{mailboxOf}_i$ can be used to
 construct global versions $\alpha$ and $\mathsf{mailboxOf}$ that operate over
-all engines $\mathcal{E}$ in $\kappa$, functions of type $\mathcal{E} \to
-\mathsf{Addr}$. These global functions are defined by combining the
-node-specific functions across all nodes, allowing us to look up addresses for
-any engine in the system regardless of which node it resides on.
+all engines $\mathcal{E}$ in $\kappa^i$, functions of type $\mathcal{E} \to
+\mathsf{Addr}$. These global functions are defined by combining the node-specific
+functions across all nodes, allowing us to look up addresses for any engine in
+look up addresses for any engine in the system regardless of which node it resides
+on.
+
+There must be other functions that allow to add, remove, and modify nodes,
+engines, and the included services provided by the system. We leave the
+specification of these functions for future work.
 
 \section{Operational Semantics}\label{sec:semantics}
 
-We formalise the reduction rules for our operational semantics through the relation $\kappa_n \to \kappa_{n+1}$, where $\kappa_n \equiv (\alpha_n, \mu_n)$ represents the system state. Mailbox engines are modeled as sets for notational convenience, with message operations handled through message passing.
+We formalise the reduction rules for our operational semantics through the
+relation $\kappa_n \to \kappa_{n+1}$, where $\kappa_n \equiv (\alpha_n, \mu_n)$
+represents the system state. Mailbox engines are modeled as sets for notational
+convenience, with message operations handled through message passing.
 
 \subsection{System Transition Rules}
 
