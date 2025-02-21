@@ -127,7 +127,9 @@ $\mathsf{snd}(x)$, respectively. Additionally, $A_1 \oplus \cdots \oplus A_n$
 denotes the disjoint union of $A_1, \dots, A_n$, so $\mathsf{inj_i}(a_i)$ are
 the corresponding injections into $A_1 \oplus \cdots \oplus A_n$ from $A_i$ for
 all $i \in \{1, \dots, n\}$. Given a type $A$, we can define the optional type
-$\Option{A}$ as $A \oplus \bot$, where $\bot$ is the bottom type.
+$\Option{A}$ as $A \oplus \bot$, where $\bot$ is the bottom type. And the terms
+$\mathsf{none}$ and $\mathsf{some}(a)$ are the corresponding terms for the
+optional type when $a : A$.
 
 \section{Model}\label{sec:model}
 
@@ -239,10 +241,10 @@ the engine's operational mode and thus its lifecycle.
 	\arrow[shift left=3, from=2-3, to=1-2]
 	\arrow[from=2-3, to=2-1]
 \end{tikzcd}\]
-\caption{An engine operates in different modes. It
-starts in a \textsf{ready} mode waiting for a message, and once it reacts to a
-message it changes to \textsf{busy}. Then, depending on its logic, the engine may
-either return to \textsf{ready} or \textsf{terminated}.}
+\caption{An engine operates may assume different stages. Every engine starts in a
+\textsf{ready} state waiting for a message, and once it reacts to a message it
+changes to \textsf{busy}. Then, depending on its logic, the engine may either
+return to \textsf{ready} or \textsf{terminated}.}
 \label{fig:engine-status}
 \end{figure}
 
@@ -257,13 +259,30 @@ to it.
 
 To operate, an engine needs a \emph{configuration} and an \emph{environment}.
 In the configuration, we find what it cannot be changed, such as the engine's name,
-location, and parent.
+location, parent, and \emph{the operational mode}. So, let's define first what 
+the operational mode is about.
+
+\begin{definition}\label{def:engine-mode}
+The \textbf{operational mode} of an engine $e_j$, of type $\mathsf{EngineMode}$,
+determines the engine's operational mode, a tag used by the system to
+distinguish the purpose of the engine.
+\begin{equation}\label{eq:engine-mode}
+\mathsf{EngineMode} := \mathsf{processing} \mid \mathsf{mailbox} \, .
+\end{equation}
+\end{definition}
+
+As we will see later, the operational mode of an engine determines how the system
+routes messages to appropriate engines. Those configured as mailboxes receive
+special treatment within the message-passing mechanism. Since the operational mode
+becomes immutable once an engine is created, this critical attribute goes into the
+engine's configuration.
 
 \begin{definition}\label{def:engine-configuration} The \textbf{configuration} of
 an engine $e_j$ often denoted by $\mathsf{cfg}_j$ is a tuple $\langle
-\mathsf{name}, \mathsf{location}, \mathsf{parent} \rangle$ of type $\mathsf{Cfg}$, where $\mathsf{name}$
-is the engine's name, $\mathsf{location}$ is the engine's location, and $\mathsf{parent}$
-is the engine's parent.
+\mathsf{name}, \mathsf{location}, \mathsf{parent} , \mathsf{mode} \rangle$ of type $\mathsf{Cfg}$, where $\mathsf{name}$
+is the engine's name, $\mathsf{location}$ is the engine's location, $\mathsf{parent}$
+is the engine's parent, and $\mathsf{mode}$ is the engine's operational mode as
+in \Cref{def:engine-mode}.
 \end{definition}
 
 Recall that engines are isolated from each other and process messages
@@ -337,7 +356,7 @@ components of an engine's behaviour.
 \begin{definition}\label{def:guards}
 A \textbf{guard} is a pre-condition that, when an engine processes a message
 with its environment $\mathsf{env}_j$ and configuration $\mathsf{cfg}_j$,
-returns nothing if the guard is not satisfied, and returns data otherwise.
+returns $\mathsf{none}$ if the guard is not satisfied, and returns data otherwise.
 Therefore, a guard can be seen as a mapping of type
 $\mathsf{Msg} \times \mathsf{Cfg}_j \times \mathsf{Env}_j(S_j) \to \Option{R}$
 for some type $R$, where $R$ is the specific type of data returned when the guard is satisfied.
@@ -380,9 +399,9 @@ illustrated in \Cref{fig:effect}.
 \begin{remark}\label{rem:turing-completeness}
 A question at this point is whether engines can enable unbounded computation.
 Engines' behaviours as introduced in~\cite{engine-art} are Turing complete. To see
-this, we need to show that our design satisfies the two fundamental requirements:
+this, we need to show that the design satisfies the two fundamental requirements:
 conditional branching through guard-state interactions and indefinite looping
-via message-passing recursion. However, note that the message-passing mechanism
+via message-passing recursion. Note that the message-passing mechanism
 says nothing about forbidding engines from sending messages to themselves, and
 this is a powerful mechanism that allows for recursive patterns. So, while
 individual effects as listed in \Cref{def:effects} lack explicit looping constructs,
@@ -415,16 +434,15 @@ In the system, not all engines are processing engines. Some engines are speciali
 in handling messages, and are referred to as \emph{mailbox engines} and treated
 differently by the system's message passing mechanism.
 
-\begin{definition}\label{def:mailbox-engine} 
-A \emph{mailbox engine} $\mathsf{m}_j$ is a dedicated processing engine 
-created by the system automatically just before a processing engine $e_j$ is created
-with the following specific properties:
+\begin{definition}\label{def:mailbox-engine} A \emph{mailbox engine}, denoted as
+$\mathsf{m}_j$ by some address $j$, is a distinguished and at the same time
+opage engine within the system. It is created by the system automatically when
+a non-mailbox processing engine $e_j$ is created with the following specific properties:
 \begin{itemize}
 \item the parent of the mailbox engine is the processing engine $e_j$,
 \item the message interface of the mailbox engine is fixed and only supports two message types: 
 $\mathsf{append}$ and $\mathsf{pull}$.
-$\mathsf{Msg_{m_j}} := \mathsf{append}(\mathsf{Msg_j}) \cup
-\mathsf{pull}(\mathsf{Msg_j})$.
+$\mathsf{Msg_{m_j}} := \mathsf{append}(\mathsf{Msg_j}) \mid \mathsf{pull}(\mathsf{Msg_j})$.
 \item the state of the mailbox engine is implemented as an abstract message
 store with implementation-defined ordering semantics
 \item the mailbox engine is created automatically with the parent processing engine
