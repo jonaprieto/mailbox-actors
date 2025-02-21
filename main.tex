@@ -109,25 +109,25 @@ Definitionally equal terms are denoted as $a \equiv b$.
 Some types are equipped with structure that behave as sets, and here are common
 set-theoretic notation we use: the membership relation is denoted as $\in$, so
 $a \in A$ is a proposition that $a$ is an element of $A$ (do not confuse with
-typing $a : A$). For $A$ and $B$: $A \subseteq B$ denotes set inclusion, meaning
-every element of $A$ belongs to $B$; $\varnothing$ denotes the empty set; union
-is denoted as $A \cup B$; intersection is denoted as $A \cap B$; the difference
-intersection is denoted as $A \cap B$; the difference between $A$ and $B$ is
-denoted as $A \setminus B$; and $A \times B$ denotes the Cartesian product of
-$A$ and $B$, and their terms are denoted as $\langle a,b \rangle$, where $a : A$
-and $b : B$. A \emph{tuple} $\langle a_1, a_2, \dots, a_n \rangle$ is a
-generalisation of an ordered pair to an ordered $n$-tuple, where $n \in \N$, of
-type $A_1 \times \cdots \times A_n$, and $a_i$ is of type $A_i$ for all $i \in
-\{1, \dots, n\}$. If the tuple components are named using sans-serif letters,
-these names are used as projections, otherwise, the projections are $\pi_i(a)
-:\equiv a_i$ for all $i \in \{1, \dots, n\}$. For example, if $x :\equiv \langle
-\mathsf{fst}, \mathsf{snd} \rangle$ denotes a tuple with components values can
-be projected using $\mathsf{fst}$ and $\mathsf{snd}$ via $\mathsf{fst}(x)$ and
-$\mathsf{snd}(x)$, respectively. Additionally, $A_1 \oplus \cdots \oplus A_n$ denotes the
-disjoint union of $A_1, \dots, A_n$, so $\mathsf{inj_i}(a_i)$ are the
-corresponding injections into $A_1 \oplus \cdots \oplus A_n$ from $A_i$ for all $i \in
-\{1, \dots, n\}$. Given a type $A$, we can define the optional type $\Option{A}$
-as $A \oplus \bot$, where $\bot$ is the bottom type.
+typing $a : A$). For $A$ and $B$, $A \subseteq B$ denotes set inclusion, meaning
+every element of $A$ belongs to $B$ and $\varnothing$ denotes the empty set.
+Union between sets $A$ and $B$ is denoted as $A \cup B$. The intersection is
+denoted as $A \cap B$. The difference between $A$ and $B$ is denoted as $A
+\setminus B$; and $A \times B$ denotes the Cartesian product of $A$ and $B$, and
+their terms are denoted as $\langle a,b \rangle$, where $a : A$ and $b : B$. A
+\emph{tuple} $\langle a_1, a_2, \dots, a_n \rangle$ is a generalisation of an
+ordered pair to an ordered $n$-tuple, where $n \in \N$, of type $A_1 \times
+\cdots \times A_n$, and $a_i$ is of type $A_i$ for all $i \in \{1, \dots, n\}$.
+If the tuple components are named using sans-serif letters, these names are used
+as projections, otherwise, the projections are $\pi_i(a) :\equiv a_i$ for all $i
+\in \{1, \dots, n\}$. For example, if $x :\equiv \langle \mathsf{fst},
+\mathsf{snd} \rangle$ denotes a tuple with components values can be projected
+using $\mathsf{fst}$ and $\mathsf{snd}$ via $\mathsf{fst}(x)$ and
+$\mathsf{snd}(x)$, respectively. Additionally, $A_1 \oplus \cdots \oplus A_n$
+denotes the disjoint union of $A_1, \dots, A_n$, so $\mathsf{inj_i}(a_i)$ are
+the corresponding injections into $A_1 \oplus \cdots \oplus A_n$ from $A_i$ for
+all $i \in \{1, \dots, n\}$. Given a type $A$, we can define the optional type
+$\Option{A}$ as $A \oplus \bot$, where $\bot$ is the bottom type.
 
 \section{Model}\label{sec:model}
 
@@ -216,16 +216,17 @@ To refer to an arbitrary message type, we use the type $\mathsf{Msg}$, which is
 the union of all valid message types, that is, $\mathsf{Msg} :\equiv
 \bigoplus_{j} \mathsf{Msg_j}$ where $j$ ranges over all engines in the system.
 
-\subsubsection{Engine components}
+\subsubsection{Engine components}\label{sec:engine-components}
 
-An engine is a tuple of components, which may be immutable such as its name,
-location, and parent, or can be changed such as its status and environment.
+An engine is a tuple of components, which may contain immutable data such as their name,
+location, and parent. Although, other information such as its status and environment
+can be changed.
 
 \begin{definition}\label{def:engine-status}
-The \textbf{status} of an engine $e_j$, which is of type
-$\mathsf{EngineStatus}$, determines the engine's operational mode and thus its lifecycle.
+The \textbf{status} of an engine $e_j$, of type $\mathsf{EngineStatus}$, determines
+the engine's operational mode and thus its lifecycle.
 \begin{equation}\label{eq:engine-status}
-\mathsf{EngineStatus} ::= \mathsf{ready} \mid \mathsf{busy} \mid \mathsf{terminated}  \, .
+\mathsf{EngineStatus} := \mathsf{ready} \mid \mathsf{busy} \mid \mathsf{terminated}  \, .
 \end{equation}
 % tikz
 \begin{figure}[!hbp]
@@ -247,11 +248,16 @@ either return to \textsf{ready} or \textsf{terminated}.}
 
 \end{definition}
 
-As illustrated in \Cref{fig:engine-status}, an engine is said to be \textsf{ready} if it is waiting for a message to
-process. Being \textsf{busy} means it is
-currently processing a message. Being \textsf{terminated} means it will not
-process any more messages. In such a case, the system will remove the engine from
-the system, and disregard any messages sent to it.
+As illustrated in \Cref{fig:engine-status}, an engine is said to be
+\textsf{ready} if it is waiting for a message to process. Being \textsf{busy}
+means the engine is currently processing a message. And \textsf{terminated}
+means the engine will not process any more messages. In such a case, the system
+will remove the engine in the next \emph{step}, and disregard any messages sent
+to it.
+
+To operate, an engine needs a \emph{configuration} and an \emph{environment}.
+In the configuration, we find what it cannot be changed, such as the engine's name,
+location, and parent.
 
 \begin{definition}\label{def:engine-configuration} The \textbf{configuration} of
 an engine $e_j$ often denoted by $\mathsf{cfg}_j$ is a tuple $\langle
@@ -260,67 +266,66 @@ is the engine's name, $\mathsf{location}$ is the engine's location, and $\mathsf
 is the engine's parent.
 \end{definition}
 
-Recall that engines are isolated from each other and process messages independently.
-However, an engine's configuration alone is insufficient for proper operation. Each
-engine encapsulates its own state as part of its execution context, which we refer
-to as the engine's \emph{environment}.
+Recall that engines are isolated from each other and process messages
+independently. However, an engine's configuration alone is insufficient for
+proper operation since some form of state is required. Therefore, each engine
+encapsulates its own state as part of its execution context, which we refer to as the
+engine's \emph{environment}.
 
 \begin{definition}\label{def:engine-environment}
 Given a type $S_j$ representing the local state of an engine $e_j$, an
-execution \textbf{environment} of $e_j$ is a tuple $\langle s_j, a_j \rangle$
+execution \textbf{environment} of $e_j$ is a tuple $\langle s_j, l_j \rangle$
 of type $\mathsf{Env}_j(S_j)$, where $S_j$ is type $S_j$ for the engine's
-local state $s_j$, and $a_j$ is the engine's address book containing the names
-of other engines, including its own. $a_j$ is of type
-$\mathsf{List}(\mathsf{Name})$, 
+local state $s_j$, and $l_j$ is the engine's address book, a non-empty list
+containing the names of other engines, including its own. $l_j$ is of type
+$\mathsf{List}(\mathsf{Addr})$.
 \end{definition}
-
 
 \subsubsection{Execution directives}\label{sec:execution-directives}
 
-The declarative aspect of an engine's behaviour describes what it does when it
+The behaviour of an engine is a declarative description of what it does when it
 reacts to a message. This description of computation is via an effect system
-consisting of \emph{actions} or commands to the system to be executed at runtime.
+consisting of commands to the system to be executed at runtime.
 
 \begin{definition}\label{def:effects}
 Given a type $S_j$ representing the local state of an engine $e_j$, an
-\textbf{action} is of type $\mathsf{Effect}(S_j)$, which considers all the
-possible ways an engine can react to a message.
+\textbf{effect} is of type $\mathsf{Effect}(S_j)$, which considers all the
+possible ways an engine can influence the system by reacting to a message.
 
 \begin{equation}\label{eq:effects}
-\begin{aligned} %TODO: fix this grammar
-\mathsf{Effect}(S_j) ::= &\quad \mathsf{send}(\mathsf{Addr} \oplus \mathsf{Name}, \mathsf{Msg}) & &\text{(message dispatch)} \\
+\begin{aligned} %TODO: review this grammar
+\mathsf{Effect}(S_j) := &\quad \mathsf{send}(\mathsf{Addr}, \mathsf{Msg}) & &\text{(message dispatch)} \\
 \mid & \quad \mathsf{update}(\mathsf{Env}(S_j)) & &\text{(engine state modification)} \\
-\mid & \quad \mathsf{spawn}(\mathsf{Cfg}, \mathsf{Env}(S_j)) & &\text{(engine creation)} \\
-\mid & \quad \mathsf{chain}(\mathsf{Effect}(S_j), \mathsf{Effect}(S_j)) & &\text{(action sequencing)} \\
-\mid & \quad \mathsf{terminate} & &\text{(Engine shutdown)} \\
-\mid & \quad \mathsf{nop} & &\text{(Null operation)\, .}
+\mid & \quad \mathsf{spawn}(\mathsf{Cfg}_j, \mathsf{Env}(S_j)) & &\text{(engine creation)} \\
+\mid & \quad \mathsf{chain}(\mathsf{List}(\mathsf{Effect}(S_j))) & &\text{(action sequencing)} \\
+\mid & \quad \mathsf{terminate} & &\text{(engine shutdown)} \\
+\mid & \quad \mathsf{nop} & &\text{(null operation)\, .}
 \end{aligned}
 \end{equation}
 \end{definition}
 
 % TODO: mention how this induces a monad.
-
-\begin{figure}[!hb]
-% https://q.uiver.app/#q=WzAsOSxbMSwwLCIobSwgXFxtYXRoc2Z7Y2ZnX2p9LFxcbWF0aHNme2Vudn1faikiXSxbMCwyLCJvXzEiXSxbMSwyLCJcXGNkb3RzIl0sWzIsMiwib19rIl0sWzAsMywiZV8xOlxcbWF0aHNme0VmZmVjdH0oU19qKSJdLFsyLDMsImVfazpcXG1hdGhzZntFZmZlY3R9KFNfaikiXSxbMCwwXSxbMiwwXSxbMSwzLCJcXGNkb3RzIl0sWzAsMiwiZ19pIiwyLHsic3R5bGUiOnsidGFpbCI6eyJuYW1lIjoibWFwcyB0byJ9fX1dLFswLDMsImdfayIsMCx7InN0eWxlIjp7InRhaWwiOnsibmFtZSI6Im1hcHMgdG8ifX19XSxbMSw0LCJhXzEiLDIseyJzdHlsZSI6eyJ0YWlsIjp7Im5hbWUiOiJtYXBzIHRvIn19fV0sWzMsNSwiYV9rIiwwLHsic3R5bGUiOnsidGFpbCI6eyJuYW1lIjoibWFwcyB0byJ9fX1dLFswLDEsImdfMSIsMix7InN0eWxlIjp7InRhaWwiOnsibmFtZSI6Im1hcHMgdG8ifX19XSxbNiw3LCIiLDAseyJjdXJ2ZSI6NCwic2hvcnRlbiI6eyJzb3VyY2UiOjIwLCJ0YXJnZXQiOjIwfSwic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoiZGFzaGVkIn0sImhlYWQiOnsibmFtZSI6Im5vbmUifX19XSxbMiw4LCIiLDIseyJzdHlsZSI6eyJ0YWlsIjp7Im5hbWUiOiJtYXBzIHRvIn19fV1d
+% also mention CCS?
+\begin{figure}[!htbp]
+% https://q.uiver.app/#q=WzAsOSxbMSwwLCIobSwgXFxtYXRoc2Z7Y2ZnX2p9LFxcbWF0aHNme2Vudn1faikiXSxbMCwyLCJyXzEiXSxbMSwyLCJcXGNkb3RzIl0sWzIsMiwicl9rIl0sWzAsMywiZV8xOlxcbWF0aHNme0VmZmVjdH0oU19qKSJdLFsyLDMsImVfazpcXG1hdGhzZntFZmZlY3R9KFNfaikiXSxbMCwwXSxbMiwwXSxbMSwzLCJcXGNkb3RzIl0sWzAsMiwiZ19pIiwyLHsic3R5bGUiOnsidGFpbCI6eyJuYW1lIjoibWFwcyB0byJ9fX1dLFswLDMsImdfayIsMCx7InN0eWxlIjp7InRhaWwiOnsibmFtZSI6Im1hcHMgdG8ifX19XSxbMSw0LCJjXzEiLDIseyJzdHlsZSI6eyJ0YWlsIjp7Im5hbWUiOiJtYXBzIHRvIn19fV0sWzMsNSwiY19rIiwwLHsic3R5bGUiOnsidGFpbCI6eyJuYW1lIjoibWFwcyB0byJ9fX1dLFswLDEsImdfMSIsMix7InN0eWxlIjp7InRhaWwiOnsibmFtZSI6Im1hcHMgdG8ifX19XSxbNiw3LCIiLDAseyJsYWJlbF9wb3NpdGlvbiI6MTAwLCJjdXJ2ZSI6NCwic2hvcnRlbiI6eyJzb3VyY2UiOjIwLCJ0YXJnZXQiOjIwfSwic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoiZGFzaGVkIn0sImhlYWQiOnsibmFtZSI6Im5vbmUifX19XSxbMiw4LCIiLDIseyJzdHlsZSI6eyJ0YWlsIjp7Im5hbWUiOiJtYXBzIHRvIn19fV1d
 \[\begin{tikzcd}
 	{} & {(m, \mathsf{cfg_j},\mathsf{env}_j)} & {} \\
 	\\
-	{o_1} & \cdots & {o_k} \\
+	{r_1} & \cdots & {r_k} \\
 	{e_1:\mathsf{Effect}(S_j)} & \cdots & {e_k:\mathsf{Effect}(S_j)}
 	\arrow[curve={height=24pt}, shorten <=24pt, shorten >=24pt, dashed, no head, from=1-1, to=1-3]
 	\arrow["{g_1}"', maps to, from=1-2, to=3-1]
-	\arrow["{}"', maps to, from=1-2, to=3-2]
+	\arrow["{g_i}"', maps to, from=1-2, to=3-2]
 	\arrow["{g_k}", maps to, from=1-2, to=3-3]
-	\arrow["{a_1}"', maps to, from=3-1, to=4-1]
+	\arrow["{c_1}"', maps to, from=3-1, to=4-1]
 	\arrow[maps to, from=3-2, to=4-2]
-	\arrow["{a_k}", maps to, from=3-3, to=4-3]
-\end{tikzcd}\] 
-
+	\arrow["{c_k}", maps to, from=3-3, to=4-3]
+\end{tikzcd}\]
 \caption{For an engine $e_j$, its behaviour acts on a message $m$ and an engine's
 configuration and environment $\mathsf{cfg}_j$ and $\mathsf{env}_j$,
 respectively. The pre-conditions, denoted as $g_i$, are guards that determine
-which action is executed. The symbols $o_i$ represent output that feeds into the
-actions $a_i$. The actions, denoted as $a_i$, are effects that are executed if their
+which action is executed. The symbols $r_i$ represent output that feeds into the
+actions $c_i$. The actions, denoted as $c_i$, are effects that are executed if their
 pre-conditions are satisfied. If no pre-conditions are satisfied, the action is a
 null operation, $\mathsf{nop}$.}
 \label{fig:effect}
@@ -330,53 +335,99 @@ Given an engine $e_j$, the following definition specifies the guard and action
 components of an engine's behaviour.
 
 \begin{definition}\label{def:guards}
-  
-  A \textbf{guard} is a pre-condition that when an engine process a message,
-  states what action to take, including ignoring the message, or modifying the
-  system in some way. These guards are defined as a mapping from a message, an
-  engine's environment $\mathsf{env}_j$, and an engine's configuration
-  $\mathsf{cfg}_j$, and returns an action the system must execute if the guard
-  is satisfied.
+A \textbf{guard} is a pre-condition that, when an engine processes a message
+with its environment $\mathsf{env}_j$ and configuration $\mathsf{cfg}_j$,
+returns nothing if the guard is not satisfied, and returns data otherwise.
+Therefore, a guard can be seen as a mapping of type
+$\mathsf{Msg} \times \mathsf{Cfg}_j \times \mathsf{Env}_j(S_j) \to \Option{R}$
+for some type $R$, where $R$ is the specific type of data returned when the guard is satisfied.
 \end{definition}
 
-\begin{definition}\label{def:guard-action}
-  A \textbf{guard-action} is a mapping of type
-  $\mathsf{Msg} \times  \mathsf{Cfg}_j \times \mathsf{Env}_j(S_j) \to \mathsf{Effect}(S_j)$,
-  which takes a message, an engine's environment, and an engine's configuration,
-  and returns an action the system must execute if the guard is satisfied.
-  Thus, a guard-action can be seen as a tuple $\langle g_j, a_j \rangle$, where $g_j$ is
-  a guard as in \Cref{def:guards} and $a_j$ is an action as in
-  \Cref{def:effects}.
+On the computational aspects of an engine, the behaviour evaluating the different
+guards, and for each guard, the action to be executed, whenever the guard is
+satisfied, is as follows:
+
+\begin{definition}\label{def:action}
+Given an engine $e_j$, an \textbf{action} acting on data of type $R$ is a mapping of type
+$R \times \mathsf{Msg}_j \times \mathsf{Cfg}_j \times \mathsf{Env}_j(S_j) \to \mathsf{Effect}(S_j)$.
 \end{definition}
 
-Upon receiving a message, an engine $e_j$ checks which of its guards is
-satisfied, and if so, the engine executes the corresponding action, as illustrated
-in \Cref{fig:effect}.
+Then, we compose a guard and an action to form a \emph{guarded action}, which is
+the building block of which an engine's behaviour consists of. The separation of
+guard and action allows for a more modular design. Consider that one may want to
+reuse the guard of an engine in different engines or decouple the logic of the
+guard against the action, allowing the pre-conditions to be reused in scenarios
+where the action is not applicable.
+
+\begin{definition}\label{def:guarded-action}
+  Given an engine $e_j$, a \textbf{guarded action} of the engine's behaviour is a tuple $\langle g_j, a_j \rangle$, where:
+  \begin{itemize}
+    \item $g_j$ is a guard as in \Cref{def:guards} that determines when the
+    action $a_j$ should execute, and
+    \item $a_j$ is an action of type $\mathsf{Effect}(S_j)$ as in \Cref{def:effects} that specifies what to execute
+  \end{itemize}
+\end{definition}
+
+Together, both the guard and action induce a mapping of type $\mathsf{Msg} \times \mathsf{Cfg}_j
+\times \mathsf{Env}_j(S_j) \to \mathsf{Effect}(S_j)$. This mapping takes in a
+message, engine configuration, and environment, and outputs the effect to
+execute when the guard is satisfied.
+
+So, upon receiving a message, an engine $e_j$ checks which of its guards is
+satisfied, and if so, the engine executes the corresponding action, as
+illustrated in \Cref{fig:effect}.
+
+\begin{remark}\label{rem:turing-completeness}
+A question at this point is whether engines can enable unbounded computation.
+Engines' behaviours as introduced in~\cite{engine-art} are Turing complete. To see
+this, we need to show that our design satisfies the two fundamental requirements:
+conditional branching through guard-state interactions and indefinite looping
+via message-passing recursion. However, note that the message-passing mechanism
+says nothing about forbidding engines from sending messages to themselves, and
+this is a powerful mechanism that allows for recursive patterns. So, while
+individual effects as listed in \Cref{def:effects} lack explicit looping constructs,
+and it may not seem at first glance there is a recursive mechanism, the combination
+of guarded actions acting as conditional statements with open-ended message passing
+enables computational universality.
+\end{remark}
 
 \subsubsection{Engines}\label{sec:processing-engines}
 
-So far, we have referred to engines without specifying their type. Engines are the
-sole and fundamental computational units of the system. With all the type
-defined for their components, we can now specify the type of engines.
+Having defined the components that make up an engine's behaviour, we can now
+formally specify engines themselves. As the fundamental computational units of
+our system, engines encapsulate both the processing logic and state management
+capabilities. We have established the types of their constituent parts - guards,
+actions, configurations and environments. Now we can provide a complete
+specification of the engine type.
 
 \begin{definition}\label{def:processing-engine}   
 An \textbf{engine} is the computational unit of the system, formally specified by a tuple,
-$\langle b,\, m,\, r,\, \mathsf{cfg},\, \mathsf{env} \rangle$, where:
+$\langle b, r, \mathsf{cfg}, \mathsf{env} \rangle$, where:
 \begin{itemize}
 \item $b$ is the engine's behaviour, a set of guarded actions as in \Cref{def:guards},
-\item $m$ is the address of an engine referred to as \emph{the dedicated mailbox engine},
 \item $r$ is the engine's status flag as in \Cref{def:engine-status},
 \item $\mathsf{cfg}$ is the engine's configuration as in \Cref{def:engine-configuration},
 \item $\mathsf{env}$ is the engine's execution context as in \Cref{def:engine-environment}.
 \end{itemize}
 \end{definition}
 
+In the system, not all engines are processing engines. Some engines are specialized
+in handling messages, and are referred to as \emph{mailbox engines} and treated
+differently by the system's message passing mechanism.
+
 \begin{definition}\label{def:mailbox-engine} 
-A \emph{mailbox engine} is a specialized processing engine with:
+A \emph{mailbox engine} $\mathsf{m}_j$ is a dedicated processing engine 
+created by the system automatically just before a processing engine $e_j$ is created
+with the following specific properties:
 \begin{itemize}
-\item Fixed message interface supporting $\mathsf{append}$ and $\mathsf{pull}$ operations
-\item Opaque state implementation (queue, priority queue, etc.)
-\item Automatic creation with parent processing engine
+\item the parent of the mailbox engine is the processing engine $e_j$,
+\item the message interface of the mailbox engine is fixed and only supports two message types: 
+$\mathsf{append}$ and $\mathsf{pull}$.
+$\mathsf{Msg_{m_j}} := \mathsf{append}(\mathsf{Msg_j}) \cup
+\mathsf{pull}(\mathsf{Msg_j})$.
+\item the state of the mailbox engine is implemented as an abstract message
+store with implementation-defined ordering semantics
+\item the mailbox engine is created automatically with the parent processing engine
 \end{itemize}
 
 Key responsibilities include:
