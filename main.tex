@@ -389,9 +389,12 @@ where the action is not applicable.
   \end{itemize}
 \end{definition}
 
-Together, both the guard and action induce a mapping of type $\mathsf{Msg} \times \mathsf{Cfg}_j
-\times \mathsf{Env}_j(S_j) \to \mathsf{Effect}(S_j)$. This mapping takes in a
-message, engine configuration, and environment, and outputs the effect to
+Together, both the guard and action induce a mapping of type
+\begin{equation*}\label{eq:guarded-action}
+\mathsf{Msg} \times \mathsf{Cfg}_j
+\times \mathsf{Env}_j(S_j) \to \mathsf{Effect}(S_j)\,.
+\end{equation*}
+This mapping takes in a message, engine configuration, and environment, and outputs the effect to
 execute when the guard is satisfied.
 
 So, upon receiving a message, an engine $e_j$ checks which of its guards is
@@ -538,14 +541,11 @@ system state $\kappa$, there exists a subsequent state $\kappa'$ where $m$ is
 eventually delivered to its intended recipient.
 \end{axiom}
 
-Transitioning from one state to a next state gives rise to a transition rule,
-and the opportunity to define new system capabilities and operations, add new,
-remove existing nodes, engines, and the included services provided by the
-system. To all this can happen, the system at any point in time provide
-functions such as the following.
+A few primitive are also needed to create different entitites such as nodes and
+engines, so at any point in time the system provides functions such as the following.
 
 \begin{itemize}
-\item $\mathsf{freshId} : \mathcal{N} \to \mathsf{Id}$ is the function that
+\item $\mathsf{freshId} : \mathcal{N} \to \mathsf{Addr}$ is the function that
 generates a fresh identifier for node creation.
 \item $\mathsf{freshName} : \mathcal{N} \to \mathsf{Name}$ is the function that
 generates a fresh name for an engine.
@@ -562,42 +562,42 @@ functions across all nodes, allowing us to look up addresses for any engine in
 look up addresses for any engine in the system regardless of which node it resides
 on.
 
-There must be other functions that allow to add, remove, and modify nodes,
-engines, and the included services provided by the system. We leave the
-specification of these functions for future work.
+The system must also provide functions for adding, removing, and modifying nodes,
+engines, and their associated services. We leave the specification of these
+additional functions for future work.
 
 \section{Operational Semantics}\label{sec:semantics}
 
-We formalise the reduction rules for our operational semantics through the
-relation $\kappa_n \to \kappa_{n+1}$, where $\kappa_n \equiv (\alpha_n, \mu_n)$
-represents the system state. Mailbox engines are modeled as sets for notational
-convenience, with message operations handled through message passing.
+The system state transitions define both how the system evolves and how the
+message-passing mechanism functions. In other words, the following operational
+rules define both the system evolution and the message-passing mechanism.
 
-\subsection{System Transition Rules}
+We formalize the reduction rules for our operational semantics through
+the relation $(\to)$ so that $\kappa^i \to \kappa^{i+1}$ signifies that the system
+state $\kappa^i$ evolves to $\kappa^{i+1}$.
 
-\begin{definition}[\textsf{Send}]\label{rule:send}
+To keep the system simple, we assume the system capabilities and operations, $\omega^i$,
+are fixed, so the reduction rules acts on tuples of the form $(\alpha, \mu)$.
+
+\subsection{System transition rules}\label{sec:system-transition-rules}
+\begin{definition}(\textsf{Send})\label{rule:send}
 Processing engine $e$ sends message $v$ to target $e_{\mathsf{target}}$:
-\begin{equation}\label{eq:send}
-\frac{
-  \alpha(e) \equiv \langle b, m_e, r, \mathsf{cfg}, \mathsf{env} \rangle \quad
-  m_{\mathsf{target}} \equiv \mathsf{mailboxOf}(e_{\mathsf{target}}) \quad
-  v : \mathsf{Msg}
-}{
-  (\alpha, \mu) \to (\alpha, \mu \cup \{ \langle e, m_{\mathsf{target}}, v \rangle \})
-}
-\end{equation}
+\begin{prooftree}
+\AxiomC{$\alpha(e) \equiv \langle b, m_e, r, \mathsf{cfg}, \mathsf{env} \rangle$}
+\AxiomC{$m_{\mathsf{target}} \equiv \mathsf{mailboxOf}(e_{\mathsf{target}})$}
+\AxiomC{$v : \mathsf{Msg}$}
+% \RightLabel{$\mathsf{Send}$}
+\TrinaryInfC{$(\alpha, \mu) \to (\alpha, \mu \cup \{ \langle e, m_{\mathsf{target}}, v \rangle \})$}
+\end{prooftree}
 \end{definition}
 
 \begin{definition}[\textsf{Append}]\label{rule:append}
 Mailbox engine $e$ enqueues message $v$:
-\begin{equation}\label{eq:append}
-\frac{
-  \alpha(e) \equiv q \quad
-  \langle s, e, v \rangle \in \mu
-}{
-  (\alpha, \mu) \to (\alpha[e \mapsto q \cup \{v\}], \mu \setminus \{\langle s, e, v \rangle\})
-}
-\end{equation}
+\begin{prooftree}
+\AxiomC{$\alpha(e) \equiv q$}
+\AxiomC{$\langle s, e, v \rangle \in \mu$}
+\BinaryInfC{$(\alpha, \mu) \to (\alpha[e \mapsto q \cup \{v\}], \mu \setminus \{\langle s, e, v \rangle\})$}
+\end{prooftree}
 \end{definition}
 
 \begin{definition}[\textsf{Pull}]\label{rule:pull}
@@ -692,20 +692,24 @@ Sequential composition:
 
 The complete operational semantics comprises three components:
 \begin{enumerate}
-\item Configuration transitions via Rules \textsf{Send}--\textsf{Process}
-\item Effect execution through Rules \textsf{E-sendMsg}--\textsf{E-chain}
-\item Type safety through Definition~\ref{def:effects}
+\item Configuration transitions via Rules \textsf{Send}--\textsf{Process}.
+\item Effect execution through Rules \textsf{E-sendMsg}--\textsf{E-chain}.
+\item Type safety through Definition~\ref{def:effects}.
 \end{enumerate}
 
-This system formalises message passing (via Rules~\ref{rule:send}--\ref{rule:append}), message processing (Rule~\ref{rule:process}), and effect-driven state changes as defined in Section~\ref{sec:semantics}.
+This system then formalises message passing (via
+Rules~\ref{rule:send}--\ref{rule:append}), message processing
+(Rule~\ref{rule:process}), and effect-driven state changes as defined in
+Section~\ref{sec:semantics}.
 
-\section{Related Work}\label{sec:related}
+\section{Discussion}\label{sec:related}
 
 Prior work has explored decoupling mailboxes from actors, primarily through
 techniques like work-queues where actors pull messages when ready to process
 them. Libraries like WeChaty in JavaScript have implemented similar mailbox
 separation patterns. However, our work is novel in treating mailboxes as
 first-class primitives within the actor model itself.
+
 
 % \section{Concluding remarks}\label{sec:conclusion}
 
