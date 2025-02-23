@@ -95,10 +95,12 @@ types presented in the following form:
 
 where $\mathsf{C}$ is a constructor of the type $A$, and $A_1, \dots, A_n$ are
 the types of the constructor arguments. The inductive type of natural numbers is
-denoted as $\N$. The terms of this type are denoted by number as usual. Another
-recurrent type is the type of parametric lists, denoted as $\mathsf{List}(A)$.
-The definition that term $x$ \emph{is} $y$ is denoted as $x :\equiv y$.
-Definitionally equal terms are denoted as $a \equiv b$.
+denoted as $\N$. The type $\mathsf{Unit}$ has exactly one term, denoted as
+$\mathsf{unit}$. The empty type is denoted as $\bot$. Another recurrent type is the
+type of parametric lists, denoted as $\mathsf{List}(A)$. The definition that
+term $x$ \emph{is} $y$ is denoted as $x :\equiv y$. Definitionally equal terms are
+denoted as $a \equiv b$. The proposition that $a$ is equal to $b$ is denoted as
+$a = b$.
 
 Some types are equipped with structure that behave as sets, and here are common
 set-theoretic notation we use: the membership relation is denoted as $\in$, so
@@ -218,7 +220,9 @@ that the engine can process.
 To refer to an arbitrary message type \emph{within the system}, we use the type
 $\mathsf{Msg}$, the sum type  of all message interfaces, and therefore the valid
 message types, that is, $\mathsf{Msg} :\equiv \bigoplus_{j} \mathsf{Msg_j}$
-where $j$ ranges over all engines in the system.
+where $j$ ranges over all engines in the system. To simplify the notation, we
+assume message type subtyping, that is, $\mathsf{Msg_j} \subseteq \mathsf{Msg}$
+for all $j \in \mathcal{E}$.
 
 \subsubsection{Engine components}\label{sec:engine-components}
 
@@ -485,6 +489,7 @@ is the set of engines running on the node, and $\omega_i$ represents specific
 node's operations.
 \end{definition}
 
+\begin{remark}\label{rem:node-functions}
 For convenience, we derive the following functions for any node $n_i$:
 \begin{itemize}
 \item $\alpha_i : \mathcal{E}_i \to \mathsf{Addr}$ is a total mapping that
@@ -493,11 +498,12 @@ returns the address of any engine living on node $n_i$.
 \item $\epsilon_i : \mathsf{Addr}_i \to \mathcal{E}_i$ is a mapping that, given
 an address in the node, that is, $\langle n_i, \mathsf{id}_j \rangle$ in
 $\mathsf{Addr}_i$, returns the corresponding engine $e_j \in \mathcal{E}_i$.
-\item $\mathsf{mailboxOf} : \mathcal{E}_i \to \Option{\mathsf{Addr}}$ is a
+\item $\mathsf{mailboxAddressOf} : \mathcal{E}_i \to \Option{\mathsf{Addr}}$ is a
 mapping that returns $\mathsf{some}(a)$ where $a$ is the address of the dedicated
 mailbox engine for a given processing engine instance, or $\mathsf{none}$ if the
 engine is not a processing engine.
 \end{itemize}
+\end{remark}
 
 \begin{remark}\label{rem:node-operations}
 By design, nodes do not have the ability to add, remove, or modify engines.
@@ -539,52 +545,52 @@ successor state $\kappa^{i+1}$.
 
 The \emph{initial state} of the system is denoted by $\kappa^0$. In principle, we could
 define the initial state as $\kappa^0 \equiv \langle \emptyset, \emptyset,
-\emptyset \rangle$, no nodes, no messages, and no capabilities. Via primitives,
-we will define later, we can step from the initial state to a successor state with
-nodes, messages, and capabilities.
+\emptyset \rangle$, no nodes, no messages, and no capabilities.
+Via primitives that we will define later, we can step from the initial state to a
+successor state with nodes, messages, and capabilities.
 
 \begin{remark}\label{rem:system-model} The Engine Model \cite{engine-art}, which
-inspires our system, is a communication-based system model incorporating temporal
-aspects and dynamic process creation. Here we retain only the dynamic process
-creation capability, leaving temporal considerations for future work. Like
-\textsc{DETCs}, we use labeled transition system semantics where transitions
-occur when processes react to messages by updating their state, generating new
-messages and engines, or remaining idle. The associated state machine in a
+inspires the system described here, is a communication-based system model
+incorporating temporal aspects and dynamic process creation. Here we retain only
+the dynamic process creation capability, leaving temporal considerations for
+future work. Like \textsc{DETCs}, we use labelled transition system semantics
+where transitions occur when processes react to messages by updating their
+state, generating new messages and engines. The associated system in
 \textsc{DETC} is defined in terms of active processes and a set of messages $M$,
-assuming all messages eventually get delivered. A similar approach is adopted for
-the state in \cref{def:state}, and we assume all messages are eventually
-delivered.
+assuming all messages eventually get delivered. A similar approach is adopted
+here for the state in \cref{def:state}, and we assume all messages are
+eventually delivered as stated in the axiom below.
 \end{remark}
 
 \begin{axiom}\label{ax:message-delivery}
-For any engines $e, e' \in \mathcal{E}$ and message $m \in M$ in transit within
+For any engines $e, e' \in \mathcal{E}$ and message in transit within
 system state $\kappa$, there exists a subsequent state $\kappa'$ where $m$ is
 eventually delivered to its intended recipient.
 \end{axiom}
 
-A few primitives are also needed to create different entities such as nodes and
-engines, so at any point in time the system provides functions such as the following.
+Now the system must provide primitives to create different entities such as nodes and
+engines. So, at any point in time the system provides functions such as the following.
 
 \begin{itemize}
-\item $\mathsf{freshId} : \mathcal{N} \to \mathsf{Addr}$ is the function that
+\item $\mathsf{freshId} : \mathsf{Unit} \to \mathsf{Addr}$ is the function that
 generates a fresh identifier for node creation.
-\item $\mathsf{freshName} : \mathcal{N} \to \mathsf{Name}$ is the function that
+\item $\mathsf{freshName} : \mathsf{Unit} \to \mathsf{Name}$ is the function that
 generates a fresh name for an engine.
 \item $\execEffect$ is the function that executes effects as in \Cref{def:effects}
 and outputs the new system state after the effect has been executed.
 \end{itemize}
 
-Also, we extend the functions defined in \Cref{rem:node-functions}. That is,
-the node-specific functions $\alpha_i$ and $\mathsf{mailboxOf}_i$ can be used to
-construct global versions $\alpha$ and $\mathsf{mailboxOf}$ that operate over
-all engines $\mathcal{E}$ in $\kappa^i$, functions of type $\mathcal{E} \to
-\mathsf{Addr}$. These global functions are defined by combining the node-specific
-functions across all nodes, allowing us to look up addresses for any engine in
-the system regardless of which node it resides on.
+We could also extend the node-specific functions defined in \Cref{rem:node-functions}.
+Functions like $\alpha_i$ and $\mathsf{mailboxAddressOf}_i$ can be used to construct
+global versions $\alpha$ and $\mathsf{mailboxAddressOf}$ that operate over all engines
+$\mathcal{E}$ in $\kappa^i$. These functions have type $\mathcal{E} \to \mathsf{Addr}$
+and are defined by combining the node-specific functions across all nodes. This
+allows us to look up addresses for any engine in the system regardless of which node
+it runs.
 
-Not described here are the functions for adding, removing, and modifying nodes,
-engines, and their associated services. We leave the specification of these
-additional functions for future work.
+Not described here are the functions for adding, removing, and modifying nodes.
+Also, one may want to move engines between nodes. We leave these considerations
+for future work.
 
 \section{Operational Semantics}\label{sec:semantics}
 
@@ -611,21 +617,22 @@ delivery, and (iii) explicit lifecycle management for engines.
 The first rule is \textsc{Send}. It handles when an engine sends a message to
 another engine. The rule just captures the target engine's address to get its
 mailbox address, and \emph{registers} the message to the target engine's
-mailbox. To the rule takes place, $v$ must be a well-typed message for engine
-$e_t$, that is, it implements/adheres to the message interface of $e_t$.
-
+mailbox. To the rule takes place, the message $v$ must be a well-typed message
+for engine $e_t$, that is, it implements/adheres to the message interface of
+$e_t$.
 \begin{definition}[\textsc{Send}]\label{rule:send}
-An engine $e_s$ sends message $v$ to another engine $e_t$.
+An engine $e_s$ sends message $v$ to a non-mailbox engine $e_t$.
 \begin{prooftree}
 \AxiomC{$\kappa \equiv (\mathcal{N}, \mu, \alpha)$}
 \AxiomC{$e_s, e_t \in \mathcal{E}$}
+\AxiomC{$\mathsf{mailbox} = \mathsf{mode}(e_t)$}
 \AxiomC{$v : \mathsf{Msg}_t$}
-\AxiomC{$m_t \equiv \mathsf{mailboxOf}(e_t)$}
-\QuaternaryInfC{$\kappa \to (\mathcal{N}, \mu \cup \{ \langle \alpha(e_s), m_t, v \rangle \}, \alpha)$}
+\AxiomC{$m_t \equiv \mathsf{mailboxAddressOf}(e_t)$}
+\QuinaryInfC{$\kappa \to (\mathcal{N}, \mu \cup \{ \langle \alpha(e_s), m_t, v \rangle \}, \alpha)$}
 \end{prooftree}
 \end{definition}
 
-Now, with a message in-transit, we need to deliver it to the target engine's
+Now, with a message in-transit, the system needs to deliver it to the target engine's
 mailbox. This is done via the \textsc{Append} rule.
 We take the message from the set of in-transit messages, and
 (i) remove it from the in-transit set, and
@@ -697,7 +704,7 @@ effect data type.
 \begin{equation}\label{eq:e-send}
 \frac{
   \mathsf{msg} \equiv \langle e_{\mathsf{sender}}, e_{\mathsf{target}}, v \rangle \quad
-  m_{\mathsf{target}} \equiv \mathsf{mailboxOf}(e_{\mathsf{target}})
+  m_{\mathsf{target}} \equiv \mathsf{mailboxAddressOf}(e_{\mathsf{target}})
 }{
   \execEffect(\mathsf{sendMsg}(\mathsf{msg}), a, (\alpha, \mu)) \equiv ((\alpha, \mu \cup \{ \mathsf{msg} \}), \mathsf{ready})
 }
