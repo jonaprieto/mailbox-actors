@@ -123,7 +123,11 @@ the corresponding injections into $A_1 \oplus \cdots \oplus A_n$ from $A_i$ for
 all $i \in \{1, \dots, n\}$. Given a type $A$, we can define the optional type
 $\Option{A}$ as $A \oplus \bot$, where $\bot$ is the bottom type. And the terms
 $\mathsf{none}$ and $\mathsf{some}(a)$ are the corresponding terms for the
-optional type when $a : A$.
+optional type when $a : A$. Finally, a function $f$ that takes an argument $a$
+of type $A$ and returns a value of type $B$ is denoted as $f : A \to B$. We also
+use the notation $f[a \mapsto c]$ to denote a function where the output of $f$ is
+replaced by $c$ when the input is $a$, if $a$ is in the domain of $f$. Otherwise,
+we extend $f$ accordingly.
 
 \section{Model}\label{sec:model}
 
@@ -414,15 +418,15 @@ enables computational universality.
 Having defined the components that make up an engine's behaviour, we can now
 formally specify engines themselves. As the fundamental computational units of
 our system, engines encapsulate both the processing logic and state management
-capabilities. We have established the types of their constituent parts - guards,
-actions, configurations and environments. Now we can provide a complete
+capabilities. We have established the types of their constituent parts, that is,
+guards, actions, configurations and environments. Now we can provide a complete
 specification of the engine type.
 
 \begin{definition}\label{def:engine}   
 An \textbf{engine} is the computational unit of the system, formally specified by a tuple
 $\langle b, r, \mathsf{cfg}, \mathsf{env} \rangle$ where:
 \begin{itemize}
-\item $b$ is the engine's behaviour --a set of guarded actions as defined in \Cref{def:guarded-action},
+\item $b$ is the engine's behaviour ---a set of guarded actions as defined in \Cref{def:guarded-action},
 \item $r$ is the engine's status flag as specified in \Cref{def:engine-status},
 \item $\mathsf{cfg}$ is the engine's configuration as described in
 \Cref{def:engine-configuration}, and
@@ -462,7 +466,7 @@ pattern introduced through explicit pull semantics, decoupling message storage
 from processing logic. This allows for independent scaling of message ingestion
 and core computation.
 
-\subsubsection{Nodes}\label{sec:system-state}
+\subsubsection{Nodes}\label{sec:nodes}
 
 Before we little mention the system, $\kappa$,  mainly consisting of a set of
 nodes $\mathcal{N}$, a set of engines $\mathcal{E}$, following a specific
@@ -498,13 +502,7 @@ engine instance.
 \end{itemize}
 \end{remark}
 
-The model presented here is a variation of the Engine Model \cite{engine-art},
-which defines the formal model \textsc{DETCs} --extending communication-based
-system models with time and dynamic process creation. We retain only the dynamic
-process creation capability, leaving temporal aspects for future work. Like
-\textsc{DETCs}, we use labelled transition system semantics, where transitions
-occur when processes react to messages by updating state, generating new
-messages and engines, or doing nothing.
+\subsubsection{System and State}\label{sec:system-state}
 
 To picture how the system evolves, as any state machine, we must define the state.
 The transition rules are then defined as the rules that govern how these states
@@ -520,13 +518,24 @@ $\kappa$ is a tuple $\kappa^{i} \equiv \langle \mathcal{N}^i, \mu^i, \omega^i
 \end{itemize}
 \end{definition}
 
-The superscript $i$ in $\kappa^i$ denotes an instantiation of the system. This
-can be viewed as a snapshot of the system at a point in time denoted by that
-superscript, with the ability to evolve to a successor state $\kappa^{i+1}$.
+\begin{remark}\label{rem:system-time-notation} The superscript $i$ in $\kappa^i$
+denotes an instantiation of the system. This can be viewed as a snapshot of the
+system at a point in time denoted by index $i$, with the ability to evolve to a
+successor state $\kappa^{i+1}$.
+\end{remark}
 
-The associated state machine in a \textsc{DETC} is defined in terms of active
-processes and a set of messages $M$ awaiting delivery, assuming all get
-delivered. This is an assumption we also adopt here.
+\begin{remark}\label{rem:system-model} The Engine Model \cite{engine-art}, which
+inspires our system, is a communication-based system model incorporating temporal
+aspects and dynamic process creation. Here we retain only the dynamic process
+creation capability, leaving temporal considerations for future work. Like
+\textsc{DETCs}, we use labeled transition system semantics where transitions
+occur when processes react to messages by updating their state, generating new
+messages and engines, or remaining idle. The associated state machine in a
+\textsc{DETC} is defined in terms of active processes and a set of messages $M$,
+assuming all messages eventually get delivered. A similar approach is adopted for
+the state in \cref{def:state}, and we assume all messages are eventually
+delivered.
+\end{remark}
 
 \begin{axiom}\label{ax:message-delivery}
 For any engines $e, e' \in \mathcal{E}$ and message $m \in M$ in transit within
@@ -561,32 +570,37 @@ additional functions for future work.
 \section{Operational Semantics}\label{sec:semantics}
 
 The transitions of the associated state machine of the system define both how the
-system evolves and how the message-passing mechanism functions. The operational
-semantics for the system are defined here via the reduction relation denoted by
-$(\to)$, where $\kappa^i \to \kappa^{i+1}$ signifies that the system state
-$\kappa^i$ evolves to $\kappa^{i+1}$.
+system evolves and how the message-passing mechanism functions. 
 
-To keep the presentation simple, we assume that the system capabilities and
-operations, $\omega^i$ in \Cref{def:state}, are fixed. That is, the reduction
-rules act on tuples of the form $(\alpha, \mu)$ where $\alpha$ is the global
-address map and $\mu$ is the set of in-transit messages.
+Let us recall the notation used below. $\mathcal{E}$ is the set of all engines
+across all nodes in $\mathcal{N}$, where $\mathcal{N}$ is the set of nodes.
+Additionally, $\alpha$ is the global address map and $\mu$ is the set of
+in-transit messages. The operational semantics for the system are defined here
+via the reduction relation denoted by $(\to)$, where $\kappa^i \to \kappa^{i+1}$
+signifies that the system state $\kappa^i$ evolves to $\kappa^{i+1}$. The
+notation $\kappa^i$ is mentioned in \Cref{rem:system-time-notation}.
 
 \subsection{Message-passing rules}\label{sec:system-transition-rules}
 
-Message-passing mechanisms form the foundation of actor-based systems and
-process calculi. We aim for the system to support (i) asynchronous communication
+We aim for the message-passing mechanism to support (i) asynchronous communication
 with non-blocking sends, (ii) mailbox isolation with guaranteed eventual
 delivery, and (iii) explicit lifecycle management for engines.
 
+Our first rule is \textsc{Send} which handles message sending between engines.
+When an engine sends a message, we capture the target engine's address to get its
+mailbox address, and add the message to the target engine's mailbox.
+
 \begin{definition}[\textsc{Send}]\label{rule:send}
-Processing engine $e$ sends message $v$ to target $e_{\mathsf{target}}$:
+An engine $e_s$ sends message $v$ to another engine $e_t$.
 \begin{prooftree}
-\AxiomC{$\alpha(e) \equiv \langle b, m_e, r, \mathsf{cfg}, \mathsf{env} \rangle$}
-\AxiomC{$m_{\mathsf{target}} \equiv \mathsf{mailboxOf}(e_{\mathsf{target}})$}
-\AxiomC{$v : \mathsf{Msg}$}
-% \RightLabel{$\textsc{Send}$}
-\TrinaryInfC{$(\alpha, \mu) \to (\alpha, \mu \cup \{ \langle e, m_{\mathsf{target}}, v \rangle \})$}
+\AxiomC{$\kappa^i \equiv (\mathcal{N}^i, \mu^i, \omega^i)$}
+\AxiomC{$e_s, e_t \in \mathcal{E}$}
+\AxiomC{$v : \mathsf{Msg}_t$}
+\AxiomC{$m_{\mathsf{target}} \equiv \mathsf{mailboxOf}(e_t)$}
+\QuaternaryInfC{$\kappa^i \to (\mathcal{N}^i, \mu^i \cup \{ \langle \alpha_i(e_s), m_{\mathsf{target}}, v \rangle \}, \omega^i)$}
 \end{prooftree}
+Here $v : \mathsf{Msg}_t$ means that $v$ is a well-typed message for engine
+$e_t$, comply its message interface.
 \end{definition}
 
 \begin{definition}[\textsc{Append}]\label{rule:append}
@@ -632,18 +646,19 @@ where $r' \equiv \mathsf{ready}$ if $r' \neq \mathsf{terminated}$.
 \end{definition}
 
 
-\begin{remark}\label{rem:omitting-rules}
-Omitting any rule would violate key system properties: Without \textsc{Append},
-messages remain in transit indefinitely; excluding \textsc{Clean} leads to
-process accumulation; missing \textsc{Pull} breaks message processing causality.
-The rules maintain the delicate balance between asynchronous execution (via
-message queues) and synchronous state changes (through atomic reductions), as
-required for verifiable distributed systems \cite{Newcombe2015}.
+\begin{remark}\label{rem:omitting-rules} 
+Omitting any of the above rules may lead to undesirable system behaviours. For
+example, without \textsc{Append}, messages remain in transit indefinitely;
+excluding \textsc{Clean} leads to accumulation of engines that do not operate
+while consuming storage resources; and omitting \textsc{Pull} disrupts message
+processing causality.
 \end{remark}
 
 \subsection{Effect Execution Rules}
 
-The function $\execEffect(E, a, (\alpha, \mu))$ is defined recursively:
+The function $\execEffect$ executes effects as defined in \Cref{def:effects}.
+Its definition is given by case analysis on the different constructors of the
+effect data type.
 
 \begin{definition}[\textsc{ESendMsg}]\label{rule:e-send}
 \begin{equation}\label{eq:e-send}
