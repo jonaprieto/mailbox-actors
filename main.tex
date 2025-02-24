@@ -127,9 +127,9 @@ $\Option{A}$ as $A \oplus \bot$, where $\bot$ is the bottom type. And the terms
 $\mathsf{none}$ and $\mathsf{some}(a)$ are the corresponding terms for the
 optional type when $a : A$. Finally, a function $f$ that takes an argument $a$
 of type $A$ and returns a value of type $B$ is denoted as $f : A \to B$. We also
-use the notation $f[a \mapsto c]$ to denote a function where the output of $f$ is
-replaced by $c$ when the input is $a$, if $a$ is in the domain of $f$. Otherwise,
-we extend $f$ accordingly.
+use the notation $f[a \mapsto c]$ to define a new function that is similar to $f$
+except that the output of $f$ is replaced by $c$ when the input is $a$, if $a$ is
+in the domain of $f$. Otherwise, we extend $f$ accordingly.
 
 \section{Model}\label{sec:model}
 
@@ -227,8 +227,9 @@ for all $j \in \mathcal{E}$.
 \subsubsection{Engine components}\label{sec:engine-components}
 
 An engine is a tuple of components, which may contain immutable data such as their name,
-location, and parent. Although, other information such as its status and environment
-can be changed.
+and parent. Although, other information such as its location, status and environment
+may change during the engine's lifecycle.
+% YEs, we should allow engines to move around the system.
 
 \begin{definition}\label{def:engine-status}
 The \textbf{status} of an engine $e_j$, of type $\mathsf{EngineStatus}$, determines
@@ -273,7 +274,7 @@ The \textbf{operational mode} of an engine $e_j$, of type $\mathsf{EngineMode}$,
 determines the engine's operational mode, a tag used by the system to
 distinguish the purpose of the engine.
 \begin{equation}\label{eq:engine-mode}
-\mathsf{EngineMode} := \mathsf{processing} \mid \mathsf{mailbox} \, .
+\mathsf{EngineMode} := \mathsf{process} \mid \mathsf{mail} \, .
 \end{equation}
 \end{definition}
 
@@ -286,9 +287,9 @@ engine's configuration.
 \begin{definition}\label{def:engine-configuration} The \textbf{configuration} of
 an engine $e_j$ often denoted by $\mathsf{cfg}_j$ is a tuple $\langle
 \mathsf{name}, \mathsf{parent} , \mathsf{mode} \rangle$ of
-type $\mathsf{Cfg}$, where $\mathsf{name}$ is the engine's name,
-$\mathsf{parent}$ is the engine's parent, and $\mathsf{mode}$ is the engine's
-operational mode as in \Cref{def:engine-mode}.
+type $\mathsf{Cfg}$. The name of the engine is its identifier, and
+\textsf{parent} is an optional reference, address, of the engine's parent.
+$\mathsf{mode}$ is the engine's operational mode as in \Cref{def:engine-mode}.
 \end{definition}
 
 Recall that engines are isolated from each other and process messages
@@ -297,11 +298,10 @@ proper operation since some form of state is required. Therefore, each engine
 encapsulates its own state as part of its execution context, which we refer to as the
 engine's \emph{environment}.
 
-\begin{definition}\label{def:engine-environment}
-Given a type $S_j$ representing the local state of an engine $e_j$, an
-execution \textbf{environment} of $e_j$ is a tuple $\langle s_j, l_j \rangle$
-of type $\mathsf{Env}_j(S_j)$, where $S_j$ is type $S_j$ for the engine's
-local state $s_j$, and $l_j$ is the engine's address book, a non-empty list
+\begin{definition}\label{def:engine-environment} Given a type $S$ representing
+the local state of an engine $e_j$, an execution \textbf{environment} of $e_j$
+is a tuple $\langle s_j, l_j \rangle$ of type $\mathsf{Env}(S)$, where $s_j$
+is of type $S$, and $l_j$ is the engine's address book, a non-empty list
 containing the names of other engines, including its own. $l_j$ is of type
 $\mathsf{List}(\mathsf{Addr})$.
 \end{definition}
@@ -498,10 +498,6 @@ returns the address of any engine living on node $n_i$.
 \item $\epsilon_i : \mathsf{Addr}_i \to \mathcal{E}_i$ is a mapping that, given
 an address in the node, that is, $\langle n_i, \mathsf{id}_j \rangle$ in
 $\mathsf{Addr}_i$, returns the corresponding engine $e_j \in \mathcal{E}_i$.
-\item $\mathsf{mailboxAddressOf} : \mathcal{E}_i \to \Option{\mathsf{Addr}}$ is a
-mapping that returns $\mathsf{some}(a)$ where $a$ is the address of the dedicated
-mailbox engine for a given processing engine instance, or $\mathsf{none}$ if the
-engine is not a processing engine.
 \end{itemize}
 \end{remark}
 
@@ -580,13 +576,11 @@ generates a fresh name for an engine.
 and outputs the new system state after the effect has been executed.
 \end{itemize}
 
-We could also extend the node-specific functions defined in \Cref{rem:node-functions}.
-Functions like $\alpha_i$ and $\mathsf{mailboxAddressOf}_i$ can be used to construct
-global versions $\alpha$ and $\mathsf{mailboxAddressOf}$ that operate over all engines
-$\mathcal{E}$ in $\kappa^i$. These functions have type $\mathcal{E} \to \mathsf{Addr}$
-and are defined by combining the node-specific functions across all nodes. This
-allows us to look up addresses for any engine in the system regardless of which node
-it runs.
+We could also extend the node-specific functions defined in
+\Cref{rem:node-functions}. Functions like $\alpha_i$ can be used to construct
+a global version $\alpha$ that operates over all engines $\mathcal{E}$ in
+$\kappa^i$. This allows us to look up addresses for any engine in the system
+regardless of which node it runs.
 
 Not described here are the functions for adding, removing, and modifying nodes.
 Also, one may want to move engines between nodes. We leave these considerations
@@ -603,10 +597,109 @@ Additionally, $\alpha$ is the global address map and $\mu$ is the set of
 in-transit messages. The operational semantics for the system are defined here
 via the reduction relation denoted by $(\to)$, where $\kappa^i \to \kappa^{i+1}$
 signifies that the system state $\kappa^i$ evolves to $\kappa^{i+1}$. The
-notation $\kappa^i$ is mentioned in \Cref{rem:system-time-notation}. Last, we use
-$\alpha$ to denote the global address map part of the system state. $\omega$
-denotes the system capabilities and operations part of the system state, but as
-it is fixed, we omit it from the notation.
+notation $\kappa^i$ is mentioned in \Cref{rem:system-time-notation}. 
+
+{\large The following rules under heavy revision. Do not expect them to be in the final version.}
+
+
+\subsection{System Initialization and Extension Rules}\label{sec:creation-rules}
+
+\begin{definition}[\textsc{CreateNode}]\label{rule:create-node-ext}
+\hspace{-1.5em}
+\begin{prooftree}
+\AxiomC{$\kappa \equiv (\mathcal{N}, \mu, \omega)$}
+\AxiomC{$n \equiv \langle \mathsf{freshId}(\mathsf{unit}), \emptyset, \omega_n \rangle$}
+\BinaryInfC{$\kappa \to (\mathcal{N} \cup \{n\}, \mu, \omega)$}
+\end{prooftree}
+
+Where $\omega_n$ contains node-specific operations including:
+\begin{itemize}
+\item $\alpha_n : \mathcal{E}_n \to \mathsf{Addr}$, node-local address map, and
+\item $\epsilon_n : \mathsf{Addr}_n \to \mathcal{E}_n$ for engine lookup.
+\end{itemize}
+\end{definition}
+
+\noindent To create an engine in the system on node $n_i$, we require a
+configuration $\mathsf{cfg}$ and an environment $\mathsf{env}$, at least.
+Additionally, the new engine must have a registered message interface and an
+associated behaviour $b$ that defines how it processes messages.
+
+\begin{definition}[\textsc{CreateEngine}]\label{rule:create-engine}
+\hspace{-1.5em}
+\begin{prooftree}
+% Level 1: Node and configuration setup
+\AxiomC{%
+$n_i \equiv \langle \mathsf{id}_i, \mathcal{E}_i, \omega_i \rangle \in \mathcal{N}%
+% \quad m : \mathsf{ \mathsf{EngineMode}} %
+\quad p : \mathsf{Option}(\mathsf{Addr}) %
+\quad \mathsf{cfg} \equiv \langle \mathsf{name}, p, \mathsf{process}\rangle$}
+\noLine
+\UnaryInfC{
+$S : \mathsf{Type} %
+\quad \mathsf{env} : \mathsf{Env}(S)  %
+\quad i : \mathsf{Msg} %
+\quad e_{\mathsf{new}} \equiv \langle i, b,
+\mathsf{ready}, \mathsf{cfg}, \mathsf{env} \rangle%
+$}
+% % Level 3: Engine set and address map updates
+\noLine
+\UnaryInfC{$%
+\iota :\equiv \mathsf{freshId}(\mathsf{unit})%
+\quad \eta \equiv  \mathsf{freshId}(\mathsf{unit})%
+$}
+\noLine
+\UnaryInfC{$%
+\mathsf{cfg}_{\mathsf{mbox}} \equiv %
+    \langle \mathsf{freshName}(\mathsf{unit}), %
+    \iota, %
+    \mathsf{mail}%
+    \rangle
+$}
+\noLine
+\UnaryInfC{$%
+m_{\mathsf{new}} \equiv %
+  \langle i_{\mathsf{mbox}}, %
+  b_{\mathsf{mbox}}, %
+  \mathsf{ready}, %
+  \mathsf{cfg}_{\mathsf{mbox}}, %
+  e_{\mathsf{mbox}}%
+  \rangle
+$}
+\noLine
+\UnaryInfC{$%
+\alpha_i' \equiv \alpha_i \cup%
+\{e_{\mathsf{new}} \mapsto \langle
+\mathsf{id}_i, \iota \rangle,
+m_{\mathsf{new}} \mapsto \langle
+\mathsf{id}_i, \eta \rangle
+\}%
+\quad \omega_i' \equiv \omega_i[\alpha \mapsto \alpha_i'] 
+$}
+\UnaryInfC{$\kappa \to %
+(\mathcal{N}[n_i \mapsto%
+  \langle \mathsf{id}_i,%
+  \mathcal{E}_i \cup \{e_{\mathsf{new}}, m_{\mathsf{new}}\},%
+  \omega_i' \rangle],%
+   \mu, %
+   \omega[\omega_i \mapsto \omega_i'])$}
+\end{prooftree}
+
+The terms $i_{\mathsf{mbox}}$, $b_{\mathsf{mbox}}$, and $e_{\mathsf{mbox}}$
+are the message interface, the behaviour, and the environment of the mailbox engine,
+respectively, which follow the specification as in \Cref{def:mailbox-engine}.
+
+\end{definition}
+
+\begin{remark}
+The rule above takes place in the context of a node $n_i$. When defining an
+engine process $e_{\mathsf{new}}$, we also define a mailbox engine on the same
+node, $m_{\mathsf{new}}$. While the only parameters required by this rule are the
+engine process parameters (configuration and environment) for $e_{\mathsf{new}}$,
+one could customize the mailbox parameters, such as its behaviour $b_{\mathsf{mbox}}$,
+to enable specialized message routing or priority-based message organization.
+However, for simplicity, we use a uniform mailbox behaviour across all mailbox
+engines.
+\end{remark}
 
 \subsection{Message-passing rules}\label{sec:system-transition-rules}
 
@@ -620,14 +713,15 @@ mailbox address, and \emph{registers} the message to the target engine's
 mailbox. To the rule takes place, the message $v$ must be a well-typed message
 for engine $e_t$, that is, it implements/adheres to the message interface of
 $e_t$.
+
 \begin{definition}[\textsc{Send}]\label{rule:send}
 An engine $e_s$ sends message $v$ to a non-mailbox engine $e_t$.
 \begin{prooftree}
 \AxiomC{$\kappa \equiv (\mathcal{N}, \mu, \alpha)$}
 \AxiomC{$e_s, e_t \in \mathcal{E}$}
-\AxiomC{$\mathsf{mailbox} = \mathsf{mode}(e_t)$}
+\AxiomC{$\mathsf{process} = \mathsf{mode}(e_t)$}
 \AxiomC{$v : \mathsf{Msg}_t$}
-\AxiomC{$m_t \equiv \mathsf{mailboxAddressOf}(e_t)$}
+\AxiomC{$m_t \equiv \mathsf{mbox}(e_t)$}
 \QuinaryInfC{$\kappa \to (\mathcal{N}, \mu \cup \{ \langle \alpha(e_s), m_t, v \rangle \}, \alpha)$}
 \end{prooftree}
 \end{definition}
@@ -704,7 +798,7 @@ effect data type.
 \begin{equation}\label{eq:e-send}
 \frac{
   \mathsf{msg} \equiv \langle e_{\mathsf{sender}}, e_{\mathsf{target}}, v \rangle \quad
-  m_{\mathsf{target}} \equiv \mathsf{mailboxAddressOf}(e_{\mathsf{target}})
+  m_{\mathsf{target}} \equiv \mathsf{mbox}(e_{\mathsf{target}})
 }{
   \execEffect(\mathsf{sendMsg}(\mathsf{msg}), a, (\alpha, \mu)) \equiv ((\alpha, \mu \cup \{ \mathsf{msg} \}), \mathsf{ready})
 }
@@ -781,13 +875,13 @@ relevancy, priority-based message organization, and temporal delivery
 optimization. However, some of these features would require extension to the
 message interface of mailboxes, and to the interface of their internal state.
 Also, the engine model would need to be extended to support time-based events,
-such as delays and timeouts~\cite{engine-art}. Additionally, message routing
+such as delays~\cite{engine-art}. Additionally, message routing
 capabilities could be added to enable directed forwarding to specific mailboxes,
 implementing debugging mechanisms.
 
 As said before, another aspect in the model not addressed in this presentation is
 the addition of a temporal component to the engine model. This would enable
-engines to react to time-based events such as delays and timeouts. Having such
+engines to react to time-based events. Having such
 information would also enable us to model and track the system's liveness, progress,
 and latency. %what else?
 
