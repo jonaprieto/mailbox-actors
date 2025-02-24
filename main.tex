@@ -564,7 +564,7 @@ system state $\kappa$, there exists a subsequent state $\kappa'$ where $m$ is
 eventually delivered to its intended recipient.
 \end{axiom}
 
-Now the system must provide primitives to create different entities such as nodes and
+Now the system must provide primitives to aid in the creation of different entities such as nodes and
 engines. So, at any point in time the system provides functions such as the following.
 
 \begin{itemize}
@@ -572,6 +572,16 @@ engines. So, at any point in time the system provides functions such as the foll
 generates a fresh identifier for node creation.
 \item $\mathsf{freshName} : \mathsf{Unit} \to \mathsf{Name}$ is the function that
 generates a fresh name for an engine.
+\item $\mathsf{mbox} : \mathsf{Addr} \to \mathsf{Addr}$ is the function that
+outputs the address of the dedicated mailbox engine for a given processing
+engine.
+% \begin{equation*}
+% \begin{aligned}
+%   &\mathsf{mbox} : \mathsf{Addr} \to \mathsf{Addr}\\
+%   &\mathsf{mbox}(\langle n_i, \mathsf{id}_j \rangle) \equiv \langle n_i, \mathsf{id}_j \rangle
+% \end{aligned}
+% \end{equation*}
+
 \item $\execEffect$ is the function that executes effects as in \Cref{def:effects}
 and outputs the new system state after the effect has been executed.
 \end{itemize}
@@ -690,7 +700,7 @@ respectively, which follow the specification as in \Cref{def:mailbox-engine}.
 
 \begin{remark}
 The rule above takes place in the context of a node $n_i$. When defining an
-engine process $e_{\mathsf{new}}$, we also define a mailbox engine on the same
+engine process $e_{\mathsf{new}}$, the system also creates a mailbox engine on the same
 node, $m_{\mathsf{new}}$. While the only parameters required by this rule are the
 engine process parameters (configuration and environment) for $e_{\mathsf{new}}$,
 one could customize the mailbox parameters, such as its behaviour $b_{\mathsf{mbox}}$,
@@ -704,9 +714,6 @@ We could think of adding rules for removing nodes and engines. However,
 one question just arises to me: how to handle broken references to those
 engines that are removed?
 \end{comment}
-
-
-
 \subsection{Message-passing rules}\label{sec:system-transition-rules}
 
 We aim for the message-passing mechanism to support (i) asynchronous communication
@@ -722,14 +729,14 @@ to $e_t$'s message interface specification. Otherwise, the rule can not be appli
 \begin{definition}[\textsc{Send}]\label{rule:send}
 An engine $e_s$ sends message $v$ to a non-mailbox engine $e_t$.
 \begin{prooftree}
-\AxiomC{$\kappa \equiv (\mathcal{N}, \mu, \alpha)
+\AxiomC{$\kappa \equiv (\mathcal{N}, \mu, \omega)$
 \quad e_s, e_t \in \mathcal{E}%
 \quad v : \mathsf{Msg}_t
-\quad m_t \equiv \mathsf{mbox}(e_t)
+\quad m_t \equiv \mathsf{mbox}(\alpha(e_t))
 $}
-\UnaryInfC{$\kappa \to (\mathcal{N}, \mu \cup \{ \langle \alpha(e_s), m_t, v \rangle \}, \alpha)$}
+\UnaryInfC{$\kappa \to (\mathcal{N}, \mu \cup \{ \langle \alpha(e_s), m_t, v \rangle \}, \omega)$}
 \end{prooftree}
-Recall that $\mathsf{mbox}$ is a function defined by case analysis on the type of
+The $\mathsf{mbox}$ function, part of the system-specific operations, is defined by case analysis on the type of
 the target engine. In case the target engine is a mailbox, the address of the
 target engine is used as the address of the message. Otherwise, in case the target
 engine is a processing engine, the message is registered to the dedicated target
