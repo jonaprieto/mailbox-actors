@@ -500,13 +500,13 @@ an address in the node, that is, $\langle n_i, \mathsf{id}_j \rangle$ in
 $\mathsf{Addr}_i$, returns the corresponding engine $e_j \in \mathcal{E}_i$.
 \end{itemize}
 \end{remark}
-
 \begin{remark}\label{rem:node-operations}
-By design, nodes do not have the ability to add, remove, or modify engines.
-These are system-level operations that are performed by the system as a whole,
-and not by a node individually. One reason for this is that nodes are not aware
-of, for example, the registry of addresses necessary to assign to new engines,
-the system's topology, and the like.
+By design, nodes cannot create, destroy, or modify engines directly. These
+operations require global coordination through system-level mechanisms rather
+than node-local decisions. This architectural constraint exists because nodes
+lack awareness of critical system-wide concerns like address registry management,
+topology relationships between components, and coordination mechanisms for
+distributed state consistency.
 \end{remark}
 
 \subsubsection{System State}\label{sec:state}
@@ -599,9 +599,6 @@ via the reduction relation denoted by $(\to)$, where $\kappa^i \to \kappa^{i+1}$
 signifies that the system state $\kappa^i$ evolves to $\kappa^{i+1}$. The
 notation $\kappa^i$ is mentioned in \Cref{rem:system-time-notation}. 
 
-{\large The following rules under heavy revision. Do not expect them to be in the final version.}
-
-
 \subsection{System Initialization and Extension Rules}\label{sec:creation-rules}
 
 \begin{definition}[\textsc{CreateNode}]\label{rule:create-node-ext}
@@ -687,7 +684,8 @@ $}
 The terms $i_{\mathsf{mbox}}$, $b_{\mathsf{mbox}}$, and $e_{\mathsf{mbox}}$
 are the message interface, the behaviour, and the environment of the mailbox engine,
 respectively, which follow the specification as in \Cref{def:mailbox-engine}.
-
+% TODO: it may seems the function to get mailbox address needs to be defined
+% in the node-specific operations.
 \end{definition}
 
 \begin{remark}
@@ -701,29 +699,41 @@ However, for simplicity, we use a uniform mailbox behaviour across all mailbox
 engines.
 \end{remark}
 
+\begin{comment}
+We could think of adding rules for removing nodes and engines. However,
+one question just arises to me: how to handle broken references to those
+engines that are removed?
+\end{comment}
+
+
+
 \subsection{Message-passing rules}\label{sec:system-transition-rules}
 
 We aim for the message-passing mechanism to support (i) asynchronous communication
 with non-blocking sends, (ii) mailbox isolation with guaranteed eventual
 delivery, and (iii) explicit lifecycle management for engines.
 
-The first rule is \textsc{Send}. It handles when an engine sends a message to
-another engine. The rule just captures the target engine's address to get its
-mailbox address, and \emph{registers} the message to the target engine's
-mailbox. To the rule takes place, the message $v$ must be a well-typed message
-for engine $e_t$, that is, it implements/adheres to the message interface of
-$e_t$.
+The \textsc{Send} rule governs message communication between engines. When
+engine $e_s$ sends a message to engine $e_t$, the rule handles the registration
+of the message in $e_t$'s dedicated mailbox. One thing to note is that the
+message must be well-typed for the target engine $e_t$, meaning it must conform
+to $e_t$'s message interface specification. Otherwise, the rule can not be applied.
 
 \begin{definition}[\textsc{Send}]\label{rule:send}
 An engine $e_s$ sends message $v$ to a non-mailbox engine $e_t$.
 \begin{prooftree}
-\AxiomC{$\kappa \equiv (\mathcal{N}, \mu, \alpha)$}
-\AxiomC{$e_s, e_t \in \mathcal{E}$}
-\AxiomC{$\mathsf{process} = \mathsf{mode}(e_t)$}
-\AxiomC{$v : \mathsf{Msg}_t$}
-\AxiomC{$m_t \equiv \mathsf{mbox}(e_t)$}
-\QuinaryInfC{$\kappa \to (\mathcal{N}, \mu \cup \{ \langle \alpha(e_s), m_t, v \rangle \}, \alpha)$}
+\AxiomC{$\kappa \equiv (\mathcal{N}, \mu, \alpha)
+\quad e_s, e_t \in \mathcal{E}%
+\quad v : \mathsf{Msg}_t
+\quad m_t \equiv \mathsf{mbox}(e_t)
+$}
+\UnaryInfC{$\kappa \to (\mathcal{N}, \mu \cup \{ \langle \alpha(e_s), m_t, v \rangle \}, \alpha)$}
 \end{prooftree}
+Recall that $\mathsf{mbox}$ is a function defined by case analysis on the type of
+the target engine. In case the target engine is a mailbox, the address of the
+target engine is used as the address of the message. Otherwise, in case the target
+engine is a processing engine, the message is registered to the dedicated target
+engine's mailbox.
 \end{definition}
 
 Now, with a message in-transit, the system needs to deliver it to the target engine's
@@ -731,6 +741,10 @@ mailbox. This is done via the \textsc{Append} rule.
 We take the message from the set of in-transit messages, and
 (i) remove it from the in-transit set, and
 (ii) append it to the target engine's mailbox.
+
+
+{\large \color{red} The following rules under heavy revision. Do not expect them
+to be in the final version.}
 
 \begin{definition}[\textsc{Append}]\label{rule:append}
 An in-transit message is appended to the mailbox engine's queue.
