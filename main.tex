@@ -865,17 +865,26 @@ This is done via the \textsc{Process} rule.
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
-e \equiv \langle i, b, \mathsf{busy}, \mathsf{cfg}, \mathsf{env} \rangle%
-\quad b \vdash \mathsf{env} \xrightarrow{v} (\mathsf{env}', E)%
+n_i \in \mathcal{N}%
+\quad e_p \in \mathcal{E}_i%
+\quad e_p \equiv \langle i, b, \mathsf{busy}, \mathsf{cfg}, \mathsf{env} \rangle%
 $}
 \noLine
-\UnaryInfC{$\kappa \vdash E \rightsquigarrow \kappa'$}
-\UnaryInfC{$\kappa \rightsquigarrow \kappa'[e \mapsto \langle i, b, \mathsf{ready}, \mathsf{cfg}, \mathsf{env}' \rangle]$}
+\UnaryInfC{$%
+m : i%
+\quad b \vdash \mathsf{env} \xrightarrow{m} (\mathsf{env}', E)%
+\quad \kappa \vdash E \rightsquigarrow (\mathcal{N}', \mu', \omega')$}
+\UnaryInfC{$\kappa \rightsquigarrow%
+\mathcal{N}'[%
+\mathcal{E}_i\mapsto \mathcal{E}_i[e_p \mapsto%
+\langle i, b, \mathsf{ready}, \mathsf{cfg}, \mathsf{env}' \rangle]%
+, \mu'
+, \omega'
+]$}
 \end{prooftree}
-
-The notation $b \vdash \mathsf{env} \xrightarrow{v} (\mathsf{env}', E)$
-denotes that the behaviour $b$ can execute an effect $E$ on the environment
-$\mathsf{env}$, resulting in a new environment $\mathsf{env}'$ and an effect $E$.
+The notation $b \vdash \mathsf{env} \xrightarrow{m} (\mathsf{env}', E)$
+denotes that applying behaviour $b$ to message $m$ with environment $\mathsf{env}$
+transforms the engine's environment to $\mathsf{env}'$ while generating an effect $E$.
 \end{definition}
 
 {\color{red} the typing rules for the behaviour execution are missing.}
