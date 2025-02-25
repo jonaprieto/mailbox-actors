@@ -28,22 +28,19 @@
 \newcommand{\pubabstract}{%
 %
 This paper presents a novel architectural approach to actor systems by
-decoupling mailboxes from processing actors. We propose modelling mailboxes as
+decoupling mailboxes from processing actors. We propose promoting mailboxes to
 independent actor entities specialising in message management while processing
 actors focusing solely on their core functionality. This separation enables
 flexible message scheduling, modular mailbox implementations, and improved
-scalability. We formally specify the message-passing mechanism and operational
-semantics for this decoupled architecture. The design addresses challenges in
-message flow management under high volumes while maintaining a clear separation
-of concerns. Although the approach may introduce additional system complexity
-and latency, we believe the benefits in terms of flexibility, scalability, and
-maintainability of actor-based systems are worth the possible trade-offs.
+scalability. We formally specify the system's operational semantics, which
+captures this separation of concerns and enables rigorous reasoning about the
+system's behavior. The design addresses challenges in managing high-volume
+message flows while maintaining modularity. Although this approach may introduce
+additional complexity and potential latency, we argue that the gains in
+flexibility and maintainability of this mailbox-as-actor-based systems outweigh
+these trade-offs.
 }
 
-
-% Description of the SI file, placed as a footnote
-% \newcommand{\pubSI}{Electronic Supplementary Information (ESI) available:
-% one PDF file with all referenced supporting information.}
 
 % Any keywords to be displayed under the abstract
 \keywords{
