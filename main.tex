@@ -634,18 +634,21 @@ Let us recall the notation used below. $\mathcal{E}$ is the set of all engines
 across all nodes in $\mathcal{N}$, where $\mathcal{N}$ is the set of nodes.
 Additionally, $\alpha$ is the global address map and $\mu$ is the set of
 in-transit messages. The operational semantics for the system are defined here
-via the reduction relation denoted by $(\to)$, where $\kappa^i \to \kappa^{i+1}$
-signifies that the system state $\kappa^i$ evolves to $\kappa^{i+1}$. The
-notation $\kappa^i$ is mentioned in \Cref{rem:system-time-notation}. 
+via the reduction relation denoted by $(\rightsquigarrow)$, where $\kappa^i
+\rightsquigarrow \kappa^{i+1}$ signifies that the system state $\kappa^i$
+evolves to $\kappa^{i+1}$. The notation $\kappa^i$ is mentioned in
+\Cref{rem:system-time-notation}. 
 
 \subsection{System Initialization and Extension Rules}\label{sec:creation-rules}
+
+In the following rules, we assume that $\kappa \equiv (\mathcal{N}, \mu,
+\omega)$, unless otherwise specified.
 
 \begin{definition}[\textsc{CreateNode}]\label{rule:create-node-ext}
 \hspace{-1.5em}
 \begin{prooftree}
-\AxiomC{$\kappa \equiv (\mathcal{N}, \mu, \omega)$}
 \AxiomC{$n \equiv \langle \mathsf{freshId}(\mathsf{unit}), \emptyset, \omega_n \rangle$}
-\BinaryInfC{$\kappa \to (\mathcal{N} \cup \{n\}, \mu, \omega)$}
+\UnaryInfC{$\kappa \rightsquigarrow (\mathcal{N} \cup \{n\}, \mu, \omega)$}
 \end{prooftree}
 
 Where $\omega_n$ contains node-specific operations including:
@@ -711,7 +714,7 @@ m_{\mathsf{new}} \mapsto \langle
 \}%
 \quad \omega_i' \equiv \omega_i[\alpha \mapsto \alpha_i'] 
 $}
-\UnaryInfC{$\kappa \to %
+\UnaryInfC{$\kappa \rightsquigarrow %
 (\mathcal{N}[n_i \mapsto%
   \langle \mathsf{id}_i,%
   \mathcal{E}_i \cup \{e_{\mathsf{new}}, m_{\mathsf{new}}\},%
@@ -752,12 +755,11 @@ done via the \textsc{Clean} rule.
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
-\kappa \equiv (\mathcal{N}, \mu, \omega)%
-\quad e \in \mathcal{E}%
+e \in \mathcal{E}%
 \quad \mathsf{terminated} = \mathsf{status}(e)
 $}
 \UnaryInfC{$%
-\kappa \to%
+\kappa \rightsquigarrow%
 (\mathcal{N} \setminus \{e\},%
 \mu,% TODO: Do we NEED to remove references to e???
 \omega%
@@ -765,6 +767,14 @@ $}
 \end{prooftree}
 \end{definition}
 
+\begin{remark}
+Notice how the \textsc{Clean} rule does not remove the engine's mailbox.
+Even when removing the processing engine, the mailbox is kept in the system
+receiving messages, but not being processed. This ensures that messages are not
+lost.
+%Also, the mailbox can be reused for future engine instances? as it is a matter
+%of changing the engine's configuration.
+\end{remark}
 
 \subsection{Message-passing rules}\label{sec:system-transition-rules}
 
@@ -781,8 +791,8 @@ to add a message to $\mu$.
 \begin{definition}[\textsc{Send}]\label{rule:send}
 \hspace{-1.5em}
   \begin{prooftree}
-\AxiomC{$\kappa \equiv (\mathcal{N}, \mu, \omega)
-\quad e_s, e_t \in \mathcal{E}%
+\AxiomC{$%
+e_s, e_t \in \mathcal{E}%
 \quad v : \mathsf{Msg}_t
 $}
 \noLine
@@ -790,7 +800,7 @@ $}
 m_t \equiv \mathsf{mbox}(\alpha(e_t))
 \quad \mathsf{mail} = \mathsf{mode}(\mathsf{cfg}(\epsilon(m_t)))
 $}
-\UnaryInfC{$\kappa \to (\mathcal{N}, \mu \cup%
+\UnaryInfC{$\kappa \rightsquigarrow (\mathcal{N}, \mu \cup%
 \{ \langle%
 \alpha(e_s),%
 m_t,%
@@ -806,54 +816,70 @@ Now, with a message in-transit, the system needs to deliver it to the target eng
 mailbox. This is done via the \textsc{Enqueue} rule.
 
 \begin{definition}[\textsc{Enqueue}]\label{rule:enqueue}
-  Deliver sent message to mailbox:
+\hspace{-1.5em}
   \begin{prooftree}
-  \AxiomC{$\langle s, m_t, \mathsf{append}(v) \rangle \in \mu$}
-  \AxiomC{$m_t \equiv \mathsf{mbox}(e_t)$}
-  \AxiomC{$\mathsf{env}(m_t) = q$}
-  \TrinaryInfC{$\kappa \to (\mathcal{N}[m_t \mapsto \langle i_{mbox}, b_{mbox}, r, \mathsf{cfg}_{mbox}, q \cup \{v\} \rangle], \mu \setminus \{m\}, \omega)$}
+  \AxiomC{$m \equiv \langle s, m_t, \mathsf{append}(v) \rangle \in \mu
+  \quad m_t \equiv \mathsf{mbox}(e_t)%
+  $}
+  \noLine
+  \UnaryInfC{$%
+   \mathsf{mail} = \mathsf{mode}(\mathsf{cfg}(\epsilon(m_t)))%
+  \quad q \equiv \mathsf{env}(\epsilon(m_t)) $}
+  \UnaryInfC{$\kappa \rightsquigarrow (\mathcal{N}[m_t \mapsto \langle i_{mbox}, b_{mbox}, r, \mathsf{cfg}_{mbox}, q \cup \{v\} \rangle], \mu \setminus \{m\}, \omega)$}
   \end{prooftree}
   \end{definition}
   
   \begin{definition}[\textsc{Dequeue}]\label{rule:dequeue}
-  Mailbox delivers message to processor:
+  \hspace{-1.5em}
   \begin{prooftree}
-  \AxiomC{$e_p \equiv \langle i_p, b_p, \mathsf{ready}, \mathsf{cfg}_p, \mathsf{env}_p \rangle$}
-  \AxiomC{$m_p \equiv \mathsf{mbox}(e_p)$}
-  \AxiomC{$\mathsf{env}(m_p) = \{v\} \cup q$}
-  \TrinaryInfC{$\kappa \to (\mathcal{N}[e_p \mapsto \langle i_p, b_p, \mathsf{busy}, \mathsf{cfg}_p, \mathsf{env}_p \rangle][m_p \mapsto \langle i_{mbox}, b_{mbox}, r, \mathsf{cfg}_{mbox}, q \rangle], \mu, \omega)$}
+  \AxiomC{$e_p \equiv \langle i_p, b_p, \mathsf{ready}, \mathsf{cfg}_p,
+  \mathsf{env}_p \rangle
+  \quad m_p \equiv \mathsf{mbox}(e_p)
+  $}
+  \noLine
+  \UnaryInfC{$%
+  \mathsf{mail} = \mathsf{mode}(\mathsf{cfg}(\epsilon(m_p)))%
+  \quad \mathsf{env}(\epsilon(m_p)) = q \cup \{v\}
+  $}
+  \noLine
+  \UnaryInfC{$%
+  \mathcal{N}' \equiv
+  \mathcal{N}[e_p \mapsto%
+  \langle i_p, b_p, \mathsf{busy}, \mathsf{cfg}_p, \mathsf{env}_p \rangle]%
+  [m_p \mapsto \langle i_{mbox}, b_{mbox}, r, \mathsf{cfg}_{mbox}, q \rangle]
+  $}
+  \UnaryInfC{$\kappa \rightsquigarrow (\mathcal{N}', \mu, \omega)$}
   \end{prooftree}
   \end{definition}
 
-
-\begin{remark}
-Notice how the \textsc{Clean} rule does not remove the engine's mailbox.
-Even when removing the processing engine, the mailbox is kept in the system
-receiving messages, but not being processed. This ensures that messages are not
-lost.
-%Also, the mailbox can be reused for future engine instances? as it is a matter
-%of changing the engine's configuration.
-\end{remark}
-
 \subsection{Processing Rules}\label{sec:processing-rules}
 
+Once the processing engine pulls a message from its mailbox, via the
+\textsc{Dequeue} rule, the engine can process the message in the \texttt{busy}
+state. Now, processing an engine consists of executing its behaviour.
+% TODO: add a reference where the typing rules for behaviour execution are given.
+This is done via the \textsc{Process} rule.
+
+% FIXME: this rule is not correct.
 \begin{definition}[\textsc{Process}]\label{rule:process}
-Engine processes message:
+\hspace{-1.5em}
 \begin{prooftree}
-\AxiomC{$e \equiv \langle i, b, \mathsf{busy}, \mathsf{cfg}, \mathsf{env} \rangle$}
-\AxiomC{$b \vdash \mathsf{env} \xrightarrow{v} (\mathsf{env}', E)$}
-\AxiomC{$\execEffect(E, e, \kappa) \equiv \kappa'$}
-\TrinaryInfC{$\kappa \to \kappa'[e \mapsto \langle i, b, \mathsf{ready}, \mathsf{cfg}, \mathsf{env}' \rangle]$}
+\AxiomC{$%
+e \equiv \langle i, b, \mathsf{busy}, \mathsf{cfg}, \mathsf{env} \rangle%
+\quad b \vdash \mathsf{env} \xrightarrow{v} (\mathsf{env}', E)%
+$}
+\noLine
+\UnaryInfC{$\kappa \vdash E \rightsquigarrow \kappa'$}
+\UnaryInfC{$\kappa \rightsquigarrow \kappa'[e \mapsto \langle i, b, \mathsf{ready}, \mathsf{cfg}, \mathsf{env}' \rangle]$}
 \end{prooftree}
+
+The notation $b \vdash \mathsf{env} \xrightarrow{v} (\mathsf{env}', E)$
+denotes that the behaviour $b$ can execute an effect $E$ on the environment
+$\mathsf{env}$, resulting in a new environment $\mathsf{env}'$ and an effect $E$.
 \end{definition}
 
-\begin{remark}\label{rem:omitting-rules}
-Omitting any of the above rules may lead to undesirable system behaviours. For
-example, without \textsc{Append}, messages remain in transit indefinitely;
-excluding \textsc{Clean} leads to accumulation of engines that do not operate
-while consuming storage resources; and omitting \textsc{Pull} disrupts message
-processing causality.
-\end{remark}
+{\color{red} the typing rules for the behaviour execution are missing.}
+
 
 \subsection{Effect Execution Rules}\label{sec:effect-rules}
 
@@ -862,43 +888,69 @@ Its definition is given by case analysis on the different constructors of the
 effect data type.
 
 \begin{definition}[\textsc{ESend}]\label{rule:e-send}
-Message generation:
+\hspace{-1.5em}
 \begin{prooftree}
-\AxiomC{$e_{\mathsf{target}} \in \mathcal{E}$}
-\AxiomC{$m_{\mathsf{target}} \equiv \mathsf{mbox}(e_{\mathsf{target}})$}
-\BinaryInfC{$\execEffect(\mathsf{send}(m_{\mathsf{target}}, v), e, \kappa) \equiv (\mathcal{N}, \mu \cup \{\langle \alpha(e), m_{\mathsf{target}}, v \rangle\}, \omega)$}
+\AxiomC{$e_s,e_t \in \mathcal{E}$}
+\AxiomC{$v : \mathsf{Msg}_t
+\quad (\kappa \rightsquigarrow \kappa') \equiv \textsc{Send}(\kappa, e_s, e_t,v)
+$}
+\BinaryInfC{$\execEffect(\mathsf{send}(e_t, v), e_s, \kappa)
+\equiv%
+\kappa'$}
 \end{prooftree}
 \end{definition}
 
 \begin{definition}[\textsc{EUpdate}]\label{rule:e-update}
-State modification:
+\hspace{-1.5em}
 \begin{prooftree}
-\AxiomC{$\mathsf{env}' \vdash \mathsf{Type}$}
-\UnaryInfC{$\execEffect(\mathsf{update}(\mathsf{env}'), e, \kappa) \equiv (\mathcal{N}[e \mapsto \langle i, b, r, \mathsf{cfg}, \mathsf{env}' \rangle], \mu, \omega)$}
+\AxiomC{$
+e \in \mathcal{E}%
+\quad S : \mathsf{Type}%
+\quad \mathsf{env}(e) : \mathsf{Env}(S)%
+\quad s : \mathsf{Env}(S)%
+$}
+\UnaryInfC{$\execEffect(\mathsf{update}(s), e, \kappa) \equiv%
+(\mathcal{N}[e \mapsto \langle%
+i, b, r, \mathsf{cfg}, s%
+ \rangle], \mu, \omega)$}
 \end{prooftree}
 \end{definition}
 
 \begin{definition}[\textsc{ESpawn}]\label{rule:e-spawn}
-Engine creation:
+\hspace{-1.5em}
 \begin{prooftree}
-\AxiomC{$\mathsf{cfg}' \equiv \langle \mathsf{freshName}(\mathsf{unit}), \alpha(e), \mathsf{process} \rangle$}
-\UnaryInfC{$\execEffect(\mathsf{spawn}(\mathsf{cfg}', \mathsf{env}'), e, \kappa) \equiv \textsc{CreateEngine}(n_i, \mathsf{cfg}', \mathsf{env}')$}
+% parent engine
+\AxiomC{$%
+n_i \in \mathcal{N}%
+\quad e \in \mathcal{E}_i%
+\quad c \equiv \langle \mathsf{freshName}(\mathsf{unit}),
+\alpha(e), \mathsf{process} \rangle%
+$}
+\noLine
+\UnaryInfC{$%
+S : \mathsf{Type}%
+\quad s : \mathsf{Env}(S)%
+\quad (k \rightsquigarrow k') \equiv \textsc{CreateEngine}(\kappa, n_i, c, s)
+$}
+\UnaryInfC{$\execEffect(\mathsf{spawn}(c, s), e, \kappa) \equiv k'$}
 \end{prooftree}
 \end{definition}
 
+{\color{red} Here, there are a few missing rules, like for chain, noop, etc.}
 
-The complete operational semantics comprises three components:
-\begin{enumerate}
-\item Configuration transitions via Rules \textsc{Send}--\textsc{Process}.
-\item Effect execution through Rules \textsc{ESendMsg}--\textsc{EChain}.
-\item Type safety through Definition~\ref{def:effects}.
-\end{enumerate}
-
-This combined system formally describes: i) how messages get delivered using
+The combined system as per the rules above formally describes: i) how messages get delivered using
 mailbox rules, ii) how engines process messages one at a time, and iii) how
 changes to the system happen via effect execution. These working rules,
 together with the type safety guarantees, allow us to reason about both
 individual engine behaviour and the whole system's operation at the same time.
+Also, omitting any of the above rules may lead to undesirable system behaviours. For
+example, without \textsc{Append}, messages remain in transit indefinitely;
+excluding \textsc{Clean} leads to accumulation of engines that do not operate
+while consuming storage resources; and omitting \textsc{Pull} disrupts message
+processing causality.
+
+{\color{red} this paragraph above needs to reference the rules explicitly,
+however, since the list of rules is not complete, it's a todo.}
 
 \section{Discussion}\label{sec:related}
 
