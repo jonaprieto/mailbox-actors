@@ -210,9 +210,9 @@ Each engine is uniquely identified by an \emph{address} in the system.
 \end{axiom}
 
 
-\subsubsection{Message Structure}\label{sec:message-structure}
+\subsubsection{Message structure}\label{sec:message-structure}
 
-Engine communication occurs through typed messages. 
+Engine communication occurs through typed messages.
 \begin{definition}\label{def:messages}
 A message is a triple $m \equiv \langle s,\, t,\, v \rangle$ where:
 \begin{itemize}
@@ -223,9 +223,7 @@ A message is a triple $m \equiv \langle s,\, t,\, v \rangle$ where:
 We define projection functions $\mathsf{sender}(m)$, $\mathsf{target}(m)$, and $\mathsf{msg}(m)$ to extract the respective components of a message.
 \end{definition}
 
-
-
-\begin{definition}\label{def:message-interface}
+\begin{definition}\label{def:message-interface}%
 The \textbf{message interface} of an engine $e_j$ is the sum type
 $\mathsf{Msg_j}$ where the type constructors address the different message types
 that the engine can process.
@@ -240,9 +238,9 @@ for all $j \in \mathcal{E}$.
 
 \subsubsection{Engine components}\label{sec:engine-components}
 
-An engine is a tuple of components, which may contain immutable data such as their name,
-and parent. Although, other information such as its location, status and environment
-may change during the engine's lifecycle.
+An engine is a tuple of components, which may contain immutable data such as
+their name, and parent. Although, other information such as its location, status
+and environment may change during the engine's lifecycle.
 % YEs, we should allow engines to move around the system.
 
 \begin{definition}\label{def:engine-status}
@@ -292,34 +290,34 @@ distinguish the purpose of the engine.
 \end{equation}
 \end{definition}
 
-As we will see later, the operational mode of an engine determines how the system
-routes messages to appropriate engines. Those configured as mailboxes receive
-special treatment within the message-passing mechanism. Since the operational mode
-becomes immutable once an engine is created, this critical attribute goes into the
-engine's configuration.
+As we will see later, the operational mode of an engine determines how the
+system routes messages to appropriate engines. Those configured as mailboxes
+receive special treatment within the message-passing mechanism. Since the
+operational mode becomes immutable once an engine is created, this critical
+attribute goes into the engine's configuration.
 
 \begin{definition}\label{def:engine-configuration} The \textbf{configuration} of
 an engine $e_j$ often denoted by $\mathsf{cfg}_j$ is a tuple $\langle
-\mathsf{name}, \mathsf{parent} , \mathsf{mode} \rangle$ of
-type $\mathsf{Cfg}$. The name of the engine is its identifier, and
-\textsf{parent} is an optional reference, address, of the engine's parent.
-$\mathsf{mode}$ is the engine's operational mode as in \Cref{def:engine-mode}.
+\mathsf{name}, \mathsf{parent} , \mathsf{mode} \rangle$ of type $\mathsf{Cfg}$.
+The name of the engine is its identifier, and \textsf{parent} is an optional
+reference, address, of the engine's parent. $\mathsf{mode}$ is the engine's
+operational mode as in \Cref{def:engine-mode}.
 \end{definition}
 
 Recall that engines are isolated from each other and process messages
 independently. However, an engine's configuration alone is insufficient for
 proper operation since some form of state is required. Therefore, each engine
-encapsulates its own state as part of its execution context, which we refer to as the
-engine's \emph{environment}.
+encapsulates its own state as part of its execution context, which we refer to
+as the engine's \emph{environment}.
 
 \begin{definition}\label{def:engine-environment}
 
 Given a type $S$ representing the local state of an engine $e_j$, an execution
 \textbf{environment} of $e_j$ is a tuple $s \equiv\langle \mathsf{state},
-\mathsf{addrbook} \rangle$ of type $\mathsf{Env}(S)$, where $\mathsf{state}(s)$ is
-of type $S$, and $\mathsf{addrbook}(s)$ is the engine's address book, a non-empty
-list containing the names of other engines, including its own. $\mathsf{addrbook}(s)$
-is of type $\mathsf{List}(\mathsf{Addr})$.
+\mathsf{addrbook} \rangle$ of type $\mathsf{Env}(S)$, where $\mathsf{state}(s)$
+is of type $S$, and $\mathsf{addrbook}(s)$ is the engine's address book, a
+non-empty list containing the names of other engines, including its own.
+$\mathsf{addrbook}(s)$ is of type $\mathsf{List}(\mathsf{Addr})$.
 \end{definition}
 
 \subsubsection{Execution directives}\label{sec:execution-directives}
@@ -328,7 +326,7 @@ The behaviour of an engine is a declarative description of what it does when it
 reacts to a message. This description of computation is via an effect system
 consisting of commands to the system to be executed at runtime.
 
-\begin{definition}\label{def:effects}
+\begin{definition}\label{def:effects}%
 Given a type $S$ representing the local state of an engine $e_j$, an
 \textbf{effect} is of type $\mathsf{Effect}(S)$, which considers all the
 possible ways an engine can influence the system by reacting to a message.
@@ -361,14 +359,14 @@ possible ways an engine can influence the system by reacting to a message.
 	\arrow["{c_1}"', maps to, from=3-1, to=4-1]
 	\arrow[maps to, from=3-2, to=4-2]
 	\arrow["{c_k}", maps to, from=3-3, to=4-3]
-\end{tikzcd}\]
-\caption{For an engine $e_j$, its behaviour acts on a message $m$
-of type $\mathsf{Msg}_j$ and an engine's configuration and environment
-$\mathsf{cfg}_j$ and $\mathsf{env}_j$, respectively. The pre-conditions,
-denoted as $g_i$, are guards that determine which action is executed. The symbols
-$r_i$ represent output that feeds into the actions $c_i$. The actions, denoted
-as $c_i$, are effects as in \Cref{def:effects} that are executed if their pre-conditions
-are satisfied. If no pre-conditions are satisfied, the action is a null operation,
+\end{tikzcd}\]%
+\caption{For an engine $e_j$, its behaviour acts on a message $m$ of type
+$\mathsf{Msg}_j$ and an engine's configuration and environment $\mathsf{cfg}_j$
+and $\mathsf{env}_j$, respectively. The pre-conditions, denoted as $g_i$, are
+guards that determine which action is executed. The symbols $r_i$ represent
+output that feeds into the actions $c_i$. The actions, denoted as $c_i$, are
+effects as in \Cref{def:effects} that are executed if their pre-conditions are
+satisfied. If no pre-conditions are satisfied, the action is a null operation,
 $\mathsf{noop}$.}
 \label{fig:effect}
 \end{figure}
@@ -376,22 +374,24 @@ $\mathsf{noop}$.}
 Given an engine $e_j$, the following definition specifies the guard and action
 components of an engine's behaviour.
 
-\begin{definition}\label{def:guards}
+\begin{definition}\label{def:guards}%
 A \textbf{guard} is a pre-condition that, when an engine processes a message
 with its environment $\mathsf{env}_j$ and configuration $\mathsf{cfg}_j$,
-returns $\mathsf{none}$ if the guard is not satisfied, and returns data otherwise.
-Therefore, a guard can be seen as a mapping of type
-$\mathsf{Msg} \times \mathsf{Cfg}_j \times \mathsf{Env}_j(S_j) \to \Option{R}$
-for some type $R$, where $R$ is the specific type of data returned when the guard is satisfied.
+returns $\mathsf{none}$ if the guard is not satisfied, and returns data
+otherwise. Therefore, a guard can be seen as a mapping of type $\mathsf{Msg}
+\times \mathsf{Cfg}_j \times \mathsf{Env}_j(S_j) \to \Option{R}$ for some type
+$R$, where $R$ is the specific type of data returned when the guard is
+satisfied.
 \end{definition}
 
-On the computational aspects of an engine, the behaviour evaluating the different
-guards, and for each guard, the action to be executed, whenever the guard is
-satisfied, is as follows:
+On the computational aspects of an engine, the behaviour evaluating the
+different guards, and for each guard, the action to be executed, whenever the
+guard is satisfied, is as follows:
 
-\begin{definition}\label{def:action}
-Given an engine $e_j$, an \textbf{action} acting on data of type $R$ is a mapping of type
-$R \times \mathsf{Msg}_j \times \mathsf{Cfg}_j \times \mathsf{Env}_j(S_j) \to \mathsf{Effect}(S_j)$.
+\begin{definition}\label{def:action}%
+Given an engine $e_j$, an \textbf{action} acting on data of type $R$ is a
+mapping of type $R \times \mathsf{Msg}_j \times \mathsf{Cfg}_j \times
+\mathsf{Env}_j(S_j) \to \mathsf{Effect}(S_j)$.
 \end{definition}
 
 Then, we compose a guard and an action to form a \emph{guarded action}, which is
@@ -401,17 +401,20 @@ reuse the guard of an engine in different engines or decouple the logic of the
 guard against the action, allowing the pre-conditions to be reused in scenarios
 where the action is not applicable.
 
-\begin{definition}\label{def:guarded-action}
-  Given an engine $e_j$, a \textbf{guarded action} of the engine's behaviour is a tuple $\langle g_j, a_j \rangle$, where:
+\begin{definition}\label{def:guarded-action}%
+  Given an engine $e_j$, a \textbf{guarded action} of the engine's behaviour is
+  a tuple $\langle g_j, a_j \rangle$, where:
   \begin{itemize}
     \item $g_j$ is a guard as in \Cref{def:guards} that determines when the
     action $a_j$ should execute, and
-    \item $a_j$ is an action of type $\mathsf{Effect}(S_j)$ as in \Cref{def:effects} that specifies what to execute
+    \item $a_j$ is an action of type $\mathsf{Effect}(S_j)$ as in
+    \Cref{def:effects} that specifies what to execute
   \end{itemize}
 \end{definition}
 
 Together, both the guard and action induce a mapping of type
-\begin{equation*}\label{eq:guarded-action}
+
+\begin{equation*}\label{eq:guarded-action}%
 \mathsf{Msg} \times \mathsf{Cfg}_j
 \times \mathsf{Env}_j(S_j) \to \mathsf{Effect}(S_j)\,.
 \end{equation*}
@@ -422,18 +425,18 @@ So, upon receiving a message, an engine $e_j$ checks which of its guards is
 satisfied, and if so, the engine executes the corresponding action, as
 illustrated in \Cref{fig:effect}.
 
-\begin{remark}\label{rem:turing-completeness}
+\begin{remark}\label{rem:turing-completeness}%
 A question at this point is whether engines can enable unbounded computation.
-Engines' behaviours as introduced in~\cite{engine-art} are Turing complete. To see
-this, we need to show that the design satisfies the two fundamental requirements:
-conditional branching through guard-state interactions and indefinite looping
-via message-passing recursion. Note that the message-passing mechanism
-says nothing about forbidding engines from sending messages to themselves, and
-this is a powerful mechanism that allows for recursive patterns. So, while
-individual effects as listed in \Cref{def:effects} lack explicit looping constructs,
-and it may not seem at first glance there is a recursive mechanism, the combination
-of guarded actions acting as conditional statements with open-ended message passing
-enables computational universality.
+Engines' behaviours as introduced in~\cite{engine-art} are Turing complete. To
+see this, we need to show that the design satisfies the two fundamental
+requirements: conditional branching through guard-state interactions and
+indefinite looping via message-passing recursion. Note that the message-passing
+mechanism says nothing about forbidding engines from sending messages to
+themselves, and this is a powerful mechanism that allows for recursive patterns.
+So, while individual effects as listed in \Cref{def:effects} lack explicit
+looping constructs, and it may not seem at first glance there is a recursive
+mechanism, the combination of guarded actions acting as conditional statements
+with open-ended message passing enables computational universality.
 \end{remark}
 
 \subsubsection{Engines}\label{sec:processing-engines}
@@ -471,7 +474,7 @@ distinguished by having its operational mode set to $\mathsf{process}$ through
 its configuration's mode field. The internals of mailbox engines are described
 in \Cref{def:mailbox-engine}.
 
-\begin{definition}\label{def:mailbox-engine}  
+\begin{definition}\label{def:mailbox-engine}
 A \emph{mailbox engine} $m_j$ is a system-configured companion engine
 automatically created when instantiating a processing engine $e_j$. It must
 satisfy:
@@ -538,7 +541,7 @@ topology relationships between components, and coordination mechanisms for
 distributed state consistency.
 \end{remark}
 
-\subsubsection{System State}\label{sec:state}
+\subsubsection{System state}\label{sec:state}
 
 Having defined nodes and their capabilities, we now define the overall system
 state. A system consists of a collection of nodes and a set of in-transit
@@ -593,8 +596,9 @@ system state $\kappa$, there exists a subsequent state $\kappa'$ where $m$ is
 eventually delivered to its intended recipient.
 \end{axiom}
 
-Now the system must provide primitives to aid in the creation of different entities such as nodes and
-engines. So, at any point in time the system provides functions such as the following.
+Now the system must provide primitives to aid in the creation of different
+entities such as nodes and engines. So, at any point in time the system provides
+functions such as the following.
 
 \begin{itemize}
 \item $\mathsf{freshId} : \mathsf{Unit} \to \mathsf{Addr}$ is the function that
@@ -637,9 +641,9 @@ in-transit messages. The operational semantics for the system are defined here
 via the reduction relation denoted by $(\rightsquigarrow)$, where $\kappa^i
 \rightsquigarrow \kappa^{i+1}$ signifies that the system state $\kappa^i$
 evolves to $\kappa^{i+1}$. The notation $\kappa^i$ is mentioned in
-\Cref{rem:system-time-notation}. 
+\Cref{rem:system-time-notation}.
 
-\subsection{System Initialization and Extension Rules}\label{sec:creation-rules}
+\subsection{System initialization and extension rules}\label{sec:creation-rules}
 
 In the following rules, we assume that $\kappa \equiv (\mathcal{N}, \mu,
 \omega)$, unless otherwise specified.
@@ -654,7 +658,8 @@ In the following rules, we assume that $\kappa \equiv (\mathcal{N}, \mu,
 Where $\omega_n$ contains node-specific operations including:
 \begin{itemize}
 \item $\alpha_n : \mathcal{E}_n \to \mathsf{Addr}$, node-local address map, and
-\item $\epsilon_n : \mathsf{Addr}_n \to \mathcal{E}_n$ for engine lookup.
+\item $\epsilon_n : \mathsf{Addr}_n \to \mathcal{E}_n$ for engine lookup given
+an engine's address.
 \end{itemize}
 \end{definition}
 
@@ -712,7 +717,7 @@ $}
 m_{\mathsf{new}} \mapsto \langle
 \mathsf{id}_i, \eta \rangle
 \}%
-\quad \omega_i' \equiv \omega_i[\alpha \mapsto \alpha_i'] 
+\quad \omega_i' \equiv \omega_i[\alpha \mapsto \alpha_i']
 $}
 \UnaryInfC{$\kappa \rightsquigarrow %
 (\mathcal{N}[n_i \mapsto%
@@ -776,7 +781,7 @@ lost.
 %of changing the engine's configuration.
 \end{remark}
 
-\subsection{Message-passing rules}\label{sec:system-transition-rules}
+\subsection{Message-passing rules}\label{sec:message-passing-rules}
 
 Our message-passing mechanism aims to support (i) asynchronous communication
 with non-blocking sends, (ii) mailbox isolation with guaranteed eventual
@@ -784,7 +789,7 @@ delivery, and (iii) explicit lifecycle management for engines.
 
 The \textsc{Send} rule governs message communication between engines. When
 engine $e_s$ sends a message to engine $e_t$, the rule handles the registration
-of the message in $e_t$'s dedicated mailbox. This message must be well-typed 
+of the message in $e_t$'s dedicated mailbox. This message must be well-typed
 according to $e_t$'s message interface specification. This rule is the only way
 to add a message to $\mu$.
 
@@ -825,10 +830,13 @@ mailbox. This is done via the \textsc{Enqueue} rule.
   \UnaryInfC{$%
    \mathsf{mail} = \mathsf{mode}(\mathsf{cfg}(\epsilon(m_t)))%
   \quad q \equiv \mathsf{env}(\epsilon(m_t)) $}
-  \UnaryInfC{$\kappa \rightsquigarrow (\mathcal{N}[m_t \mapsto \langle i_{mbox}, b_{mbox}, r, \mathsf{cfg}_{mbox}, q \cup \{v\} \rangle], \mu \setminus \{m\}, \omega)$}
+  \UnaryInfC{$\kappa \rightsquigarrow (\mathcal{N}[m_t \mapsto%
+  \langle i_{mbox}, b_{mbox}, r, \mathsf{cfg}_{mbox}, q \cup \{v\} \rangle],%
+  \mu \setminus \{m\},%
+  \omega)$}
   \end{prooftree}
   \end{definition}
-  
+
   \begin{definition}[\textsc{Dequeue}]\label{rule:dequeue}
   \hspace{-1.5em}
   \begin{prooftree}
@@ -851,46 +859,78 @@ mailbox. This is done via the \textsc{Enqueue} rule.
   \UnaryInfC{$\kappa \rightsquigarrow (\mathcal{N}', \mu, \omega)$}
   \end{prooftree}
   \end{definition}
+After a processing engine retrieves a message via the \textsc{Dequeue} rule, it
+enters the \texttt{busy} state to handle the message. This message processing
+involves executing the engine's predefined behaviour through the
+\textsc{Process} rule, as defined in~\Cref{sec:processing-rules}. However, we
+need first to establish how an engine's behaviour evaluates messages through its
+guarded actions, and how the evaluation of those effects changes the system state.
 
-\subsection{Processing Rules}\label{sec:processing-rules}
+\subsection{Behaviour evaluation rules}\label{sec:behavior-eval-rules}
 
-Once the processing engine pulls a message from its mailbox, via the
-\textsc{Dequeue} rule, the engine can process the message in the \texttt{busy}
-state. Now, processing an engine consists of executing its behaviour.
-% TODO: add a reference where the typing rules for behaviour execution are given.
-This is done via the \textsc{Process} rule.
+While the system's operational semantics primarily govern inter-engine
+communication, individual engines retain full autonomy over their internal
+message processing. This subsection formalises the evaluation mechanism for
+guarded actions that govern engine responses to messages. Specifically, the
+following rules define the process by which an engine $p$ consumes a message $v$
+from its mailbox, formalised via the judgment $b_p,
+\mathsf{env}_p \vdash v \downarrow E$. This relation indicates that evaluating
+message $v$ using behaviour $b_p$ within the context of a busy engine $p$ and its
+environment $\mathsf{env}_p$ results in an effect $E$.
 
-% FIXME: this rule is not correct.
-\begin{definition}[\textsc{Process}]\label{rule:process}
+\begin{definition}[\textsc{GuardedActionEval}]\label{rule:guarded-action-eval}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
-n_i \in \mathcal{N}%
-\quad e_p \in \mathcal{E}_i%
-\quad e_p \equiv \langle i, b, \mathsf{busy}, \mathsf{cfg}, \mathsf{env} \rangle%
+p \in \mathcal{E}%
+\quad p \equiv \langle i_p, b_p, \mathsf{busy}, \mathsf{cfg}_p, \mathsf{env}_p \rangle%
+\quad v : i_p%
+\quad S : \mathsf{Type}%
+\quad \mathsf{env}_p : \mathsf{Env}(S)%
 $}
 \noLine
 \UnaryInfC{$%
-m : i%
-\quad b \vdash \mathsf{env} \xrightarrow{m} (\mathsf{env}', E)%
-\quad \kappa \vdash E \rightsquigarrow (\mathcal{N}', \mu', \omega')$}
-\UnaryInfC{$\kappa \rightsquigarrow%
-\mathcal{N}'[%
-\mathcal{E}_i\mapsto \mathcal{E}_i[e_p \mapsto%
-\langle i, b, \mathsf{ready}, \mathsf{cfg}, \mathsf{env}' \rangle]%
-, \mu'
-, \omega'
-]$}
+\langle g, a \rangle \in b_p%
+\quad g(v, \mathsf{cfg}_p, \mathsf{env}_p) = \mathsf{some}(r)%
+\quad E : \mathsf{Effect}(S)%
+\quad a(r, v, \mathsf{cfg}_p, \mathsf{env}_p) = E%
+$}
+\UnaryInfC{$b_p, \mathsf{env}_p \vdash v \downarrow E$}
 \end{prooftree}
-The notation $b \vdash \mathsf{env} \xrightarrow{m} (\mathsf{env}', E)$
-denotes that applying behaviour $b$ to message $m$ with environment $\mathsf{env}$
-transforms the engine's environment to $\mathsf{env}'$ while generating an effect $E$.
 \end{definition}
 
-{\color{red} the typing rules for the behaviour execution are missing.}
+The \textsc{GuardedActionEval} rule reads as follows. When a guarded action
+$\langle g, a \rangle$ exists in behaviour $b_p$ such that: the guard $g$ is
+satisfied for message $v$, configuration $\mathsf{cfg}_p$, and environment
+$\mathsf{env}_p$, yielding a result $r$; the corresponding action $a$ executed
+using $r$, $v$, $\mathsf{cfg}_p$, and $\mathsf{env}_p$ generates effect $E$.
 
+Similarly, if no matching guard is found, the engine will perform a no-op, as
+defined in~\Cref{def:effects}.
 
-\subsection{Effect Execution Rules}\label{sec:effect-rules}
+\begin{definition}[\textsc{NoMatchingGuard}]\label{rule:no-matching-guard}
+\hspace{-1.5em}
+\begin{prooftree}
+\AxiomC{$%
+p \in \mathcal{E}%
+\quad p \equiv \langle i_p, b_p, \mathsf{busy}, \mathsf{cfg}_p, \mathsf{env}_p \rangle%
+$}
+\noLine
+\UnaryInfC{$
+S : \mathsf{Type}%
+\quad \mathsf{env}_p : \mathsf{Env}(S)%
+\quad v : i_p%
+$}
+\noLine
+\UnaryInfC{$%
+\langle g, a \rangle \in b%
+\quad g(v, \mathsf{cfg}_p, \mathsf{env}_p) = \mathsf{none}%
+$}
+\UnaryInfC{$b_p, \mathsf{env}_p \vdash v \downarrow \mathsf{noop}$}
+\end{prooftree}
+\end{definition}
+
+\subsection{Effect execution rules}\label{sec:effect-rules}
 
 The function $\execEffect$ executes effects as defined in \Cref{def:effects}.
 Its definition is given by case analysis on the different constructors of the
@@ -909,7 +949,7 @@ e_t \equiv \langle i_t, b_t, \mathsf{ready}, \mathsf{cfg}_t, \mathsf{env}_t \ran
 \quad (\kappa \rightsquigarrow \kappa') \equiv%
  \textsc{Send}(\kappa, e_s, e_t,v)
 $}
-\UnaryInfC{$\execEffect(\mathsf{send}(a_t, v), e_s, \kappa)
+\UnaryInfC{$\execEffect(\mathsf{send}(a_t, v), \kappa)
 \equiv%
 \kappa'$}
 \end{prooftree}
@@ -924,7 +964,7 @@ e \in \mathcal{E}%
 \quad \mathsf{env}(e) : \mathsf{Env}(S)%
 \quad s : \mathsf{Env}(S)%
 $}
-\UnaryInfC{$\execEffect(\mathsf{update}(s), e, \kappa) \equiv%
+\UnaryInfC{$\execEffect(\mathsf{update}(s), \kappa) \equiv%
 (\mathcal{N}[e \mapsto \langle%
 i, b, r, \mathsf{cfg}, s%
  \rangle], \mu, \omega)$}
@@ -947,7 +987,7 @@ S : \mathsf{Type}%
 \quad s : \mathsf{Env}(S)%
 \quad (k \rightsquigarrow k') \equiv \textsc{CreateEngine}(\kappa, n_i, c, s)
 $}
-\UnaryInfC{$\execEffect(\mathsf{spawn}(c, s), e, \kappa) \equiv k'$}
+\UnaryInfC{$\execEffect(\mathsf{spawn}(c, s), \kappa) \equiv k'$}
 \end{prooftree}
 \end{definition}
 
@@ -957,15 +997,18 @@ $}
 \AxiomC{$e \in \mathcal{E}_i$}
 \AxiomC{$\execEffect(\mathit{eff}_1, e, \kappa) \equiv \kappa'$}
 \AxiomC{$\execEffect(\mathit{eff}_2, e, \kappa') \equiv \kappa''$}
-\TrinaryInfC{$\execEffect(\mathsf{chain}(\mathit{eff}_1, \mathit{eff}_2), e, \kappa) \equiv \kappa''$}
+\TrinaryInfC{$\execEffect(\mathsf{chain}(\mathit{eff}_1, \mathit{eff}_2),
+\kappa)%
+\equiv \kappa''$}
 \end{prooftree}
 \end{definition}
 
 \begin{definition}[\textsc{ETerminate}]\label{rule:e-terminate}
 \hspace{-1.5em}
 \begin{prooftree}
-\AxiomC{$e \in \mathcal{N} \quad (\kappa \rightsquigarrow \kappa') \equiv \textsc{Clean}(\kappa, e)$}
-\UnaryInfC{$\execEffect(\mathsf{terminate}, e, \kappa) \equiv \kappa'$}
+\AxiomC{$e \in \mathcal{N} \quad (\kappa \rightsquigarrow \kappa') \equiv%
+  \textsc{Clean}(\kappa, e)$}
+\UnaryInfC{$\execEffect(\mathsf{terminate}, \kappa) \equiv \kappa'$}
 \end{prooftree}
 \end{definition}
 
@@ -973,38 +1016,77 @@ $}
   \hspace{-1.5em}
   \begin{prooftree}
   \AxiomC{$\quad e \in \mathcal{E}_i$}
-  \UnaryInfC{$\execEffect(\mathsf{noop}, e, \kappa) \equiv \kappa$}
+  \UnaryInfC{$\execEffect(\mathsf{noop}, \kappa) \equiv \kappa$}
   \end{prooftree}
 \end{definition}
-  
 
+% Finally define effect execution
+\begin{definition}[\textsc{EffectExec}]\label{rule:effect-exec}
+  \hspace{-1.5em}
+  \begin{prooftree}
+  \AxiomC{$\execEffect(E, \kappa) = \kappa'$} \UnaryInfC{$\kappa \vdash
+  E \rightsquigarrow \kappa'$}
+  \end{prooftree}
+\end{definition}
 
+\subsection{Processing rules}\label{sec:processing-rules}
 
-The combined system as per the rules above formally describes: i) how messages get delivered using
-mailbox rules, ii) how engines process messages one at a time, and iii) how
-changes to the system happen via effect execution. These working rules,
-together with the type safety guarantees, allow us to reason about both
-individual engine behaviour and the whole system's operation at the same time.
-Also, omitting any of the above rules may lead to undesirable system behaviours. For
-example, without \textsc{Append}, messages remain in transit indefinitely;
-excluding \textsc{Clean} leads to accumulation of engines that do not operate
-while consuming storage resources; and omitting \textsc{Pull} disrupts message
-processing causality.
+This section introduces the final and most critical operational rule:
+\textsc{Process}, which governs message handling by engines.
+
+\begin{definition}[\textsc{Process}]\label{rule:process}
+\hspace{-1.5em}
+\begin{prooftree}
+\AxiomC{$%
+n_i \in \mathcal{N}%
+\quad p \in \mathcal{E}_i%
+\quad p \equiv \langle i_p, b_p, \mathsf{busy}, \mathsf{cfg}_p, \mathsf{env}_p \rangle%
+$}
+\noLine
+\UnaryInfC{$%
+m : i_p%
+\quad b_p, \mathsf{env}_p \vdash  m \downarrow E%
+\quad \kappa \vdash E \rightsquigarrow (\mathcal{N}', \mu', \omega')$}
+\UnaryInfC{$\kappa \rightsquigarrow%
+\mathcal{N}'[%
+\mathcal{E}_i\mapsto \mathcal{E}_i[e_p \mapsto%
+\langle i_p, b_p, \mathsf{ready}, \mathsf{cfg}_p, \mathsf{env}_p' \rangle]%
+, \mu'
+, \omega'
+]$}
+\end{prooftree}
+\end{definition}
+
+The formal system established through the set of rules above specifies three key
+aspects: (i) message delivery through mailbox operations, (ii) sequential
+message processing by engines, and (iii) state transitions through effect
+execution. We believe that these core operational rule sets, combined with type
+safety guarantees, enable comprehensive analysis of both individual engine
+behaviours and overall system dynamics.
+
+The omission of any rule induces system-level inconsistencies or failures:
+failure to include \textsc{Enqueue} leaves messages perpetually in-transit;
+absence of \textsc{Dequeue} breaks causal message processing relationships; and,
+for example, exclusion of \textsc{Clean} results in resource-leaking dormant
+engines.
 
 \section{Discussion}\label{sec:related}
+
+There are several extensions to the model that could be considered. I mentioned
+below a few discussion points that could be considered.
 
 \paragraph{Multiple mailboxes per processing actor}
 While our architecture could naturally accommodate multiple mailbox actors per
 processing actor, a pattern that might enable specialized message routing or
 priority queues, we consciously omit this extension from our core design. This
 restriction serves to preserve the system's verifiable properties. Concurrent
-pulling from multiple mailboxes could introduce race conditions that violate
-our exactly-once delivery guarantee. The coordination overhead required for
-atomic operations across distributed mailboxes would also compromise the
-simplicity benefits of our decoupled architecture. Therefore, we intentionally
-maintain a one-to-one relationship between processing actors and their mailboxes,
-as this constraint ensures reliable message ordering while preserving the
-opacity and encapsulation benefits central to our design.
+pulling from multiple mailboxes could introduce race conditions that violate our
+exactly-once delivery guarantee. The coordination overhead required for atomic
+operations across distributed mailboxes would also compromise the simplicity
+benefits of our decoupled architecture. Therefore, we intentionally maintain a
+one-to-one relationship between processing actors and their mailboxes, as this
+constraint ensures reliable message ordering while preserving the opacity and
+encapsulation benefits central to our design.
 
 \paragraph{Practical message buffering strategies}
 By promoting mailboxes to first-class, that is, engine, we enable several
@@ -1016,20 +1098,19 @@ relevancy, priority-based message organization, and temporal delivery
 optimization. However, some of these features would require extension to the
 message interface of mailboxes, and to the interface of their internal state.
 Also, the engine model would need to be extended to support time-based events,
-such as delays~\cite{engine-art}. Additionally, message routing
-capabilities could be added to enable directed forwarding to specific mailboxes,
-implementing debugging mechanisms.
+such as delays~\cite{engine-art}. Additionally, message routing capabilities
+could be added to enable directed forwarding to specific mailboxes, implementing
+debugging mechanisms.
 
-As said before, another aspect in the model not addressed in this presentation is
-the addition of a temporal component to the engine model. This would enable
-engines to react to time-based events. Having such
-information would also enable us to model and track the system's liveness, progress,
-and latency. %what else?
+As said before, another aspect in the model not addressed in this presentation
+is the addition of a temporal component to the engine model. This would enable
+engines to react to time-based events. Having such information would also enable
+us to model and track the system's liveness, progress, and latency. %what else?
 
 \paragraph{System properties}
-There is nothing that prevents us from proving system properties for this extended
-model. A possible starting point would be to add a timeout primitive to the
-engine model and demonstrate that the system remains live and makes progress
+There is nothing that prevents us from proving system properties for this
+extended model. A possible starting point would be to add a timeout primitive to
+the engine model and demonstrate that the system remains live and makes progress
 even in the presence of timeouts for practical implementations.
 
 
@@ -1039,31 +1120,45 @@ techniques like work-queues where actors pull messages when ready to process
 them. Industrial libraries like WeChaty in JavaScript have implemented similar
 mailbox separation patterns. However, our work is novel in treating mailboxes as
 first-class primitives within the actor model itself.
-\paragraph{Message-passing mechanism}
-Our message-passing mechanism is implemented via the five rules given above. The
-\textsc{Send} rule enables asynchronous message creation following actor system
-principles, allowing concurrent message generation without sender blocking.
-Messages are reliably delivered through the \textsc{Append} rule, which
-which implements atomic \say{enqueuing} to mailboxes.  Message digestion is handled
-by the \textsc{Pull} rule. Engine-garbage collection is addressed by the
-\textsc{Clean} rule through explicit termination detection to prevent orphaned
-processes.
-Finally, the \textsc{Process} rule enables atomic state transitions by combining
-$\pi$-calculus reduction semantics with practical effect handling. Together,
-these rules form a complete system for reliable asynchronous communication with
-proper resource management.
+
+\paragraph{Rules as way to guide implementation}
+The operational semantics given in \Cref{sec:semantics} can be seen as a way to
+guide the implementation of mailbox-as-an-actor approach, described in this
+paper. We present the rules such they should be easy to reason about and to
+implement.
+
+The system-level rules are given in \Cref{sec:creation-rules}. In this section,
+we describe how the system grows from the initial empty state, with the addition
+of nodes, engines, and later on messages in \Cref{sec:message-passing-rules}. We
+cover other rules such as \textsc{Clean} as a garbage-collector for engines,
+however, we did not cover rules for on-demand engine or node
+deletion/disconnect. This can be seen as an extension of the model.
+
+Our message-passing mechanism is implemented the rules given in
+\Cref{sec:message-passing-rules}. The \textsc{Send} rule enables asynchronous
+message realisation in the system, allowing concurrent message generation
+without sender blocking. Messages are reliably delivered to mailbox engines
+through the \textsc{Enqueue} rule, which implements atomic \say{enqueuing}.
+Message digestion is handled by the \textsc{Dequeue} rule.
+
+Finally, and probably one of the most interesting rules, the \textsc{Process}
+rule enables atomic state transitions by combining behaviour evaluation, rules
+in \Cref{sec:behavior-eval-rules} with effect handling, rules in
+\Cref{sec:effect-rules}. Together, the rules in \Cref{sec:semantics} form a
+complete system for reliable asynchronous communication with proper resource
+management.
 
 \paragraph{Future work}
 There is an ongoing effort to implement this work in Elixir via macros that
-generate the necessary code to support the mailbox primitive. The library is
-a work-in-progress, and the code is available at
+generate the necessary code to support the mailbox primitive. The library is a
+work-in-progress, and the code is available at
 \url{https://github.com/anoma/engine}, branch \texttt{mailbox-actors}.
 
 \section{Acknowledgements}
-The inspiration for this work comes from a discussion initiated by Jeremy
-Ornelas and Christophe De Troyer, and continued by Tobias Heindel, Anthony Hart,
-and TG x Thoth. Thank them for their feedback and their questions that motivated
-this work.
+
+This work was inspired by discussions between Jeremy Ornelas and
+Christophe De Troyer, which subsequently evolved through helpful comments and
+questions from Tobias Heindel, Anthony Hart, and TGX Thoth.
 
 \bibliography{art.bib,ref.bib}
 
