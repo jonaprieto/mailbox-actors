@@ -76,10 +76,10 @@ separation between processing actors and their mailboxes in \Cref{sec:model},
 which enables improved flexibility and scalability for message management. Second,
 we formulate operational semantics in \Cref{sec:semantics} for both the decoupled
 architecture and its explicit message-passing mechanism, making the system's
-communication patterns formally explicit. This description provides sufficient
-grounding to implement a library on top of a compatible system/platform such
-as Erlang, and to formalize and prove key system properties such as liveness
-guarantees and correctness under concurrent message processing.
+design formally explicit. This description provides sufficient grounding to
+implement a library on top of a compatible system/platform such as Erlang, and
+to formalise and prove key system properties such as liveness guarantees and
+correctness under concurrent message processing.
 
 \section{Notation}\label{sec:notation}
 
@@ -165,8 +165,6 @@ actions have satisfied pre-conditions, and executes the corresponding action.
   %Here, we have a more restricted set of actions, as will be seen in \Cref{def:effects}.
 \end{remark}
 
-\subsection{Definitions}\label{sec:definitions}
-
 The model assumes an ambient \emph{system} $\kappa$ mainly consisting of a set of
 \emph{nodes} $\mathcal{N}$, a set of \emph{engines} $\mathcal{E}$, following a
 specific \emph{message-passing mechanism} (MPM for short) that will be described
@@ -195,7 +193,7 @@ $\mu^i$ is the set of messages in the $i$-th step.
 % referring to engines.
 
 
-\subsubsection{Addresses and names}\label{sec:addresses-and-names}
+\subsection{Addresses and names}\label{sec:addresses-and-names}
 
 \begin{definition}\label{def:address}
 
@@ -210,7 +208,7 @@ Each engine is uniquely identified by an \emph{address} in the system.
 \end{axiom}
 
 
-\subsubsection{Message structure}\label{sec:message-structure}
+\subsection{Message structure}\label{sec:message-structure}
 
 Engine communication occurs through typed messages.
 \begin{definition}\label{def:messages}
@@ -236,7 +234,7 @@ where $j$ ranges over all engines in the system. To simplify the notation, we
 assume message type subtyping, that is, $\mathsf{Msg_j} \subseteq \mathsf{Msg}$
 for all $j \in \mathcal{E}$.
 
-\subsubsection{Engine components}\label{sec:engine-components}
+\subsection{Engine components}\label{sec:engine-components}
 
 An engine is a tuple of components, which may contain immutable data such as
 their name, and parent. Although, other information such as its location, status
@@ -320,7 +318,7 @@ non-empty list containing the names of other engines, including its own.
 $\mathsf{addrbook}(s)$ is of type $\mathsf{List}(\mathsf{Addr})$.
 \end{definition}
 
-\subsubsection{Execution directives}\label{sec:execution-directives}
+\subsection{Execution directives}\label{sec:execution-directives}
 
 The behaviour of an engine is a declarative description of what it does when it
 reacts to a message. This description of computation is via an effect system
@@ -375,7 +373,7 @@ Given an engine $e_j$, the following definition specifies the guard and action
 components of an engine's behaviour.
 
 \begin{definition}\label{def:guards}%
-A \textbf{guard} is a pre-condition that, when an engine processes a message
+A \textbf{guard} is a pre-condition that, when an engine reacts to a message
 with its environment $\mathsf{env}_j$ and configuration $\mathsf{cfg}_j$,
 returns $\mathsf{none}$ if the guard is not satisfied, and returns data
 otherwise. Therefore, a guard can be seen as a mapping of type $\mathsf{Msg}
@@ -439,7 +437,7 @@ mechanism, the combination of guarded actions acting as conditional statements
 with open-ended message passing enables computational universality.
 \end{remark}
 
-\subsubsection{Engines}\label{sec:processing-engines}
+\subsection{Engines}\label{sec:processing-engines}
 
 Having defined the components that make up an engine's behaviour, we can now
 formally specify engines themselves. As the fundamental computational units of
@@ -506,7 +504,7 @@ from processing logic. This allows for independent scaling of message ingestion
 and core computation.
 %TODO: add a reference to the corresponing rules in the operational semantics
 
-\subsubsection{Nodes}\label{sec:nodes}
+\subsection{Nodes}\label{sec:nodes}
 
 Having previously introduced the system $\kappa$, which comprises a set of nodes
 $\mathcal{N}$ that host engines $\mathcal{E}$ governed by a message-passing
@@ -541,7 +539,7 @@ topology relationships between components, and coordination mechanisms for
 distributed state consistency.
 \end{remark}
 
-\subsubsection{System state}\label{sec:state}
+\subsection{System state}\label{sec:state}
 
 Having defined nodes and their capabilities, we now define the overall system
 state. A system consists of a collection of nodes and a set of in-transit
@@ -643,7 +641,7 @@ via the reduction relation denoted by $(\rightsquigarrow)$, where $\kappa^i
 evolves to $\kappa^{i+1}$. The notation $\kappa^i$ is mentioned in
 \Cref{rem:system-time-notation}.
 
-\subsection{System initialization and extension rules}\label{sec:creation-rules}
+\subsection{System initialisation and extension rules}\label{sec:creation-rules}
 
 In the following rules, we assume that $\kappa \equiv (\mathcal{N}, \mu,
 \omega)$, unless otherwise specified.
@@ -737,11 +735,11 @@ respectively, which follow the specification as in \Cref{def:mailbox-engine}.
 
 \begin{remark}
 The rule \textsc{CreateEngine} takes place in the context of a node $n_i$. When defining an
-engine process $e_{\mathsf{new}}$, the system also creates a mailbox engine on the same
+processing engine $e_{\mathsf{new}}$, the system also creates a mailbox engine on the same
 node, $m_{\mathsf{new}}$. While the only parameters required by this rule are the
-engine process parameters (configuration and environment) for $e_{\mathsf{new}}$,
+processing engine parameters (configuration and environment) for $e_{\mathsf{new}}$,
 one could customize the mailbox parameters, such as its behaviour $b_{\mathsf{mbox}}$,
-to enable specialized message routing or priority-based message organization.
+to enable specialized message routing or priority-based message organisation.
 However, for simplicity, we use a uniform mailbox behaviour across all mailbox
 engines.
 \end{remark}
@@ -1094,8 +1092,8 @@ essential messaging features. A mailbox can implement \emph{rate limiting}
 through configurable constraints on message retrieval frequency. Conceptually,
 mailbox engines function as \emph{secretaries}, intelligent message brokers that
 can be configured to perform content-based filtering rules or engine-specific
-relevancy, priority-based message organization, and temporal delivery
-optimization. However, some of these features would require extension to the
+relevancy, priority-based message organisation, and temporal delivery
+optimisation. However, some of these features would require extension to the
 message interface of mailboxes, and to the interface of their internal state.
 Also, the engine model would need to be extended to support time-based events,
 such as delays~\cite{engine-art}. Additionally, message routing capabilities
