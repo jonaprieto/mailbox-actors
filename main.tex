@@ -129,7 +129,12 @@ optional type when $a : A$. Finally, a function $f$ that takes an argument $a$
 of type $A$ and returns a value of type $B$ is denoted as $f : A \to B$. We also
 use the notation $f[a \mapsto c]$ to define a new function that is similar to $f$
 except that the output of $f$ is replaced by $c$ when the input is $a$, if $a$ is
-in the domain of $f$. Otherwise, we extend $f$ accordingly.
+in the domain of $f$. Otherwise, we extend $f$ accordingly. We overload the
+notation $\mathcal{N}[a \mapsto c]$ to also apply to sets, so if $\mathcal{N}$ is a
+set, then $\mathcal{N}[a \mapsto c]$ is the set resulting from $\mathcal{N}$ by
+replacing the element $a$ with $c$, if $a$ is a valid element of $\mathcal{N}$.
+Otherwise, we extend $\mathcal{N}$ accordingly.
+
 
 \section{Model}\label{sec:model}
 
@@ -193,8 +198,11 @@ $\mu^i$ is the set of messages in the $i$-th step.
 \subsubsection{Addresses and names}\label{sec:addresses-and-names}
 
 \begin{definition}\label{def:address}
-An \textbf{address} for an engine $e_j$ within the system is a tuple $\langle n_i, \mathsf{id}_j \rangle$, where
-$n_i$ is the node identifier where the engine lives, and $\mathsf{id}_j$ is the engine's unique identifier.
+
+An \textbf{address} for an engine $e_j$ is a tuple $a \equiv \langle
+\mathsf{node}, \mathsf{id} \rangle$, where $\mathsf{node}(a)$ is the node
+identifier where the engine runs, and $\mathsf{id}(a)$ is the engine's unique
+identifier.
 \end{definition}
 
 \begin{axiom}\label{ax:address}
@@ -204,12 +212,18 @@ Each engine is uniquely identified by an \emph{address} in the system.
 
 \subsubsection{Message Structure}\label{sec:message-structure}
 
-\begin{definition}\label{def:messages} Engine communication occurs through typed
-messages. A message is a triple $\langle s,\, t,\, v \rangle$ where $s$ is the
-sender address, $t$ is the target address, and $v$ is the payload of type
-$\mathsf{Msg_j}$ that is specific to the message types the target engine can
-process.
+Engine communication occurs through typed messages. 
+\begin{definition}\label{def:messages}
+A message is a triple $m \equiv \langle s,\, t,\, v \rangle$ where:
+\begin{itemize}
+    \item $s$ is the sender address (source)
+    \item $t$ is the target address (destination)
+    \item $v$ is a payload of type $\mathsf{Msg_j}$ corresponding to the message interface of target engine $e_j$
+\end{itemize}
+We define projection functions $\mathsf{sender}(m)$, $\mathsf{target}(m)$, and $\mathsf{msg}(m)$ to extract the respective components of a message.
 \end{definition}
+
+
 
 \begin{definition}\label{def:message-interface}
 The \textbf{message interface} of an engine $e_j$ is the sum type
@@ -238,7 +252,7 @@ the engine's operational mode and thus its lifecycle.
 \mathsf{EngineStatus} := \mathsf{ready} \mid \mathsf{busy} \mid \mathsf{terminated}  \, .
 \end{equation}
 % tikz
-\begin{figure}[!hbp]
+\begin{figure}%[!hbp]
 \centering
 \[\begin{tikzcd}
 	& {\mathsf{ready}} \\
@@ -298,12 +312,14 @@ proper operation since some form of state is required. Therefore, each engine
 encapsulates its own state as part of its execution context, which we refer to as the
 engine's \emph{environment}.
 
-\begin{definition}\label{def:engine-environment} Given a type $S$ representing
-the local state of an engine $e_j$, an execution \textbf{environment} of $e_j$
-is a tuple $\langle s_j, l_j \rangle$ of type $\mathsf{Env}(S)$, where $s_j$
-is of type $S$, and $l_j$ is the engine's address book, a non-empty list
-containing the names of other engines, including its own. $l_j$ is of type
-$\mathsf{List}(\mathsf{Addr})$.
+\begin{definition}\label{def:engine-environment}
+
+Given a type $S$ representing the local state of an engine $e_j$, an execution
+\textbf{environment} of $e_j$ is a tuple $s \equiv\langle \mathsf{state},
+\mathsf{addrbook} \rangle$ of type $\mathsf{Env}(S)$, where $\mathsf{state}(s)$ is
+of type $S$, and $\mathsf{addrbook}(s)$ is the engine's address book, a non-empty
+list containing the names of other engines, including its own. $\mathsf{addrbook}(s)$
+is of type $\mathsf{List}(\mathsf{Addr})$.
 \end{definition}
 
 \subsubsection{Execution directives}\label{sec:execution-directives}
@@ -331,7 +347,7 @@ possible ways an engine can influence the system by reacting to a message.
 
 % TODO: mention how this induces a monad.
 % also mention CCS?
-\begin{figure}[!htbp]
+\begin{figure}%[!htbp]
 % https://q.uiver.app/#q=WzAsOSxbMSwwLCIobSwgXFxtYXRoc2Z7Y2ZnX2p9LFxcbWF0aHNme2Vudn1faikiXSxbMCwyLCJyXzEiXSxbMSwyLCJcXGNkb3RzIl0sWzIsMiwicl9rIl0sWzAsMywiZV8xOlxcbWF0aHNme0VmZmVjdH0oU19qKSJdLFsyLDMsImVfazpcXG1hdGhzZntFZmZlY3R9KFNfaikiXSxbMCwwXSxbMiwwXSxbMSwzLCJcXGNkb3RzIl0sWzAsMiwiZ19pIiwyLHsic3R5bGUiOnsidGFpbCI6eyJuYW1lIjoibWFwcyB0byJ9fX1dLFswLDMsImdfayIsMCx7InN0eWxlIjp7InRhaWwiOnsibmFtZSI6Im1hcHMgdG8ifX19XSxbMSw0LCJjXzEiLDIseyJzdHlsZSI6eyJ0YWlsIjp7Im5hbWUiOiJtYXBzIHRvIn19fV0sWzMsNSwiY19rIiwwLHsic3R5bGUiOnsidGFpbCI6eyJuYW1lIjoibWFwcyB0byJ9fX1dLFswLDEsImdfMSIsMix7InN0eWxlIjp7InRhaWwiOnsibmFtZSI6Im1hcHMgdG8ifX19XSxbNiw3LCIiLDAseyJsYWJlbF9wb3NpdGlvbiI6MTAwLCJjdXJ2ZSI6NCwic2hvcnRlbiI6eyJzb3VyY2UiOjIwLCJ0YXJnZXQiOjIwfSwic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoiZGFzaGVkIn0sImhlYWQiOnsibmFtZSI6Im5vbmUifX19XSxbMiw4LCIiLDIseyJzdHlsZSI6eyJ0YWlsIjp7Im5hbWUiOiJtYXBzIHRvIn19fV1d
 \[\begin{tikzcd}
 	{} & {(m, \mathsf{cfg_j},\mathsf{env}_j)} & {} \\
@@ -431,11 +447,11 @@ specification of the engine type.
 
 \begin{definition}\label{def:engine}
 An \textbf{engine} is the computational unit of the system, formally specified by a tuple
-$\langle i, b, r, \mathsf{cfg}, \mathsf{env} \rangle$ where:
+$\langle i, b, \mathsf{status}, \mathsf{cfg}, \mathsf{env} \rangle$ where:
 \begin{itemize}
 \item $i$ is the engine's message interface, a type as described in \Cref{def:message-interface},
 \item $b$ is the engine's behaviour ---a set of guarded actions as defined in \Cref{def:guarded-action},
-\item $r$ is the engine's status flag as specified in \Cref{def:engine-status},
+\item $\mathsf{status}$ is the engine's status flag as specified in \Cref{def:engine-status},
 \item $\mathsf{cfg}$ is the engine's configuration as described in
 \Cref{def:engine-configuration}, and
 \item $\mathsf{env}$ is the engine's execution environment as outlined in \Cref{def:engine-environment}.
@@ -447,25 +463,37 @@ $\langle i, b, r, \mathsf{cfg}, \mathsf{env} \rangle$ where:
 % messages.
 % \end{remark}
 
-Two flavours of engines exist in our system: processing engines and mailbox
-engines. A processing engine is any engine marked as
-$\mathsf{processing}$ in its configuration via \textsf{mode}. Otherwise, the
-engine is a mailbox engine, however, we require a bit more.
+Our system defines two engine types: \emph{processing engines} and \emph{mailbox
+engines}. Users can only explicitly create processing engines, while mailbox
+engines are automatically created by the system when a processing engine is
+instantiated, as detailed in \Cref{sec:creation-rules}. A processing engine is
+distinguished by having its operational mode set to $\mathsf{process}$ through
+its configuration's mode field. The internals of mailbox engines are described
+in \Cref{def:mailbox-engine}.
 
-\begin{definition}\label{def:mailbox-engine} A \emph{mailbox engine} $m_j$
-paired with a processing engine $e_j$ is an engine that satisfies the following requirements:
+\begin{definition}\label{def:mailbox-engine}  
+A \emph{mailbox engine} $m_j$ is a system-configured companion engine
+automatically created when instantiating a processing engine $e_j$. It must
+satisfy:
 \begin{itemize}
-\item the engine's operational mode is $\mathsf{mailbox}$,
-\item the engine's parent is the processing engine $e_j$,
-\item the engine's message interface is fixed and consists of only two message types:
-$\mathsf{append}$ and $\mathsf{pull}$ both of which take a single message of
-type $\mathsf{Msg_j}$ as the payload the engine reads from and writes to,
-\item the state of the mailbox engine must implement a data structure that
-supports the two message types,
-\item the engine's behaviour must ensure that the $\mathsf{append}$ message
-is always executed before the $\mathsf{pull}$ message, and
-\item the engine's behaviour must ensure that the $\mathsf{pull}$ message is
-always executed after the $\mathsf{append}$ message.
+\item Operational mode set to $\mathsf{mail}$ (per \Cref{def:engine-mode})
+\item Parent reference pointing to its paired processing engine $e_j$
+\item Fixed message interface $i_\mathsf{mbox}$ with two operation types:
+\begin{equation*}
+\begin{array}{rcl}
+  i_\mathsf{mbox} &:= &\mathsf{append}(\mathsf{Msg_j}) \\
+                  &|  &\mathsf{pull}(\mathsf{Msg_j})
+\end{array}
+\end{equation*}
+both carrying payloads of type $\mathsf{Msg_j}$
+\item State $q$ of type $S$ implementing a queue-like structure with:
+  \begin{itemize}
+  \item $\emptyset$ denoting empty state,
+  \item message insertion to support $\mathsf{append}$ messages, $\mathsf{append}(q, v) : S \times \mathsf{Msg_j} \to S$, and
+  \item message retrieval to support $\mathsf{pull}$ messages, $\mathsf{pull}(q) : S \to \mathsf{Msg_j} \times S$
+  \end{itemize}
+\item Behaviour enforcing semantics: $\mathsf{append}$ operations always precede
+$\mathsf{pull}$ operations in message processing
 \end{itemize}
 \end{definition}
 
@@ -473,13 +501,14 @@ With mailbox engines added to the system, we have a strict producer-consumer
 pattern introduced through explicit pull semantics, decoupling message storage
 from processing logic. This allows for independent scaling of message ingestion
 and core computation.
+%TODO: add a reference to the corresponing rules in the operational semantics
 
 \subsubsection{Nodes}\label{sec:nodes}
 
-Before we little mention the system, $\kappa$,  mainly consisting of a set of
-nodes $\mathcal{N}$ which reference a set of engines $\mathcal{E}$ following a
-specific message-passing mechanism depending on the desired properties. So, what
-is a node?
+Having previously introduced the system $\kappa$, which comprises a set of nodes
+$\mathcal{N}$ that host engines $\mathcal{E}$ governed by a message-passing
+mechanism defined by the system's requirements, we now formally define what
+constitutes a node.
 
 \begin{definition}\label{def:node}
 A \textbf{node} $n_i$ in $\mathcal{N}$ is a tuple
@@ -644,8 +673,8 @@ $n_i \equiv \langle \mathsf{id}_i, \mathcal{E}_i, \omega_i \rangle \in \mathcal{
 \UnaryInfC{
 $S : \mathsf{Type} %
 \quad \mathsf{env} : \mathsf{Env}(S)  %
-\quad i : \mathsf{Msg} %
-\quad e_{\mathsf{new}} \equiv \langle i, b,
+\quad in : \mathsf{Msg} %
+\quad e_{\mathsf{new}} \equiv \langle in, b,
 \mathsf{ready}, \mathsf{cfg}, \mathsf{env} \rangle%
 $}
 % % Level 3: Engine set and address map updates
@@ -699,7 +728,7 @@ respectively, which follow the specification as in \Cref{def:mailbox-engine}.
 \end{definition}
 
 \begin{remark}
-The rule above takes place in the context of a node $n_i$. When defining an
+The rule \textsc{CreateEngine} takes place in the context of a node $n_i$. When defining an
 engine process $e_{\mathsf{new}}$, the system also creates a mailbox engine on the same
 node, $m_{\mathsf{new}}$. While the only parameters required by this rule are the
 engine process parameters (configuration and environment) for $e_{\mathsf{new}}$,
@@ -714,92 +743,109 @@ We could think of adding rules for removing nodes and engines. However,
 one question just arises to me: how to handle broken references to those
 engines that are removed?
 \end{comment}
+
+To prevent \emph{zombie} engine instances that could  violate liveness and
+safety guarantees, we need to remove terminated engines from the system. This is
+done via the \textsc{Clean} rule.
+
+\begin{definition}[\textsc{Clean}]\label{rule:clean}
+\hspace{-1.5em}
+\begin{prooftree}
+\AxiomC{$%
+\kappa \equiv (\mathcal{N}, \mu, \omega)%
+\quad e \in \mathcal{E}%
+\quad \mathsf{terminated} = \mathsf{status}(e)
+$}
+\UnaryInfC{$%
+\kappa \to%
+(\mathcal{N} \setminus \{e\},%
+\mu,% TODO: Do we NEED to remove references to e???
+\omega%
+)$}
+\end{prooftree}
+\end{definition}
+
+
 \subsection{Message-passing rules}\label{sec:system-transition-rules}
 
-We aim for the message-passing mechanism to support (i) asynchronous communication
+Our message-passing mechanism aims to support (i) asynchronous communication
 with non-blocking sends, (ii) mailbox isolation with guaranteed eventual
 delivery, and (iii) explicit lifecycle management for engines.
 
 The \textsc{Send} rule governs message communication between engines. When
 engine $e_s$ sends a message to engine $e_t$, the rule handles the registration
-of the message in $e_t$'s dedicated mailbox. One thing to note is that the
-message must be well-typed for the target engine $e_t$, meaning it must conform
-to $e_t$'s message interface specification. Otherwise, the rule can not be applied.
+of the message in $e_t$'s dedicated mailbox. This message must be well-typed 
+according to $e_t$'s message interface specification. This rule is the only way
+to add a message to $\mu$.
 
 \begin{definition}[\textsc{Send}]\label{rule:send}
-An engine $e_s$ sends message $v$ to a non-mailbox engine $e_t$.
-\begin{prooftree}
-\AxiomC{$\kappa \equiv (\mathcal{N}, \mu, \omega)$
+\hspace{-1.5em}
+  \begin{prooftree}
+\AxiomC{$\kappa \equiv (\mathcal{N}, \mu, \omega)
 \quad e_s, e_t \in \mathcal{E}%
 \quad v : \mathsf{Msg}_t
-\quad m_t \equiv \mathsf{mbox}(\alpha(e_t))
 $}
-\UnaryInfC{$\kappa \to (\mathcal{N}, \mu \cup \{ \langle \alpha(e_s), m_t, v \rangle \}, \omega)$}
+\noLine
+\UnaryInfC{$%
+m_t \equiv \mathsf{mbox}(\alpha(e_t))
+\quad \mathsf{mail} = \mathsf{mode}(\mathsf{cfg}(\epsilon(m_t)))
+$}
+\UnaryInfC{$\kappa \to (\mathcal{N}, \mu \cup%
+\{ \langle%
+\alpha(e_s),%
+m_t,%
+\mathsf{append}(v)%
+\rangle%
+\},%
+\omega%
+)$}
 \end{prooftree}
-The $\mathsf{mbox}$ function, part of the system-specific operations, is defined by case analysis on the type of
-the target engine. In case the target engine is a mailbox, the address of the
-target engine is used as the address of the message. Otherwise, in case the target
-engine is a processing engine, the message is registered to the dedicated target
-engine's mailbox.
 \end{definition}
 
 Now, with a message in-transit, the system needs to deliver it to the target engine's
-mailbox. This is done via the \textsc{Append} rule.
-We take the message from the set of in-transit messages, and
-(i) remove it from the in-transit set, and
-(ii) append it to the target engine's mailbox.
+mailbox. This is done via the \textsc{Enqueue} rule.
+
+\begin{definition}[\textsc{Enqueue}]\label{rule:enqueue}
+  Deliver sent message to mailbox:
+  \begin{prooftree}
+  \AxiomC{$\langle s, m_t, \mathsf{append}(v) \rangle \in \mu$}
+  \AxiomC{$m_t \equiv \mathsf{mbox}(e_t)$}
+  \AxiomC{$\mathsf{env}(m_t) = q$}
+  \TrinaryInfC{$\kappa \to (\mathcal{N}[m_t \mapsto \langle i_{mbox}, b_{mbox}, r, \mathsf{cfg}_{mbox}, q \cup \{v\} \rangle], \mu \setminus \{m\}, \omega)$}
+  \end{prooftree}
+  \end{definition}
+  
+  \begin{definition}[\textsc{Dequeue}]\label{rule:dequeue}
+  Mailbox delivers message to processor:
+  \begin{prooftree}
+  \AxiomC{$e_p \equiv \langle i_p, b_p, \mathsf{ready}, \mathsf{cfg}_p, \mathsf{env}_p \rangle$}
+  \AxiomC{$m_p \equiv \mathsf{mbox}(e_p)$}
+  \AxiomC{$\mathsf{env}(m_p) = \{v\} \cup q$}
+  \TrinaryInfC{$\kappa \to (\mathcal{N}[e_p \mapsto \langle i_p, b_p, \mathsf{busy}, \mathsf{cfg}_p, \mathsf{env}_p \rangle][m_p \mapsto \langle i_{mbox}, b_{mbox}, r, \mathsf{cfg}_{mbox}, q \rangle], \mu, \omega)$}
+  \end{prooftree}
+  \end{definition}
 
 
-{\large \color{red} The following rules under heavy revision. Do not expect them
-to be in the final version.}
-
-\begin{definition}[\textsc{Append}]\label{rule:append}
-An in-transit message is appended to the mailbox engine's queue.
-\begin{prooftree}
-\AxiomC{$\kappa \equiv (\mathcal{N}, \mu, \alpha)$}
-\AxiomC{$\alpha(e) \equiv q$}
-\AxiomC{$\langle s, e, v \rangle \in \mu$}
-\TrinaryInfC{$\kappa \to (\mathcal{N}, \mu \setminus \{\langle s, e, v \rangle\}, \alpha[e \mapsto q \cup \{v\}])$}
-\end{prooftree}
-\end{definition}
-
-\begin{remark}\label{rem:append-rule}
-Notice that by design, there is no selection criteria for the message to be appended.
+\begin{remark}
+Notice how the \textsc{Clean} rule does not remove the engine's mailbox.
+Even when removing the processing engine, the mailbox is kept in the system
+receiving messages, but not being processed. This ensures that messages are not
+lost.
+%Also, the mailbox can be reused for future engine instances? as it is a matter
+%of changing the engine's configuration.
 \end{remark}
 
-\begin{definition}[\textsc{Pull}]\label{rule:pull}
-Processing engine retrieves message from mailbox:
-\begin{prooftree}
-\AxiomC{$\alpha(e) \equiv \langle b, m_e, \mathsf{ready}, \mathsf{cfg}, \mathsf{env} \rangle$}
-\AxiomC{$\alpha(m_e) \equiv \{v\} \cup q$}
-\BinaryInfC{$(\alpha, \mu) \to (\alpha', \mu)$}
-\end{prooftree}
-where $\alpha' \equiv \alpha[e \mapsto \langle b, m_e, \mathsf{busy}, \mathsf{cfg}, \mathsf{env} \rangle] \cup \{ m_e \mapsto q \}$.
-\end{definition}
-
-\begin{definition}[\textsc{Clean}]\label{rule:clean}
-Remove terminated engine:
-\begin{prooftree}
-\AxiomC{$\alpha(e) \equiv \langle b, m_e, \mathsf{terminated}, \mathsf{cfg}, \mathsf{env} \rangle$}
-\UnaryInfC{$(\alpha, \mu) \to (\alpha \setminus \{e\}, \mu)$}
-\end{prooftree}
-\end{definition}
-
-The \textsc{Clean} rule is a mechanism that removes terminated engines from the
-system. This rule is necessary to prevent orphaned engine processes that could
-violate the system's liveness and progress properties.
+\subsection{Processing Rules}\label{sec:processing-rules}
 
 \begin{definition}[\textsc{Process}]\label{rule:process}
 Engine processes message:
 \begin{prooftree}
-\AxiomC{$\alpha(e) \equiv \langle b, m_e, \mathsf{busy}, \mathsf{cfg}, \mathsf{env} \rangle$}
-\AxiomC{$b, \mathsf{env} \vdash v \Downarrow E$}
-\AxiomC{$\execEffect(E, e, (\alpha, \mu)) \equiv (\alpha', \mu', r')$}
-\TrinaryInfC{$(\alpha, \mu) \to (\alpha', \mu')$}
+\AxiomC{$e \equiv \langle i, b, \mathsf{busy}, \mathsf{cfg}, \mathsf{env} \rangle$}
+\AxiomC{$b \vdash \mathsf{env} \xrightarrow{v} (\mathsf{env}', E)$}
+\AxiomC{$\execEffect(E, e, \kappa) \equiv \kappa'$}
+\TrinaryInfC{$\kappa \to \kappa'[e \mapsto \langle i, b, \mathsf{ready}, \mathsf{cfg}, \mathsf{env}' \rangle]$}
 \end{prooftree}
-where $r' \equiv \mathsf{ready}$ if $r' \neq \mathsf{terminated}$.
 \end{definition}
-
 
 \begin{remark}\label{rem:omitting-rules}
 Omitting any of the above rules may lead to undesirable system behaviours. For
@@ -809,55 +855,38 @@ while consuming storage resources; and omitting \textsc{Pull} disrupts message
 processing causality.
 \end{remark}
 
-\subsection{Effect Execution Rules}
+\subsection{Effect Execution Rules}\label{sec:effect-rules}
 
 The function $\execEffect$ executes effects as defined in \Cref{def:effects}.
 Its definition is given by case analysis on the different constructors of the
 effect data type.
 
-\begin{definition}[\textsc{ESendMsg}]\label{rule:e-send}
-\begin{equation}\label{eq:e-send}
-\frac{
-  \mathsf{msg} \equiv \langle e_{\mathsf{sender}}, e_{\mathsf{target}}, v \rangle \quad
-  m_{\mathsf{target}} \equiv \mathsf{mbox}(e_{\mathsf{target}})
-}{
-  \execEffect(\mathsf{sendMsg}(\mathsf{msg}), a, (\alpha, \mu)) \equiv ((\alpha, \mu \cup \{ \mathsf{msg} \}), \mathsf{ready})
-}
-\end{equation}
-\end{definition}
-
-\begin{definition}[\textsc{EUpdateEnv}]\label{rule:e-update}
-\begin{equation}\label{eq:e-update}
-\frac{
-  \alpha(e) \equiv \langle b, m_e, r, \mathsf{cfg}, \mathsf{env} \rangle \quad
-  \mathsf{env}^{*} : \mathsf{ofType}(\mathsf{env})
-}{
-  \execEffect(\mathsf{updateEnv}(\mathsf{env}^{*}), e, (\alpha, \mu)) \equiv (\alpha[e \mapsto \langle b, m_e, r, \mathsf{cfg}, \mathsf{env}^{*} \rangle], \mathsf{ready})
-}
-\end{equation}
-where $\mathsf{ofType}$ maps an instance of an engine environment to their actual type.
-\end{definition}
-
-% TODO: add notation for extending the \alpha function!!
-\begin{definition}[\textsc{ESpawnEngine}]\label{rule:e-spawn}
-Create new engine:
+\begin{definition}[\textsc{ESend}]\label{rule:e-send}
+Message generation:
 \begin{prooftree}
-  \AxiomC{$n \equiv \mathsf{freshId}(\alpha, \mu)$}
-  \AxiomC{$m \equiv \mathsf{freshId}(\alpha, \mu)$}
-  \AxiomC{$\alpha(e) \equiv \langle b, m_e, r, \mathsf{cfg}, \mathsf{env} \rangle$}
-  \TrinaryInfC{$\execEffect(\mathsf{spawnEngine}(e), a, (\alpha, \mu)) \equiv (\alpha \cup \{ n \mapsto \langle b, m, \mathsf{ready}, \mathsf{cfg}, \mathsf{env} \rangle \}, \mathsf{ready})$}
+\AxiomC{$e_{\mathsf{target}} \in \mathcal{E}$}
+\AxiomC{$m_{\mathsf{target}} \equiv \mathsf{mbox}(e_{\mathsf{target}})$}
+\BinaryInfC{$\execEffect(\mathsf{send}(m_{\mathsf{target}}, v), e, \kappa) \equiv (\mathcal{N}, \mu \cup \{\langle \alpha(e), m_{\mathsf{target}}, v \rangle\}, \omega)$}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\textsc{EChain}]\label{rule:e-chain}
-Sequential composition:
-
+\begin{definition}[\textsc{EUpdate}]\label{rule:e-update}
+State modification:
 \begin{prooftree}
-  \AxiomC{$\execEffect(e_1, a, (\alpha, \mu)) \equiv (\alpha_1, \mu_1, s_1)$}
-  \AxiomC{$\execEffect(\mathsf{chain}(e_2; \dots; e_n), a, (\alpha_1, \mu_1)) \equiv (\alpha', \mu', s')$}
-  \BinaryInfC{$\execEffect(\mathsf{chain}(e_1; \dots; e_n), e, (\alpha, \mu)) \equiv (\alpha', \mu', s')$}
+\AxiomC{$\mathsf{env}' \vdash \mathsf{Type}$}
+\UnaryInfC{$\execEffect(\mathsf{update}(\mathsf{env}'), e, \kappa) \equiv (\mathcal{N}[e \mapsto \langle i, b, r, \mathsf{cfg}, \mathsf{env}' \rangle], \mu, \omega)$}
 \end{prooftree}
 \end{definition}
+
+\begin{definition}[\textsc{ESpawn}]\label{rule:e-spawn}
+Engine creation:
+\begin{prooftree}
+\AxiomC{$\mathsf{cfg}' \equiv \langle \mathsf{freshName}(\mathsf{unit}), \alpha(e), \mathsf{process} \rangle$}
+\UnaryInfC{$\execEffect(\mathsf{spawn}(\mathsf{cfg}', \mathsf{env}'), e, \kappa) \equiv \textsc{CreateEngine}(n_i, \mathsf{cfg}', \mathsf{env}')$}
+\end{prooftree}
+\end{definition}
+
+
 The complete operational semantics comprises three components:
 \begin{enumerate}
 \item Configuration transitions via Rules \textsc{Send}--\textsc{Process}.
