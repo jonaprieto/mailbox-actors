@@ -329,18 +329,18 @@ reacts to a message. This description of computation is via an effect system
 consisting of commands to the system to be executed at runtime.
 
 \begin{definition}\label{def:effects}
-Given a type $S_j$ representing the local state of an engine $e_j$, an
-\textbf{effect} is of type $\mathsf{Effect}(S_j)$, which considers all the
+Given a type $S$ representing the local state of an engine $e_j$, an
+\textbf{effect} is of type $\mathsf{Effect}(S)$, which considers all the
 possible ways an engine can influence the system by reacting to a message.
 
 \begin{equation}\label{eq:effects}
 \begin{aligned} %TODO: review this grammar
-\mathsf{Effect}(S_j) := &\quad \mathsf{send}(\mathsf{Addr}, \mathsf{Msg}) & &\text{(message dispatch)} \\
-\mid & \quad \mathsf{update}(\mathsf{Env}(S_j)) & &\text{(engine state modification)} \\
-\mid & \quad \mathsf{spawn}(\mathsf{Cfg}_j, \mathsf{Env}(S_j)) & &\text{(engine creation)} \\
-\mid & \quad \mathsf{chain}(\mathsf{List}(\mathsf{Effect}(S_j))) & &\text{(action sequencing)} \\
+\mathsf{Effect}(S) := &\quad \mathsf{send}(\mathsf{Addr}, \mathsf{Msg}) & &\text{(message dispatch)} \\
+\mid & \quad \mathsf{update}(\mathsf{Env}(S)) & &\text{(engine state modification)} \\
+\mid & \quad \mathsf{spawn}(\mathsf{Cfg}_j, \mathsf{Env}(S)) & &\text{(engine creation)} \\
+\mid & \quad \mathsf{chain}(\mathsf{Effect}(S), \mathsf{Effect}(S_j)) & &\text{(action sequencing)} \\
 \mid & \quad \mathsf{terminate} & &\text{(engine shutdown)} \\
-\mid & \quad \mathsf{nop} & &\text{(null operation)\, .}
+\mid & \quad \mathsf{noop} & &\text{(null operation)\, .}
 \end{aligned}
 \end{equation}
 \end{definition}
@@ -369,7 +369,7 @@ denoted as $g_i$, are guards that determine which action is executed. The symbol
 $r_i$ represent output that feeds into the actions $c_i$. The actions, denoted
 as $c_i$, are effects as in \Cref{def:effects} that are executed if their pre-conditions
 are satisfied. If no pre-conditions are satisfied, the action is a null operation,
-$\mathsf{nop}$.}
+$\mathsf{noop}$.}
 \label{fig:effect}
 \end{figure}
 
@@ -945,7 +945,34 @@ $}
 \end{prooftree}
 \end{definition}
 
-{\color{red} Here, there are a few missing rules, like for chain, noop, etc.}
+\begin{definition}[\textsc{EChain}]\label{rule:e-chain}
+\hspace{-1.5em}
+\begin{prooftree}
+\AxiomC{$e \in \mathcal{E}_i$}
+\AxiomC{$\execEffect(\mathit{eff}_1, e, \kappa) \equiv \kappa'$}
+\AxiomC{$\execEffect(\mathit{eff}_2, e, \kappa') \equiv \kappa''$}
+\TrinaryInfC{$\execEffect(\mathsf{chain}(\mathit{eff}_1, \mathit{eff}_2), e, \kappa) \equiv \kappa''$}
+\end{prooftree}
+\end{definition}
+
+\begin{definition}[\textsc{ETerminate}]\label{rule:e-terminate}
+\hspace{-1.5em}
+\begin{prooftree}
+\AxiomC{$e \in \mathcal{N} \quad (\kappa \rightsquigarrow \kappa') \equiv \textsc{Clean}(\kappa, e)$}
+\UnaryInfC{$\execEffect(\mathsf{terminate}, e, \kappa) \equiv \kappa'$}
+\end{prooftree}
+\end{definition}
+
+\begin{definition}[\textsc{ENoop}]\label{rule:e-noop}
+  \hspace{-1.5em}
+  \begin{prooftree}
+  \AxiomC{$\quad e \in \mathcal{E}_i$}
+  \UnaryInfC{$\execEffect(\mathsf{noop}, e, \kappa) \equiv \kappa$}
+  \end{prooftree}
+\end{definition}
+  
+
+
 
 The combined system as per the rules above formally describes: i) how messages get delivered using
 mailbox rules, ii) how engines process messages one at a time, and iii) how
@@ -957,9 +984,6 @@ example, without \textsc{Append}, messages remain in transit indefinitely;
 excluding \textsc{Clean} leads to accumulation of engines that do not operate
 while consuming storage resources; and omitting \textsc{Pull} disrupts message
 processing causality.
-
-{\color{red} this paragraph above needs to reference the rules explicitly,
-however, since the list of rules is not complete, it's a todo.}
 
 \section{Discussion}\label{sec:related}
 
