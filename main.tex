@@ -899,11 +899,17 @@ effect data type.
 \begin{definition}[\textsc{ESend}]\label{rule:e-send}
 \hspace{-1.5em}
 \begin{prooftree}
-\AxiomC{$e_s,e_t \in \mathcal{E}$}
-\AxiomC{$v : \mathsf{Msg}_t
-\quad (\kappa \rightsquigarrow \kappa') \equiv \textsc{Send}(\kappa, e_s, e_t,v)
+\AxiomC{$e_s,e_t \in \mathcal{E}%
+\quad a_t \equiv \alpha(e_t)%
 $}
-\BinaryInfC{$\execEffect(\mathsf{send}(e_t, v), e_s, \kappa)
+\noLine
+\UnaryInfC{$%
+e_t \equiv \langle i_t, b_t, \mathsf{ready}, \mathsf{cfg}_t, \mathsf{env}_t \rangle%
+\quad v : i_t%
+\quad (\kappa \rightsquigarrow \kappa') \equiv%
+ \textsc{Send}(\kappa, e_s, e_t,v)
+$}
+\UnaryInfC{$\execEffect(\mathsf{send}(a_t, v), e_s, \kappa)
 \equiv%
 \kappa'$}
 \end{prooftree}
