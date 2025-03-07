@@ -250,31 +250,35 @@ and environment may change during the engine's lifecycle.
 The \textbf{status} of an engine $e_j$, of type $\mathsf{EngineStatus}$, determines
 the engine's operational mode and thus its lifecycle.
 \begin{equation}\label{eq:engine-status}
-\mathsf{EngineStatus} := \mathsf{ready} \mid \mathsf{busy} \mid \mathsf{terminated}  \, .
+\mathsf{EngineStatus} :=%
+\mathsf{ready} \mid%
+\mathsf{busy}(\mathsf{Msg}) \mid%
+\mathsf{terminated}  \, .
 \end{equation}
 % tikz
 \begin{figure}%[!hbp]
 \centering
 \[\begin{tikzcd}
 	& {\mathsf{ready}} \\
-	{\mathsf{terminated}} && {\mathsf{busy}}
+	{\mathsf{terminated}} && {\mathsf{busy}(m)}
 	\arrow[from=1-2, to=2-1]
 	\arrow[from=1-2, to=2-3, bend right]
 	\arrow[from=2-3, to=1-2, bend right]
 	\arrow[from=2-3, to=2-1, bend left]
-\end{tikzcd}\]
-\caption{An engine life cycle. Every engine starts in a
-\textsf{ready} state waiting for a message, and once it reacts to a message it
-changes to \textsf{busy}. Then, depending on its logic, the engine may either
-return to \textsf{ready} or \textsf{terminated}.}
+\end{tikzcd}\]%
+\caption{An engine life cycle. Every engine starts in a \textsf{ready} state
+waiting for a message, and once it reacts to a message it changes to
+$\mathsf{busy}(m)$ where $m$ is the message to which the engine reacts to. Then,
+depending on its logic, the engine may either return to \textsf{ready} or
+\textsf{terminated}.}
 \label{fig:engine-status}
 \end{figure}
 
 \end{definition}
 
 As illustrated in \Cref{fig:engine-status}, an engine is said to be
-\textsf{ready} if it can process a message. Being \textsf{busy}
-means the engine is currently processing a message. And \textsf{terminated}
+\textsf{ready} if it can process a message. Being $\mathsf{busy}(m)$
+means the engine is currently processing the message $m$. And \textsf{terminated}
 means the engine will not process any more messages. In such a case, the system
 will remove the engine in the next \emph{step}, and disregard any messages sent
 to it.
