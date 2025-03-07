@@ -1101,7 +1101,7 @@ interaction remains a low-level system primitive with opaque handling.
 
 Our architecture advances this paradigm by promoting mailboxes to
 engines/process, synthesising Kilim's structural separation with Erlang's
-operational transparency while introducing new capabilities via custom mailbox's
+operational transparency while introducing new capabilities via custom mailboxes
 behaviour. This architectural promotion enables implementations supporting
 advanced messaging strategies including priority queuing, protocol-aware
 filtering, and context-dependent message discarding.
@@ -1133,10 +1133,9 @@ extended to support time-based events, such as delays~\cite{engine-art}.
 Additionally, message routing capabilities could be added to enable directed
 forwarding to specific mailboxes, implementing debugging mechanisms.
 
-As said before, another aspect in the model not addressed in this presentation
-is the addition of a temporal component to the engine model. This would enable
-engines to react to time-based events. Having such information would also enable
-us to model and track the system's liveness, progress, and latency. %what else?
+As said before, another aspect of the Engine model~\cite{art-engines} not addressed in this presentation
+is engine clocks. An engine clock or timer would enable
+it to react to time-based events. Such information could be used to model and track the system's liveness, progress, and latency. 
 
 \paragraph{System properties}
 There is nothing that prevents us from proving system properties for this
@@ -1150,8 +1149,9 @@ fully adopt the mailbox-as-actor design. Actor frameworks like Kilim for
 Java~\cite{kilim-framework} demonstrate partial alignment by decoupling
 mailboxes from actors ---treating them as object/work-queues where actors pull
 messages when ready to process them. We identify analogous approaches in the
-JavaScript ecosystem, such as the WeChaty library employed in industrial chatbot
-applications using actor-like architectures. Our work's distinct contribution
+JavaScript ecosystem, such as the WeChaty library employed in the industrial chatbot
+applications using actor-like architectures~\cite{wechaty}.
+Our work's distinct contribution
 lies in formally promoting mailboxes to first-class citizens, actors, within the
 model itself, rather than treating them as implementation details or external
 components.
