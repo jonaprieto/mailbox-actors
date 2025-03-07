@@ -513,19 +513,19 @@ satisfy:
 \begin{itemize}
 \item Operational mode set to $\mathsf{mail}$ (per \Cref{def:engine-mode})
 \item Parent reference pointing to its paired processing engine $e_j$
-\item Fixed message interface $i_\mathsf{mbox}$ with two operation types:
+\item Fixed message interface $i_\mathsf{mbox}$ with one message type:
 \begin{equation*}
 \begin{array}{rcl}
   i_\mathsf{mbox} &:= &\mathsf{append}(\mathsf{Msg_j})\,. %TODO: remove pull from the text
                   % &|  &\mathsf{pull}(\mathsf{Msg_j})
 \end{array}
 \end{equation*}
-both carrying payloads of type $\mathsf{Msg_j}$
+carrying a payload of type $\mathsf{Msg_j}$
 \item State $q$ of type $S$ implementing a queue-like structure with:
   \begin{itemize}
   \item $\emptyset$ denoting empty state,
   \item message insertion to support $\mathsf{append}$ messages, $\mathsf{append}(q, v) : S \times \mathsf{Msg_j} \to S$, and
-  \item message retrieval to support $\mathsf{pull}$ messages, $\mathsf{pull}(q) : S \to \mathsf{Msg_j} \times S$
+  % \item message retrieval to support $\mathsf{pull}$ messages, $\mathsf{pull}(q) : S \to \mathsf{Msg_j} \times S$
   \end{itemize}
 \item Behaviour enforcing semantics: $\mathsf{append}$ operations always precede
 $\mathsf{pull}$ operations in message processing
@@ -533,9 +533,9 @@ $\mathsf{pull}$ operations in message processing
 \end{definition}
 
 With mailbox engines added to the system, we have a strict producer-consumer
-pattern introduced through explicit pull semantics, decoupling message storage
-from processing logic. This allows for independent scaling of message ingestion
-and core computation.
+pattern introduced through explicit message-reception semantics, decoupling
+message storage from processing logic. This allows for independent scaling of
+message ingestion and core computation.
 %TODO: add a reference to the corresponing rules in the operational semantics
 
 \subsection{Nodes}\label{sec:nodes}
