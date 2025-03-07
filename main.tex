@@ -260,7 +260,8 @@ their name and parent. Although, other information such as its location, status,
 and environment can change during the engine's lifecycle. For example, a system
 might relocate an engine to a different location when computational costs in its
 current location become prohibitive and more favourable resource availability
-exists elsewhere.
+exists elsewhere, although for simplicity we assume that engines always remain
+on the same node.
 
 \begin{definition}[Engine Lifecyle]\label{def:engine-status}
 The \textbf{status} of an engine $e_j$, of type $\mathsf{EngineStatus}$, determines
@@ -515,8 +516,8 @@ satisfy:
 \item Fixed message interface $i_\mathsf{mbox}$ with two operation types:
 \begin{equation*}
 \begin{array}{rcl}
-  i_\mathsf{mbox} &:= &\mathsf{append}(\mathsf{Msg_j}) \\
-                  &|  &\mathsf{pull}(\mathsf{Msg_j})
+  i_\mathsf{mbox} &:= &\mathsf{append}(\mathsf{Msg_j})\,. %TODO: remove pull from the text
+                  % &|  &\mathsf{pull}(\mathsf{Msg_j})
 \end{array}
 \end{equation*}
 both carrying payloads of type $\mathsf{Msg_j}$
@@ -918,8 +919,8 @@ environment $\mathsf{env}_p$ results in an effect $E$.
 \begin{prooftree}
 \AxiomC{$%
 p \in \mathcal{E}%
-\quad p \equiv \langle i_p, b_p, \mathsf{busy}, \mathsf{cfg}_p, \mathsf{env}_p \rangle%
-\quad v : i_p%
+\quad p \equiv \langle i_p, b_p, \mathsf{busy}(m), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
+% \quad m : i_p%
 \quad S : \mathsf{Type}%
 \quad \mathsf{env}_p : \mathsf{Env}(S)%
 $}
@@ -1134,7 +1135,6 @@ These mailbox engines act as \emph{secretaries} ---intelligent brokers that can
 filter content, prioritize messages, delay delivery, or debug issues through
 configurable rules.
 
-
 \paragraph{Multiple mailboxes per processing actor}
 While our architecture could naturally accommodate multiple mailbox actors per
 processing actor, a pattern that might enable specialized message routing or
@@ -1195,10 +1195,10 @@ complete system for reliable asynchronous communication with proper resource
 management.
 
 \paragraph{Future work}
-There is an ongoing effort to implement this work in Elixir via macros that
-generate the necessary code to support the mailbox primitive. The library is a
-work-in-progress, and the code is available at
-\url{https://github.com/anoma/engine}, branch \texttt{mailbox-actors}.
+We plan to implement a prototype in Elixir leveraging its native actor model
+support on the BEAM virtual machine. The prototype source code will be available
+in the Anoma Foundation's public repository at
+\url{https://github.com/anoma/engine}.
 
 \section{Acknowledgements}
 
