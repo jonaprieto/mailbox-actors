@@ -33,11 +33,12 @@ order while remaining separate from the actor's core logic.
 
 % Challenges in actor system message flow management
 One challenge in actor systems is managing message flow under high volumes.
-Although some techniques such as rate limiting and \emph{backpressure} help regulate
-message rates, these control mechanisms may also fail under heavily loaded
-systems. Message delivery is often assumed to be reliable, but practical
-implementations need to consider the possibility of message loss and
-delays from processing bottlenecks or crashing actors.
+Although some techniques such as rate limiting and%
+\emph{backpressure routing}~\cite{backpressure} help regulate message rates,
+these control mechanisms may also fail under heavily loaded systems. Message
+delivery is often assumed to be reliable, but practical implementations
+must consider the possibility of message loss and delays from processing
+bottlenecks or crashing actors.
 
 % Proposes a solution by decoupling mailboxes from processing actors.
 To address some of these challenges, in particular the need to handle message
@@ -865,6 +866,11 @@ guarded actions, and how the evaluation of those effects changes the system stat
 
 \subsection{Behaviour evaluation rules}\label{sec:behavior-eval-rules}
 
+\begin{comment}
+restrict attention to machines
+whose behaviour is guaranteed to terminate,
+\end{comment}
+
 While the system's operational semantics primarily govern inter-engine
 communication, individual engines retain full autonomy over their internal
 message processing. This subsection formalises the evaluation mechanism for
@@ -1151,11 +1157,11 @@ work-in-progress, and the code is available at
 \section{Acknowledgements}
 
 This work was inspired by discussions between Jeremy Ornelas and
-Christophe De Troyer, which subsequently evolved through helpful comments and
-questions from Tobias Heindel, Anthony Hart, and TGX Thoth.
+Christophe De Troyer.
+Thanks to Tobias Heindel and Anthony Hart, and for helpful comments and
+discussions that shaped this work.
 
 \bibliography{art.bib,ref.bib}
-
 \appendix
 
 % \section{Some extra stuff}
