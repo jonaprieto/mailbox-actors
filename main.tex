@@ -57,7 +57,7 @@ programming Actor Model~\cite{foundation97agha,taxonomy-of-actor-models}.
 % Outlines the benefits of the proposed architectural separation.
 The architectural separation of mailboxes from processing actors provides
 several key benefits. First, it cleanly separates message management from
-processing logic, allowing mailbox actors to specialize in queue management
+processing logic, allowing mailbox actors to specialise in queue management
 while processing actors focus on their core functionality. Second, it enables
 flexible message scheduling—different mailbox implementations can support
 priority queues, batch processing, or custom dispatch strategies without affecting
@@ -75,15 +75,17 @@ outweighed by the benefits of a more flexible system.
 % How this paper is organized and what is the contribution.
 
 \paragraph{Contributions}
-First, we propose a new architectural
-separation between processing actors and their mailboxes in \Cref{sec:model},
-which enables improved flexibility and scalability for message management. Second,
-we formulate operational semantics in \Cref{sec:semantics} for both the decoupled
-architecture and its explicit message-passing mechanism, making the system's
-design formally explicit. This description provides sufficient grounding to
-implement a library on top of a compatible system/platform such as Erlang, and
-to formalise and prove key system properties such as liveness guarantees and
-correctness under concurrent message processing.
+First, we propose a new architectural separation between processing actors and
+their mailboxes in \Cref{sec:model}, which enables improved flexibility and
+scalability for message management. Second, we formulate operational semantics
+in \Cref{sec:semantics} for both the decoupled architecture and its associated
+explicit message-passing mechanism, formally specifying the system's design
+following in the spirit of the approach established for
+Erlang~\cite{formal-semantics-erlang}. This formal specification provides
+sufficient grounding to implement system from scratch or as a library on top
+of a compatible system/platform such as Erlang, and to formalise and prove key
+system properties such as liveness guarantees and correctness under concurrent
+message processing.
 
 \section{Notation}\label{sec:notation}
 
@@ -150,23 +152,29 @@ without any time component. In this actor-like model, the system consists of
 
 An engine is comprised of three main components: a \emph{configuration}, an
 \emph{execution environment}, and a \emph{behaviour}. The configuration
-includes, among other things, the engine's name, location within the system, and
-an optional reference to the parent engine. The execution environment includes
-an \emph{address book} of other engines to communicate with, including the
-engine's own address. Finally, the behaviour defines how the engine reacts to
-messages that follow the engine's \emph{message interface}, which is simply a
-set of message types that the engine can process. The engine's behaviour is a
-set of \emph{guarded actions} consisting of pairs of pre-conditions and actions
-to execute. When an engine receives a message, it checks which of its guarded
-actions have satisfied pre-conditions, and executes the corresponding action.
+includes, among other things, the engine's name (different to its unique
+identifier), location within the system, and an optional reference to the parent
+engine. The execution environment includes an \emph{address book} of other
+engines to communicate with, including the engine's own address. Finally, the
+behaviour defines how the engine reacts to messages that follow the engine's
+\emph{message interface}, which is simply a sum type of message types that the
+engine can process. The engine's behaviour is a set of \emph{guarded actions}
+consisting of pairs of pre-conditions and actions to execute. When an engine
+receives a message, it checks which of its guarded actions have satisfied
+pre-conditions, and executes the corresponding action. However, an avid reader
+may notice that it could be different strategies for selecting which action to
+execute, whether a guard is satisfied, which guard finishes first, etc.
+It must clear that guards semantics could be any for the purposes of this paper,
+and deserves study on its own.
 
 \begin{remark}
-  The way engine behaviour is defined is similar to the Event-B formalism in
-  that event-driven system transitions are specified by a set of pre-conditions
-  on sets that form the current system state and the actions to execute if those
-  pre-conditions are satisfied. The actions are defined using a language derived
-  from process calculi, which often include operations such as parallel composition,
-  a null operation, sequencing, nondeterministic choice, and recursion.
+  This engine behaviour specification resembles the correct-by-construction
+  approach used in Event-B systems~\cite{dupont:tel-04165215}, where system
+  transitions are governed by preconditions on the current system state/execution
+  context, and corresponding actions that execute when their preconditions are
+  met. The actions are defined using a language derived from process calculi,
+  which often include operations such as parallel composition, a null operation,
+  sequencing, nondeterministic choice, and recursion.
   %Here, we have a more restricted set of actions, as will be seen in \Cref{def:effects}.
 \end{remark}
 
@@ -212,7 +220,6 @@ identifier.
 Each engine is uniquely identified by an \emph{address} in the system.
 \end{axiom}
 
-
 \subsection{Message structure}\label{sec:message-structure}
 
 Engine communication occurs through typed messages.
@@ -221,9 +228,11 @@ A message is a triple $m \equiv \langle s,\, t,\, v \rangle$ where:
 \begin{itemize}
     \item $s$ is the sender address (source)
     \item $t$ is the target address (destination)
-    \item $v$ is a payload of type $\mathsf{Msg_j}$ corresponding to the message interface of target engine $e_j$
+    \item $v$ is a payload of type $\mathsf{Msg_j}$ which is the message type
+    the target engine $e_j$ can process.
 \end{itemize}
-We define projection functions $\mathsf{sender}(m)$, $\mathsf{target}(m)$, and $\mathsf{msg}(m)$ to extract the respective components of a message.
+We define projection functions $\mathsf{sender}(m)$, $\mathsf{target}(m)$, and
+$\mathsf{msg}(m)$ to extract the respective components of a message.
 \end{definition}
 
 \begin{definition}[Message Interface]\label{def:message-interface}%
@@ -239,12 +248,19 @@ where $j$ ranges over all engines in the system. To simplify the notation, we
 assume message type subtyping, that is, $\mathsf{Msg_j} \subseteq \mathsf{Msg}$
 for all $j \in \mathcal{E}$.
 
+% An alternative approach defines message interfaces through untagged unions, permitting
+% overlapping message types across engines. This is consistent with our approach,
+% enabling shared message constructors between engines capable of processing them,
+% though it diverges from our system's concrete implementation in Juvix.
+
 \subsection{Engine components}\label{sec:engine-components}
 
 An engine is a tuple of components which may contain immutable data such as
 their name and parent. Although, other information such as its location, status,
-and environment may change during the engine's lifecycle.
-% YEs, we should allow engines to move around the system.
+and environment can change during the engine's lifecycle. For example, a system
+might relocate an engine to a different location when computational costs in its
+current location become prohibitive and more favourable resource availability
+exists elsewhere.
 
 \begin{definition}[Engine Lifecyle]\label{def:engine-status}
 The \textbf{status} of an engine $e_j$, of type $\mathsf{EngineStatus}$, determines
@@ -273,7 +289,6 @@ depending on its logic, the engine may either return to \textsf{ready} or
 \textsf{terminated}.}
 \label{fig:engine-status}
 \end{figure}
-
 \end{definition}
 
 As illustrated in \Cref{fig:engine-status}, an engine is said to be
@@ -283,10 +298,12 @@ means the engine will not process any more messages. In such a case, the system
 will remove the engine in the next \emph{step}, and disregard any messages sent
 to it.
 
-To operate, an engine needs a \emph{configuration} and an \emph{environment}.
-In the configuration, we find what cannot be changed, such as the engine's name,
-location, parent, and \emph{the operational mode}. So, let's define first what
-the operational mode is about.
+An engine's operation requires two fundamental components: a
+\emph{configuration} and an \emph{environment}. The implicit initial state of an
+engine then emerges from these two components. Precisely, the configuration
+contains immutable data such as the engine's name, parent reference, and
+operational mode. We first formalise this operational mode concept to establish
+precise semantics.
 
 \begin{definition}\label{def:engine-mode}
 The \textbf{operational mode} of an engine $e_j$, of type $\mathsf{EngineMode}$,
@@ -305,11 +322,19 @@ attribute goes into the engine's configuration.
 
 \begin{definition}\label{def:engine-configuration} The \textbf{configuration} of
 an engine $e_j$ often denoted by $\mathsf{cfg}_j$ is a tuple $\langle
-\mathsf{name}, \mathsf{parent} , \mathsf{mode} \rangle$ of type $\mathsf{Cfg}$.
-The name of the engine is its identifier, and \textsf{parent} is an optional
-reference (address) of the engine's parent. The third component, the $\mathsf{mode}$, is the engine's
-operational mode as in \Cref{def:engine-mode}.
+\mathsf{name}, \mathsf{parent} , \mathsf{mode} \rangle$.
+The inferred type of the configuration is denoted with $\mathsf{Cfg}_j$, indicating
+the configuration of engine $e_j$. The engine's name is its identifier, and
+\textsf{parent} is an optional reference (address) of the engine's parent. The
+third component, the $\mathsf{mode}$, is the engine's operational mode as in
+\Cref{def:engine-mode}.
 \end{definition}
+
+\begin{remark}
+Similar to message interfaces, we collect all configurations into a single type,
+$\mathsf{Cfg}$, the sum type of all configuration types. Subtyping for configurations
+is defined as $\mathsf{Cfg_j} \subseteq \mathsf{Cfg}$.
+\end{remark}
 
 Recall that engines are isolated from each other and process messages
 independently. However, an engine's configuration alone is insufficient for
@@ -1092,24 +1117,22 @@ Fundamentally, engines represent processes augmented with additional structural
 components but not particularly crucial to the main design proposed here. Here we proposed a mailboxes-as-actor approach that naturally extends to any Actor-like model that shares a process-oriented paradigm~\cite{taxonomy-of-actor-models}. 
 
 \paragraph{Related work}
-Kilim's framework~\cite{kilim-framework} aligns to the mailbox decoupling, goal of this paper. Kilim achieves the mailbox separation through
-specialised queues. However, Kilim's implementation treats mailboxes as passive
-data structures rather than first-class actors. This limitation persists across
-most Actor model
-implementations like Agha's Classic Actor Model~\cite{foundation97agha}, and SALSA~\cite{taxonomy-of-actor-models}, where
-mailboxes typically function as internal components with limited exposed
-functionality beyond basic queue operations, or like Erlang, where mailbox
-interaction remains a low-level system primitive with opaque handling~\cite{erlang-2010}.
+Kilim's framework~\cite{kilim-framework} aligns to the mailbox decoupling, goal
+of this paper. Kilim achieves the mailbox separation through specialised queues.
+However, Kilim's implementation treats mailboxes as passive data structures
+rather than first-class actors. This limitation persists across most Actor model
+implementations like Agha's Classic Actor Model~\cite{foundation97agha}, and
+SALSA~\cite{taxonomy-of-actor-models}, where mailboxes typically function as
+internal components with limited exposed functionality beyond basic queue
+operations, or like Erlang, where mailbox interaction remains a low-level system
+primitive with opaque handling~\cite{erlang-2010}.
 
-In short, here, by promoting mailboxes to
-engines/process, we synthesise Kilim's structural separation with Erlang's
-operational transparency while introducing new capabilities via custom mailboxes
-behaviour.
-
-Summarising, mailbox engines function as \emph{secretaries},
-intelligent message brokers that can be configured to, for example, perform content-based
-filtering rules, engine-specific priority-based message
-organisation, temporal/delayed delivery, and implementing debugging mechanisms.
+In short, by promoting mailboxes to opaque first-class actors, we combine
+Kilim's structural separation with Erlang's process-oriented operational
+transparency, plus the ability to implement custom mailbox behaviours.
+These mailbox engines act as \emph{secretaries} ---intelligent brokers that can
+filter content, prioritize messages, delay delivery, or debug issues through
+configurable rules.
 
 
 \paragraph{Multiple mailboxes per processing actor}
