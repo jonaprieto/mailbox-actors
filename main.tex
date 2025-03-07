@@ -22,8 +22,8 @@
 \section{Introduction}
 
 % Introduction to actor models and their communication mechanism.
-Actor models provide a computational framework for concurrent systems. In these
-systems, the main construct is the notion of an \emph{actor}. Actors are
+Actor models provide a framework for concurrent systems. In these
+systems, the main entity is the notion of an \emph{actor}. Actors are
 independent computational units that encapsulate the execution environment of
 their processing logic. Asynchronous communication between actors occurs
 solely via messages. A message is defined as any piece of data sent from one
@@ -36,7 +36,7 @@ One challenge in actor systems is managing message flow under high volumes.
 Although some techniques such as rate limiting and \emph{backpressure} help regulate
 message rates, these control mechanisms may also fail under heavily loaded
 systems. Message delivery is often assumed to be reliable, but practical
-implementations really need to consider the possibility of message loss and
+implementations need to consider the possibility of message loss and
 delays from processing bottlenecks or crashing actors.
 
 % Proposes a solution by decoupling mailboxes from processing actors.
@@ -84,33 +84,33 @@ correctness under concurrent message processing.
 \section{Notation}\label{sec:notation}
 
 We use an informal type-theoretic notation. For example, a term $x$ of type $A$
-is denoted as $x : A$. Capital letters or capitalized words are used for types,
+is denoted $x : A$. Capital letters or capitalized words are used for types,
 and lowercase letters or lowercase words are used for terms. There is a universe
 of types $U$, so if $A$ is a type, then $A : U$. We also work with inductive
 types presented in the following form:
 
 \begin{align*}
-  A ::= \cdots \mid \mathsf{C}(A_1, \dots, A_n) \, ,
+  A := \cdots \mid \mathsf{C}(A_1, \dots, A_n) \, ,
 \end{align*}
 
 where $\mathsf{C}$ is a constructor of the type $A$, and $A_1, \dots, A_n$ are
 the types of the constructor arguments. The inductive type of natural numbers is
-denoted as $\N$. The type $\mathsf{Unit}$ has exactly one term, denoted as
-$\mathsf{unit}$. The empty type is denoted as $\bot$. Another recurrent type is the
-type of parametric lists, denoted as $\mathsf{List}(A)$. The definition that
-term $x$ \emph{is} $y$ is denoted as $x :\equiv y$. Definitionally equal terms are
-denoted as $a \equiv b$. The proposition that $a$ is equal to $b$ is denoted as
+denoted~$\N$. The type $\mathsf{Unit}$ has exactly one term, denoted
+$\mathsf{unit}$. The empty type is denoted $\bot$. Another recurrent type is the
+type of parametric lists, denoted $\mathsf{List}(A)$. The definition that
+term $x$ \emph{is} $y$ is denoted $x :\equiv y$. Definitionally equal terms are
+denoted $a \equiv b$. The proposition that $a$ is equal to $b$ is denoted
 $a = b$.
 
-Some types are equipped with structure that behave as sets, and here are common
-set-theoretic notation we use: the membership relation is denoted as $\in$, so
+Some types are equipped with structure that allows them to behave as sets, and we use some common
+set-theoretic notations: the membership relation is denoted $\in$, so
 $a \in A$ is a proposition that $a$ is an element of $A$ (do not confuse with
 typing $a : A$). For $A$ and $B$, $A \subseteq B$ denotes set inclusion, meaning
-every element of $A$ belongs to $B$ and $\varnothing$ denotes the empty set.
-Union between sets $A$ and $B$ is denoted as $A \cup B$. The intersection is
-denoted as $A \cap B$. The difference between $A$ and $B$ is denoted as $A
-\setminus B$; and $A \times B$ denotes the Cartesian product of $A$ and $B$, and
-their terms are denoted as $\langle a,b \rangle$, where $a : A$ and $b : B$. A
+every element of $A$ belongs to $B$. $\varnothing$ denotes the empty set.
+Union between sets $A$ and $B$ is denoted $A \cup B$. The intersection is
+denoted $A \cap B$. The difference between $A$ and $B$ is denoted $A
+\setminus B$. $A \times B$ denotes the Cartesian product of $A$ and $B$, and
+their terms are denoted $\langle a,b \rangle$, where $a : A$ and $b : B$. A
 \emph{tuple} $\langle a_1, a_2, \dots, a_n \rangle$ is a generalisation of an
 ordered pair to an ordered $n$-tuple, where $n \in \N$, of type $A_1 \times
 \cdots \times A_n$, and $a_i$ is of type $A_i$ for all $i \in \{1, \dots, n\}$.
@@ -119,14 +119,15 @@ as projections, otherwise, the projections are $\pi_i(a) :\equiv a_i$ for all $i
 \in \{1, \dots, n\}$. For example, if $x :\equiv \langle \mathsf{fst},
 \mathsf{snd} \rangle$ denotes a tuple with components values can be projected
 using $\mathsf{fst}$ and $\mathsf{snd}$ via $\mathsf{fst}(x)$ and
-$\mathsf{snd}(x)$, respectively. Additionally, $A_1 \oplus \cdots \oplus A_n$
-denotes the disjoint union of $A_1, \dots, A_n$, so $\mathsf{inj_i}(a_i)$ are
+$\mathsf{snd}(x)$, respectively. $A_1 \oplus \cdots \oplus A_n$
+denotes the disjoint union of $A_1, \dots, A_n$, and $\mathsf{inj_i}(a_i)$ are
 the corresponding injections into $A_1 \oplus \cdots \oplus A_n$ from $A_i$ for
 all $i \in \{1, \dots, n\}$. Given a type $A$, we can define the optional type
-$\Option{A}$ as $A \oplus \bot$, where $\bot$ is the bottom type. And the terms
+$\Option{A}$ as $A \oplus \mathsf{Unit}$.
+The terms
 $\mathsf{none}$ and $\mathsf{some}(a)$ are the corresponding terms for the
 optional type when $a : A$. Finally, a function $f$ that takes an argument $a$
-of type $A$ and returns a value of type $B$ is denoted as $f : A \to B$. We also
+of type $A$ and returns a value of type $B$ is denoted $f : A \to B$. We also
 use the notation $f[a \mapsto c]$ to define a new function that is similar to $f$
 except that the output of $f$ is replaced by $c$ when the input is $a$, if $a$ is
 in the domain of $f$. Otherwise, we extend $f$ accordingly. We overload the
@@ -138,12 +139,12 @@ Otherwise, we extend $\mathcal{N}$ accordingly.
 
 \section{Model}\label{sec:model}
 
-This section presents a version based on the Engine Model \cite{engine-art}
+This section presents a model based on the Engine Model \cite{engine-art}
 without any time component. In this actor-like model, the system consists of
 \emph{engines}, which are similar to the notion of actor in Agha's Actor Model
 \cite{foundation97agha} but are equipped with more context.
 
-An engine comprises three main components: a \emph{configuration}, an
+An engine is comprised of three main components: a \emph{configuration}, an
 \emph{execution environment}, and a \emph{behaviour}. The configuration
 includes, among other things, the engine's name, location within the system, and
 an optional reference to the parent engine. The execution environment includes
@@ -166,18 +167,18 @@ actions have satisfied pre-conditions, and executes the corresponding action.
 \end{remark}
 
 The model assumes an ambient \emph{system} $\kappa$ mainly consisting of a set of
-\emph{nodes} $\mathcal{N}$, a set of \emph{engines} $\mathcal{E}$, following a
+\emph{nodes}~$\mathcal{N}$, a set of \emph{engines} $\mathcal{E}$, following a
 specific \emph{message-passing mechanism} (MPM for short) that will be described
 later, among other components.
 
 Engines are distributed across the nodes of the system, with each engine being
 associated with a unique node. Each entity in the system has a unique identifier,
-allowing nodes and engines to be denoted as $n_i$ and $e_j$ respectively, where
+allowing nodes and engines to be denoted with $n_i$ and $e_j$ respectively, where
 $i, j \in \N$.
 
 Following the message-passing paradigm, the MPM enforces policies for message
 delivery and flow control. This mechanism operates on a set of \emph{messages}
-that we denote here as $\mu$. Each message contains information about its
+which we denote with $\mu$. Each message contains information about its
 sender and receiver.
 
 To reason about the system, we use a state machine that evolves in discrete
@@ -211,7 +212,7 @@ Each engine is uniquely identified by an \emph{address} in the system.
 \subsection{Message structure}\label{sec:message-structure}
 
 Engine communication occurs through typed messages.
-\begin{definition}\label{def:messages}
+\begin{definition}[Message]\label{def:messages}
 A message is a triple $m \equiv \langle s,\, t,\, v \rangle$ where:
 \begin{itemize}
     \item $s$ is the sender address (source)
@@ -221,14 +222,14 @@ A message is a triple $m \equiv \langle s,\, t,\, v \rangle$ where:
 We define projection functions $\mathsf{sender}(m)$, $\mathsf{target}(m)$, and $\mathsf{msg}(m)$ to extract the respective components of a message.
 \end{definition}
 
-\begin{definition}\label{def:message-interface}%
+\begin{definition}[Message Interface]\label{def:message-interface}%
 The \textbf{message interface} of an engine $e_j$ is the sum type
 $\mathsf{Msg_j}$ where the type constructors address the different message types
 that the engine can process.
 \end{definition}
 
 To refer to an arbitrary message type \emph{within the system}, we use the type
-$\mathsf{Msg}$, the sum type  of all message interfaces, and therefore the valid
+$\mathsf{Msg}$, the sum type of all message interfaces, and therefore the valid
 message types, that is, $\mathsf{Msg} :\equiv \bigoplus_{j} \mathsf{Msg_j}$
 where $j$ ranges over all engines in the system. To simplify the notation, we
 assume message type subtyping, that is, $\mathsf{Msg_j} \subseteq \mathsf{Msg}$
@@ -236,12 +237,12 @@ for all $j \in \mathcal{E}$.
 
 \subsection{Engine components}\label{sec:engine-components}
 
-An engine is a tuple of components, which may contain immutable data such as
-their name, and parent. Although, other information such as its location, status
+An engine is a tuple of components which may contain immutable data such as
+their name and parent. Although, other information such as its location, status,
 and environment may change during the engine's lifecycle.
 % YEs, we should allow engines to move around the system.
 
-\begin{definition}\label{def:engine-status}
+\begin{definition}[Engine Lifecyle]\label{def:engine-status}
 The \textbf{status} of an engine $e_j$, of type $\mathsf{EngineStatus}$, determines
 the engine's operational mode and thus its lifecycle.
 \begin{equation}\label{eq:engine-status}
@@ -254,9 +255,9 @@ the engine's operational mode and thus its lifecycle.
 	& {\mathsf{ready}} \\
 	{\mathsf{terminated}} && {\mathsf{busy}}
 	\arrow[from=1-2, to=2-1]
-	\arrow[from=1-2, to=2-3]
-	\arrow[shift left=3, from=2-3, to=1-2]
-	\arrow[from=2-3, to=2-1]
+	\arrow[from=1-2, to=2-3, bend right]
+	\arrow[from=2-3, to=1-2, bend right]
+	\arrow[from=2-3, to=2-1, bend left]
 \end{tikzcd}\]
 \caption{An engine life cycle. Every engine starts in a
 \textsf{ready} state waiting for a message, and once it reacts to a message it
@@ -275,7 +276,7 @@ will remove the engine in the next \emph{step}, and disregard any messages sent
 to it.
 
 To operate, an engine needs a \emph{configuration} and an \emph{environment}.
-In the configuration, we find what it cannot be changed, such as the engine's name,
+In the configuration, we find what cannot be changed, such as the engine's name,
 location, parent, and \emph{the operational mode}. So, let's define first what
 the operational mode is about.
 
@@ -298,7 +299,7 @@ attribute goes into the engine's configuration.
 an engine $e_j$ often denoted by $\mathsf{cfg}_j$ is a tuple $\langle
 \mathsf{name}, \mathsf{parent} , \mathsf{mode} \rangle$ of type $\mathsf{Cfg}$.
 The name of the engine is its identifier, and \textsf{parent} is an optional
-reference, address, of the engine's parent. $\mathsf{mode}$ is the engine's
+reference (address) of the engine's parent. The third component, the $\mathsf{mode}$, is the engine's
 operational mode as in \Cref{def:engine-mode}.
 \end{definition}
 
@@ -324,7 +325,7 @@ The behaviour of an engine is a declarative description of what it does when it
 reacts to a message. This description of computation is via an effect system
 consisting of commands to the system to be executed at runtime.
 
-\begin{definition}\label{def:effects}%
+\begin{definition}[Effect]\label{def:effects}%
 Given a type $S$ representing the local state of an engine $e_j$, an
 \textbf{effect} is of type $\mathsf{Effect}(S)$, which considers all the
 possible ways an engine can influence the system by reacting to a message.
@@ -372,7 +373,7 @@ $\mathsf{noop}$.}
 Given an engine $e_j$, the following definition specifies the guard and action
 components of an engine's behaviour.
 
-\begin{definition}\label{def:guards}%
+\begin{definition}[Guard]\label{def:guards}%
 A \textbf{guard} is a pre-condition that, when an engine reacts to a message
 with its environment $\mathsf{env}_j$ and configuration $\mathsf{cfg}_j$,
 returns $\mathsf{none}$ if the guard is not satisfied, and returns data
@@ -443,8 +444,7 @@ Having defined the components that make up an engine's behaviour, we can now
 formally specify engines themselves. As the fundamental computational units of
 our system, engines encapsulate both the processing logic and state management
 capabilities. We have established the types of their constituent parts, that is,
-guards, actions, configurations and environments. Now we can provide a complete
-specification of the engine type.
+guards, actions, configurations and environments. 
 
 \begin{definition}\label{def:engine}
 An \textbf{engine} is the computational unit of the system, formally specified by a tuple
@@ -515,7 +515,7 @@ constitutes a node.
 A \textbf{node} $n_i$ in $\mathcal{N}$ is a tuple
 $\langle \mathsf{id}, \mathcal{E}_i, \omega_i \rangle$ where $\mathsf{id}$
 corresponds to the node's unique identifier across the system, $\mathcal{E}_i$
-is the set of engines running on the node, and $\omega_i$ represents specific
+is the set of engines running on the node, and $\omega_i$ represents this specific
 node's operations.
 \end{definition}
 
@@ -594,9 +594,8 @@ system state $\kappa$, there exists a subsequent state $\kappa'$ where $m$ is
 eventually delivered to its intended recipient.
 \end{axiom}
 
-Now the system must provide primitives to aid in the creation of different
-entities such as nodes and engines. So, at any point in time the system provides
-functions such as the following.
+The system must provide primitives to aid in the creation of different
+entities such as nodes and engines. The system provides the following functions:
 
 \begin{itemize}
 \item $\mathsf{freshId} : \mathsf{Unit} \to \mathsf{Addr}$ is the function that
@@ -734,7 +733,7 @@ respectively, which follow the specification as in \Cref{def:mailbox-engine}.
 \end{definition}
 
 \begin{remark}
-The rule \textsc{CreateEngine} takes place in the context of a node $n_i$. When defining an
+The rule \textsc{CreateEngine} takes place in the context of a node $n_i$. When defining a
 processing engine $e_{\mathsf{new}}$, the system also creates a mailbox engine on the same
 node, $m_{\mathsf{new}}$. While the only parameters required by this rule are the
 processing engine parameters (configuration and environment) for $e_{\mathsf{new}}$,
@@ -822,14 +821,14 @@ mailbox. This is done via the \textsc{Enqueue} rule.
 \hspace{-1.5em}
   \begin{prooftree}
   \AxiomC{$m \equiv \langle s, m_t, \mathsf{append}(v) \rangle \in \mu
-  \quad m_t \equiv \mathsf{mbox}(e_t)%
+  \quad m_t \equiv \mathsf{mbox}(\alpha(e_t))%
   $}
   \noLine
   \UnaryInfC{$%
    \mathsf{mail} = \mathsf{mode}(\mathsf{cfg}(\epsilon(m_t)))%
   \quad q \equiv \mathsf{env}(\epsilon(m_t)) $}
   \UnaryInfC{$\kappa \rightsquigarrow (\mathcal{N}[m_t \mapsto%
-  \langle i_{mbox}, b_{mbox}, r, \mathsf{cfg}_{mbox}, q \cup \{v\} \rangle],%
+  \langle i_{mbox}, b_{mbox}, s_{mbox}, \mathsf{cfg}_{mbox}, q \cup \{v\} \rangle],%
   \mu \setminus \{m\},%
   \omega)$}
   \end{prooftree}
@@ -852,7 +851,7 @@ mailbox. This is done via the \textsc{Enqueue} rule.
   \mathcal{N}' \equiv
   \mathcal{N}[e_p \mapsto%
   \langle i_p, b_p, \mathsf{busy}, \mathsf{cfg}_p, \mathsf{env}_p \rangle]%
-  [m_p \mapsto \langle i_{mbox}, b_{mbox}, r, \mathsf{cfg}_{mbox}, q \rangle]
+  [m_p \mapsto \langle i_{mbox}, b_{mbox}, s_{mbox}, \mathsf{cfg}_{mbox}, q \rangle]
   $}
   \UnaryInfC{$\kappa \rightsquigarrow (\mathcal{N}', \mu, \omega)$}
   \end{prooftree}
@@ -983,9 +982,9 @@ $}
 \UnaryInfC{$%
 S : \mathsf{Type}%
 \quad s : \mathsf{Env}(S)%
-\quad (k \rightsquigarrow k') \equiv \textsc{CreateEngine}(\kappa, n_i, c, s)
+\quad (\kappa \rightsquigarrow \kappa') \equiv \textsc{CreateEngine}(\kappa, n_i, c, s)
 $}
-\UnaryInfC{$\execEffect(\mathsf{spawn}(c, s), \kappa) \equiv k'$}
+\UnaryInfC{$\execEffect(\mathsf{spawn}(c, s), \kappa) \equiv \kappa'$}
 \end{prooftree}
 \end{definition}
 
@@ -1070,9 +1069,6 @@ engines.
 
 \section{Discussion}\label{sec:related}
 
-There are several extensions to the model that could be considered. I mentioned
-below a few discussion points that could be considered.
-
 \paragraph{Multiple mailboxes per processing actor}
 While our architecture could naturally accommodate multiple mailbox actors per
 processing actor, a pattern that might enable specialized message routing or
@@ -1087,7 +1083,7 @@ constraint ensures reliable message ordering while preserving the opacity and
 encapsulation benefits central to our design.
 
 \paragraph{Practical message buffering strategies}
-By promoting mailboxes to first-class, that is, engine, we enable several
+By promoting mailboxes to first-class citizens, that is, treat them as engines, we enable several
 essential messaging features. A mailbox can implement \emph{rate limiting}
 through configurable constraints on message retrieval frequency. Conceptually,
 mailbox engines function as \emph{secretaries}, intelligent message brokers that
@@ -1121,18 +1117,18 @@ first-class primitives within the actor model itself.
 
 \paragraph{Rules as way to guide implementation}
 The operational semantics given in \Cref{sec:semantics} can be seen as a way to
-guide the implementation of mailbox-as-an-actor approach, described in this
-paper. We present the rules such they should be easy to reason about and to
+guide the implementation of the \say{mailbox-as-an-actor} approach, described in this
+paper. We presented the rules in such a way that they should be easy to reason about and
 implement.
 
 The system-level rules are given in \Cref{sec:creation-rules}. In this section,
-we describe how the system grows from the initial empty state, with the addition
+we described how the system grows from the initial empty state, with the addition
 of nodes, engines, and later on messages in \Cref{sec:message-passing-rules}. We
 cover other rules such as \textsc{Clean} as a garbage-collector for engines,
 however, we did not cover rules for on-demand engine or node
-deletion/disconnect. This can be seen as an extension of the model.
+deletion/disconnection. This can be seen as an extension of the model.
 
-Our message-passing mechanism is implemented the rules given in
+Our message-passing mechanism implements the rules given in
 \Cref{sec:message-passing-rules}. The \textsc{Send} rule enables asynchronous
 message realisation in the system, allowing concurrent message generation
 without sender blocking. Messages are reliably delivered to mailbox engines
@@ -1141,7 +1137,7 @@ Message digestion is handled by the \textsc{Dequeue} rule.
 
 Finally, and probably one of the most interesting rules, the \textsc{Process}
 rule enables atomic state transitions by combining behaviour evaluation, rules
-in \Cref{sec:behavior-eval-rules} with effect handling, rules in
+in \Cref{sec:behavior-eval-rules} with effect handling, and rules in
 \Cref{sec:effect-rules}. Together, the rules in \Cref{sec:semantics} form a
 complete system for reliable asynchronous communication with proper resource
 management.
