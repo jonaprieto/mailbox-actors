@@ -1085,26 +1085,28 @@ processes~\cite{taxonomy-of-actor-models} ---entities we refer to as
 \emph{engines} in our framework.
 
 Fundamentally, engines represent processes augmented with additional structural
-components. This structural enhancement implies that our what this paper
-proposes, a mailbox decoupling methodology, naturally extends to any Actor model
-implementation following a process-oriented paradigm. 
+components but not particularly crucial to the main design proposed here. Here we propose mailboxes as actors that naturally extends to any Actor-like that shares a process-oriented paradigm. 
 
-One related work that aligns to the mailbox decoupling is the Kilim's
-framework~\cite{kilim-framework}. Kilim achieves mailbox separation through
+\paragraph{Related work}
+Kilim's framework~\cite{kilim-framework} aligns to the mailbox decoupling, goal of this paper. Kilim achieves the mailbox separation through
 specialised queues. However, Kilim's implementation treats mailboxes as passive
 data structures rather than first-class actors. This limitation persists across
 most Actor model
-implementations~\cite{foundation97agha,taxonomy-of-actor-models}, where
+implementations like Agha's Classic Actor Model~\cite{foundation97agha}, and SALSA~\cite{taxonomy-of-actor-models}, where
 mailboxes typically function as internal components with limited exposed
 functionality beyond basic queue operations, or like Erlang, where mailbox
-interaction remains a low-level system primitive with opaque handling.
+interaction remains a low-level system primitive with opaque handling~\cite{erlang-2010}.
 
-Our architecture advances this paradigm by promoting mailboxes to
-engines/process, synthesising Kilim's structural separation with Erlang's
+In short, here, by promoting mailboxes to
+engines/process, we synthesise Kilim's structural separation with Erlang's
 operational transparency while introducing new capabilities via custom mailboxes
-behaviour. This architectural promotion enables implementations supporting
-advanced messaging strategies including priority queuing, protocol-aware
-filtering, and context-dependent message discarding.
+behaviour.
+
+Summarising, mailbox engines function as \emph{secretaries},
+intelligent message brokers that can be configured to, for example, perform content-based
+filtering rules, engine-specific priority-based message
+organisation, temporal/delayed delivery, and implementing debugging mechanisms.
+
 
 \paragraph{Multiple mailboxes per processing actor}
 While our architecture could naturally accommodate multiple mailbox actors per
@@ -1118,24 +1120,6 @@ benefits of our decoupled architecture. Therefore, we intentionally maintain a
 one-to-one relationship between processing actors and their mailboxes, as this
 constraint ensures reliable message ordering while preserving the opacity and
 encapsulation benefits central to our design.
-
-\paragraph{Practical message buffering strategies}
-By promoting mailboxes to first-class citizens, that is, treat them as engines,
-we enable several essential messaging features. A mailbox can implement
-\emph{rate limiting} through configurable constraints on message retrieval
-frequency. Conceptually, mailbox engines function as \emph{secretaries},
-intelligent message brokers that can be configured to perform content-based
-filtering rules or engine-specific relevancy, priority-based message
-organisation, and temporal delivery optimisation. However, some of these
-features would require extension to the message interface of mailboxes, and to
-the interface of their internal state. Also, the engine model would need to be
-extended to support time-based events, such as delays~\cite{engine-art}.
-Additionally, message routing capabilities could be added to enable directed
-forwarding to specific mailboxes, implementing debugging mechanisms.
-
-As said before, another aspect of the Engine model~\cite{art-engines} not addressed in this presentation
-is engine clocks. An engine clock or timer would enable
-it to react to time-based events. Such information could be used to model and track the system's liveness, progress, and latency. 
 
 \paragraph{System properties}
 There is nothing that prevents us from proving system properties for this
