@@ -206,14 +206,14 @@ $\mu^i$ is the set of messages in the $i$-th step.
 % referring to engines.
 
 
-\subsection{Addresses and names}\label{sec:addresses-and-names}
+\subsection{Addresses}\label{sec:addresses-and-names}
 
 \begin{definition}\label{def:address}
 
 An \textbf{address} for an engine $e_j$ is a tuple $a \equiv \langle
 \mathsf{node}, \mathsf{id} \rangle$, where $\mathsf{node}(a)$ is the node
 identifier where the engine runs, and $\mathsf{id}(a)$ is the engine's unique
-identifier.
+identifier, of type $\mathsf{NodeID}$ and $\mathsf{UID}$, respectively.
 \end{definition}
 
 \begin{axiom}\label{ax:address}
@@ -226,8 +226,8 @@ Engine communication occurs through typed messages.
 \begin{definition}[Message]\label{def:messages}
 A message is a triple $m \equiv \langle s,\, t,\, v \rangle$ where:
 \begin{itemize}
-    \item $s$ is the sender address (source)
-    \item $t$ is the target address (destination)
+    \item $s$ is the sender address,
+    \item $t$ is the target address, and
     \item $v$ is a payload of type $\mathsf{Msg_j}$ which is the message type
     the target engine $e_j$ can process.
 \end{itemize}
@@ -245,7 +245,7 @@ To refer to an arbitrary message type \emph{within the system}, we use the type
 $\mathsf{Msg}$, the sum type of all message interfaces, and therefore the valid
 message types, that is, $\mathsf{Msg} :\equiv \bigoplus_{j} \mathsf{Msg_j}$
 where $j$ ranges over all engines in the system. To simplify the notation, we
-assume message type subtyping, that is, $\mathsf{Msg_j} \subseteq \mathsf{Msg}$
+assume message type subtyping, that is, $\mathsf{Msg_j} : \mathsf{Msg}$
 for all $j \in \mathcal{E}$.
 
 % An alternative approach defines message interfaces through untagged unions, permitting
@@ -302,7 +302,7 @@ to it.
 An engine's operation requires two fundamental components: a
 \emph{configuration} and an \emph{environment}. The implicit initial state of an
 engine then emerges from these two components. Precisely, the configuration
-contains immutable data such as the engine's name, parent reference, and
+contains immutable data such as the engine's parent reference, and
 operational mode. We first formalise this operational mode concept to establish
 precise semantics.
 
@@ -325,7 +325,7 @@ attribute goes into the engine's configuration.
 an engine $e_j$ often denoted by $\mathsf{cfg}_j$ is a tuple $\langle
 \mathsf{name}, \mathsf{parent} , \mathsf{mode} \rangle$.
 The inferred type of the configuration is denoted with $\mathsf{Cfg}_j$, indicating
-the configuration of engine $e_j$. The engine's name is its identifier, and
+the configuration of engine $e_j$. The engine's
 \textsf{parent} is an optional reference (address) of the engine's parent. The
 third component, the $\mathsf{mode}$, is the engine's operational mode as in
 \Cref{def:engine-mode}.
@@ -334,7 +334,7 @@ third component, the $\mathsf{mode}$, is the engine's operational mode as in
 \begin{remark}
 Similar to message interfaces, we collect all configurations into a single type,
 $\mathsf{Cfg}$, the sum type of all configuration types. Subtyping for configurations
-is defined as $\mathsf{Cfg_j} \subseteq \mathsf{Cfg}$.
+means that the configuration of an engine $j$, $\mathsf{Cfg_j}$, is also a type of $\mathsf{Cfg}$.
 \end{remark}
 
 Recall that engines are isolated from each other and process messages
@@ -360,16 +360,16 @@ reacts to a message. This description of computation is via an effect system
 consisting of commands to the system to be executed at runtime.
 
 \begin{definition}[Effect]\label{def:effects}%
-Given a type $S$ representing the local state of an engine $e_j$, an
-\textbf{effect} is of type $\mathsf{Effect}(S)$, which considers all the
+Given a type $S_j$ representing the local state of an engine $e_j$, an
+\textbf{effect} is of type $\mathsf{Effect}(j, S_j)$, which considers all the
 possible ways an engine can influence the system by reacting to a message.
 
 \begin{equation}\label{eq:effects}
 \begin{aligned} %TODO: review this grammar
-\mathsf{Effect}(S) := &\quad \mathsf{send}(\mathsf{Addr}, \mathsf{Msg}) & &\text{(message dispatch)} \\
-\mid & \quad \mathsf{update}(\mathsf{Env}(S)) & &\text{(engine state modification)} \\
-\mid & \quad \mathsf{spawn}(\mathsf{Cfg}_j, \mathsf{Env}(S)) & &\text{(engine creation)} \\
-\mid & \quad \mathsf{chain}(\mathsf{Effect}(S), \mathsf{Effect}(S_j)) & &\text{(action sequencing)} \\
+\mathsf{Effect}(j, S_j) := &\quad \mathsf{send}(\mathsf{Addr}, \mathsf{Msg}) & &\text{(message dispatch)} \\
+\mid & \quad \mathsf{update}(\mathsf{Env}_j(S_j)) & &\text{(engine state modification)} \\
+\mid & \quad \mathsf{spawn}(i, \mathsf{Cfg}_i, \mathsf{Env}_i(S_i)) & &\text{(engine creation)} \\
+\mid & \quad \mathsf{chain}(\mathsf{Effect}(j, S_j), \mathsf{Effect}(j, S_j)) & &\text{(action sequencing)} \\
 \mid & \quad \mathsf{terminate} & &\text{(engine shutdown)} \\
 \mid & \quad \mathsf{noop} & &\text{(null operation)\, .}
 \end{aligned}
@@ -384,7 +384,7 @@ possible ways an engine can influence the system by reacting to a message.
 	{} & {(m, \mathsf{cfg_j},\mathsf{env}_j)} & {} \\
 	\\
 	{r_1} & \cdots & {r_k} \\
-	{e_1:\mathsf{Effect}(S_j)} & \cdots & {e_k:\mathsf{Effect}(S_j)}
+	{e_1:\mathsf{Effect}(j, S_j)} & \cdots & {e_k:\mathsf{Effect}(j, S_j)}
 	\arrow[curve={height=24pt}, shorten <=24pt, shorten >=24pt, dashed, no head, from=1-1, to=1-3]
 	\arrow["{g_1}"', maps to, from=1-2, to=3-1]
 	\arrow["{g_i}"', maps to, from=1-2, to=3-2]
@@ -394,13 +394,13 @@ possible ways an engine can influence the system by reacting to a message.
 	\arrow["{c_k}", maps to, from=3-3, to=4-3]
 \end{tikzcd}\]%
 \caption{For an engine $e_j$, its behaviour acts on a message $m$ of type
-$\mathsf{Msg}_j$ and an engine's configuration and environment $\mathsf{cfg}_j$
-and $\mathsf{env}_j$, respectively. The pre-conditions, denoted as $g_i$, are
+$\mathsf{Msg}_j$ and an engine's configuration $\mathsf{cfg}_j$
+and environment $\mathsf{env}_j$. The pre-conditions, denoted as $g_i$, are
 guards that determine which action is executed. The symbols $r_i$ represent
-output that feeds into the actions $c_i$. The actions, denoted as $c_i$, are
-effects as in \Cref{def:effects} that are executed if their pre-conditions are
-satisfied. If no pre-conditions are satisfied, the action is a null operation,
-$\mathsf{noop}$.}
+output that feeds into the actions $c_i$. The actions, denoted as $c_i$ return
+one of the effects as in \Cref{def:effects}. These effects are executed if their
+pre-conditions are satisfied. If no pre-conditions are satisfied, the action is a
+null operation, $\mathsf{noop}$.}
 \label{fig:effect}
 \end{figure}
 
@@ -408,13 +408,13 @@ Given an engine $e_j$, the following definition specifies the guard and action
 components of an engine's behaviour.
 
 \begin{definition}[Guard]\label{def:guards}%
-A \textbf{guard} is a pre-condition that, when an engine reacts to a message
-with its environment $\mathsf{env}_j$ and configuration $\mathsf{cfg}_j$,
-returns $\mathsf{none}$ if the guard is not satisfied, and returns data
-otherwise. Therefore, a guard can be seen as a mapping of type $\mathsf{Msg}
-\times \mathsf{Cfg}_j \times \mathsf{Env}_j(S_j) \to \Option{R}$ for some type
-$R$, where $R$ is the specific type of data returned when the guard is
-satisfied.
+A \textbf{guard} is a pre-condition-alike function that
+returns a value of a given type $R$ if the guard is satisfied, and $\mathsf{none}$
+otherwise. The guard is a mapping of type%
+$\mathsf{Msg}_i \times \mathsf{Cfg}_i \times \mathsf{Env}_i(S_i) \to
+\Option{R}$.%
+Recall that $R$ is the specific type of data returned when the guard is
+satisfied, and $S_i$ is the type of the engine's local state.
 \end{definition}
 
 On the computational aspects of an engine, the behaviour evaluating the
@@ -424,7 +424,7 @@ guard is satisfied, is as follows:
 \begin{definition}\label{def:action}%
 Given an engine $e_j$, an \textbf{action} acting on data of type $R$ is a
 mapping of type $R \times \mathsf{Msg}_j \times \mathsf{Cfg}_j \times
-\mathsf{Env}_j(S_j) \to \mathsf{Effect}(S_j)$.
+\mathsf{Env}_j(S_j) \to \mathsf{Effect}(j, S_j)$.
 \end{definition}
 
 Then, we compose a guard and an action to form a \emph{guarded action}, which is
@@ -440,16 +440,16 @@ where the action is not applicable.
   \begin{itemize}
     \item $g_j$ is a guard as in \Cref{def:guards} that determines when the
     action $a_j$ should execute, and
-    \item $a_j$ is an action of type $\mathsf{Effect}(S_j)$ as in
-    \Cref{def:effects} that specifies what to execute
+    \item $a_j$ is an action of type $\mathsf{Effect}(S)$ as in
+    \Cref{def:effects} that specifies what to execute,
   \end{itemize}
 \end{definition}
 
 Together, both the guard and action induce a mapping of type
 
 \begin{equation*}\label{eq:guarded-action}%
-\mathsf{Msg} \times \mathsf{Cfg}_j
-\times \mathsf{Env}_j(S_j) \to \mathsf{Effect}(S_j)\,.
+\mathsf{Msg}_j \times \mathsf{Cfg}_j
+\times \mathsf{Env}_j(S_j) \to \mathsf{Effect}(j, S_j)\,.
 \end{equation*}
 This mapping takes in a message, engine configuration, and environment, and
 outputs the effect to execute when the guard is satisfied.
@@ -471,6 +471,11 @@ looping constructs, and it may not seem at first glance there is a recursive
 mechanism, the combination of guarded actions acting as conditional statements
 with open-ended message passing enables computational universality.
 \end{remark}
+
+\begin{definition}\label{def:engine-behaviour}
+Given an engine $e_j$, the type of its behaviour is denoted with
+$\mathsf{EngineBehaviour}_i$, and it is the set of its guarded actions.
+\end{definition}
 
 \subsection{Engines}\label{sec:processing-engines}
 
@@ -523,12 +528,14 @@ satisfy:
 carrying a payload of type $\mathsf{Msg_j}$
 \item State $q$ of type $S$ implementing a queue-like structure with:
   \begin{itemize}
-  \item $\emptyset$ denoting empty state,
-  \item message insertion to support $\mathsf{append}$ messages, $\mathsf{append}(q, v) : S \times \mathsf{Msg_j} \to S$, and
-  % \item message retrieval to support $\mathsf{pull}$ messages, $\mathsf{pull}(q) : S \to \mathsf{Msg_j} \times S$
+  \item $\emptyset$ denoting empty state.
+  \item Message insertion to support $\mathsf{append}$ messages, 
+  $$(\cup) : S \times \mathsf{Msg_j} \to S.$$
+  \item Message delation to support $\mathsf{pull}$ messages,%
+  $$(\backslash) : S \times \mathsf{Msg}_j \to S.$$
   \end{itemize}
-\item Behaviour enforcing semantics: $\mathsf{append}$ operations always precede
-$\mathsf{pull}$ operations in message processing
+% \item Behaviour enforcing semantics: $\mathsf{append}$ operations always precede
+% $\mathsf{pull}$ operations in message processing
 \end{itemize}
 \end{definition}
 
@@ -547,23 +554,20 @@ constitutes a node.
 
 \begin{definition}\label{def:node}
 A \textbf{node} $n_i$ in $\mathcal{N}$ is a tuple
-$\langle \mathsf{id}, \mathcal{E}_i, \omega_i \rangle$ where $\mathsf{id}$
-corresponds to the node's unique identifier across the system, $\mathcal{E}_i$
-is the set of engines running on the node, and $\omega_i$ represents this specific
+$\langle \mathsf{id}, \epsilon_i, \omega_i \rangle$ where $\mathsf{id}$
+corresponds to the node's unique identifier across the system, $\epsilon_i$
+is a mapping from identifiers to engines instances
+on the node, and $\omega_i$ represents this specific
 node's operations.
 \end{definition}
 
-\begin{remark}\label{rem:node-functions}
-For convenience, we derive the following functions for any node $n_i$:
+For convenience, given a node $n_i$, we have the following notation:
 \begin{itemize}
-\item $\alpha_i : \mathcal{E}_i \to \mathsf{Addr}$ is a total mapping that
-returns the address of any engine living on node $n_i$.
-\item The image of $\alpha_i$ is $\mathsf{Addr}_i :\equiv \alpha_i(\mathcal{E}_i)$.
-\item $\epsilon_i : \mathsf{Addr}_i \to \mathcal{E}_i$ is a mapping that, given
-an address in the node, that is, $\langle n_i, \mathsf{id}_j \rangle$ in
-$\mathsf{Addr}_i$, returns the corresponding engine $e_j \in \mathcal{E}_i$.
+  \item $\mathcal{E}_i$ is the set of values of the mapping $\epsilon_i$, and
+  \item $\alpha_i$ is a mapping from engine instances into
+  their identifiers.
 \end{itemize}
-\end{remark}
+
 \begin{remark}\label{rem:node-operations}
 By design, nodes cannot create, destroy, or modify engines directly. These
 operations require global coordination through system-level mechanisms rather
@@ -632,10 +636,10 @@ The system must provide primitives to aid in the creation of different
 entities such as nodes and engines. The system provides the following functions:
 
 \begin{itemize}
-\item $\mathsf{freshId} : \mathsf{Unit} \to \mathsf{Addr}$ is the function that
+\item $\mathsf{freshId}$ is the function that
 generates a fresh identifier for node creation.
-\item $\mathsf{freshName} : \mathsf{Unit} \to \mathsf{Name}$ is the function that
-generates a fresh name for an engine.
+% \item $\mathsf{freshName}$ is the function that
+% generates a fresh name for an engine.
 \item $\mathsf{mbox} : \mathsf{Addr} \to \mathsf{Addr}$ is the function that
 outputs the address of the dedicated mailbox engine for a given processing
 engine.
@@ -650,10 +654,11 @@ engine.
 and outputs the new system state after the effect has been executed.
 \end{itemize}
 
-We could also extend the node-specific functions defined in
-\Cref{rem:node-functions}. Functions like $\alpha_i$ can be used to construct
-a global version $\alpha$ that operates over all engines $\mathcal{E}$ in
-$\kappa^i$. This allows us to look up addresses for any engine in the system
+We could also extend the node-specific function $\epsilon_i$ to construct
+a global version $\epsilon$ that operates over all engines instances $\mathcal{E}$ in
+$\kappa^i$. Recall $\mathcal{E}$ is the collection of engine instances
+$\mathcal{E}_i$ for $i$ ranging over the node set.
+This allows us to look up addresses for any engine in the system
 regardless of which node it runs.
 
 Not described here are the functions for adding, removing, and modifying nodes.
@@ -682,16 +687,9 @@ In the following rules, we assume that $\kappa \equiv (\mathcal{N}, \mu,
 \begin{definition}[\textsc{CreateNode}]\label{rule:create-node-ext}
 \hspace{-1.5em}
 \begin{prooftree}
-\AxiomC{$n \equiv \langle \mathsf{freshId}(\mathsf{unit}), \emptyset, \omega_n \rangle$}
+\AxiomC{$n \equiv \langle \mathsf{freshId}(), \emptyset, \omega_n \rangle$}
 \UnaryInfC{$\kappa \rightsquigarrow (\mathcal{N} \cup \{n\}, \mu, \omega)$}
 \end{prooftree}
-
-Where $\omega_n$ contains node-specific operations including:
-\begin{itemize}
-\item $\alpha_n : \mathcal{E}_n \to \mathsf{Addr}$, node-local address map, and
-\item $\epsilon_n : \mathsf{Addr}_n \to \mathcal{E}_n$ for engine lookup given
-an engine's address.
-\end{itemize}
 \end{definition}
 
 \noindent To create an engine in the system on node $n_i$, we require a
@@ -704,29 +702,27 @@ associated behaviour $b$ that defines how it processes messages.
 \begin{prooftree}
 % Level 1: Node and configuration setup
 \AxiomC{%
-$n_i \equiv \langle \mathsf{id}_i, \mathcal{E}_i, \omega_i \rangle \in \mathcal{N}%
+$n_i \equiv \langle \mathsf{id}_i, \epsilon_i, \omega_i \rangle \in \mathcal{N}%
 % \quad m : \mathsf{ \mathsf{EngineMode}} %
 \quad p : \mathsf{Option}(\mathsf{Addr}) %
-\quad \mathsf{cfg} \equiv \langle \mathsf{name}, p, \mathsf{process}\rangle$}
+\quad \mathsf{cfg} \equiv \langle p, \mathsf{process}\rangle$}
 \noLine
 \UnaryInfC{
 $S : \mathsf{Type} %
 \quad \mathsf{env} : \mathsf{Env}(S)  %
 \quad in : \mathsf{Msg} %
+% \quad b : \mathsf{EngineBehaviour}
 \quad e_{\mathsf{new}} \equiv \langle in, b,
 \mathsf{ready}, \mathsf{cfg}, \mathsf{env} \rangle%
 $}
 % % Level 3: Engine set and address map updates
 \noLine
 \UnaryInfC{$%
-\iota :\equiv \mathsf{freshId}(\mathsf{unit})%
-\quad \eta \equiv  \mathsf{freshId}(\mathsf{unit})%
-$}
-\noLine
-\UnaryInfC{$%
-\mathsf{cfg}_{\mathsf{mbox}} \equiv %
-    \langle \mathsf{freshName}(\mathsf{unit}), %
-    \iota, %
+\iota :\equiv \mathsf{freshId}()%
+\quad \eta :\equiv \mathsf{freshId}() %
+\quad \mathsf{cfg}_{\mathsf{mbox}} \equiv %
+    \langle %
+    \alpha_i(e_\mathsf{new}), %
     \mathsf{mail}%
     \rangle
 $}
@@ -742,21 +738,13 @@ m_{\mathsf{new}} \equiv %
 $}
 \noLine
 \UnaryInfC{$%
-\alpha_i' \equiv \alpha_i \cup%
-\{e_{\mathsf{new}} \mapsto \langle
-\mathsf{id}_i, \iota \rangle,
-m_{\mathsf{new}} \mapsto \langle
-\mathsf{id}_i, \eta \rangle
-\}%
-\quad \omega_i' \equiv \omega_i[\alpha \mapsto \alpha_i']
+\epsilon' \equiv \epsilon_i[\iota \mapsto e_\mathsf{new}]%
+[\eta \mapsto m_\mathsf{new}] 
 $}
 \UnaryInfC{$\kappa \rightsquigarrow %
-(\mathcal{N}[n_i \mapsto%
-  \langle \mathsf{id}_i,%
-  \mathcal{E}_i \cup \{e_{\mathsf{new}}, m_{\mathsf{new}}\},%
-  \omega_i' \rangle],%
+(\mathcal{N}[\epsilon_i \mapsto \epsilon'],%
    \mu, %
-   \omega[\omega_i \mapsto \omega_i'])$}
+   \omega)$}
 \end{prooftree}
 
 The terms $i_{\mathsf{mbox}}$, $b_{\mathsf{mbox}}$, and $e_{\mathsf{mbox}}$
@@ -833,8 +821,8 @@ e_s, e_t \in \mathcal{E}%
 $}
 \noLine
 \UnaryInfC{$%
-m_t \equiv \mathsf{mbox}(\alpha(e_t))
-\quad \mathsf{mail} = \mathsf{mode}(\mathsf{cfg}(\epsilon(m_t)))
+m_t : \mathsf{Addr} \equiv \mathsf{mbox}(\epsilon(e_t))
+% \quad \mathsf{mail} = \mathsf{mode}(\mathsf{cfg}(\epsilon(m_t)))
 $}
 \UnaryInfC{$\kappa \rightsquigarrow (\mathcal{N}, \mu \cup%
 \{ \langle%
@@ -848,21 +836,38 @@ m_t,%
 \end{prooftree}
 \end{definition}
 
+%TODO: add a lemma stating that the operational mode
+% of an engine found in the destination of a message is
+% always an mailbox.
+
 Now, with a message in-transit, the system needs to deliver it to the target engine's
 mailbox. This is done via the \textsc{Enqueue} rule.
 
 \begin{definition}[\textsc{Enqueue}]\label{rule:enqueue}
 \hspace{-1.5em}
   \begin{prooftree}
-  \AxiomC{$m \equiv \langle s, m_t, \mathsf{append}(v) \rangle \in \mu
-  \quad m_t \equiv \mathsf{mbox}(\alpha(e_t))%
+  \AxiomC{$%
+  m \equiv \langle%
+  \cdots,%
+  %s, 
+  m_t, 
+  \mathsf{append}(v) \rangle \in \mu
+  % \quad m_t \equiv \mathsf{mbox}(\epsilon(e_t))%
+  \quad q \equiv \mathsf{env}(\epsilon(m_t))%
   $}
   \noLine
-  \UnaryInfC{$%
-   \mathsf{mail} = \mathsf{mode}(\mathsf{cfg}(\epsilon(m_t)))%
-  \quad q \equiv \mathsf{env}(\epsilon(m_t)) $}
-  \UnaryInfC{$\kappa \rightsquigarrow (\mathcal{N}[m_t \mapsto%
-  \langle i_{mbox}, b_{mbox}, s_{mbox}, \mathsf{cfg}_{mbox}, q \cup \{v\} \rangle],%
+  \UnaryInfC{$
+  i \equiv \mathsf{fst}(m_t)
+  \quad \epsilon' :\equiv \epsilon[%
+  m_t \mapsto%
+  \langle%
+  \cdots,%
+  % i_{mbox}, b_{mbox}, s_{mbox}, \mathsf{cfg}_{mbox}, 
+  q \cup \{v\} \rangle%
+  ]%
+  $}
+  \UnaryInfC{$\kappa \rightsquigarrow (\mathcal{N}[%
+  \epsilon_i \mapsto \epsilon'],
   \mu \setminus \{m\},%
   \omega)$}
   \end{prooftree}
@@ -871,28 +876,37 @@ mailbox. This is done via the \textsc{Enqueue} rule.
   \begin{definition}[\textsc{Dequeue}]\label{rule:dequeue}
   \hspace{-1.5em}
   \begin{prooftree}
-  \AxiomC{$e_p \equiv \langle i_p, b_p, \mathsf{ready}, \mathsf{cfg}_p,
-  \mathsf{env}_p \rangle
+  \AxiomC{$e_p \equiv \langle%
+  \cdots,
+  % i_p, b_p, 
+  \mathsf{ready}, %
+  \cdots%
+  % \mathsf{cfg}_p,
+  % \mathsf{env}_p 
+  \rangle
   \quad m_p \equiv \mathsf{mbox}(e_p)
-  $}
-  \noLine
-  \UnaryInfC{$%
-  \mathsf{mail} = \mathsf{mode}(\mathsf{cfg}(\epsilon(m_p)))%
   \quad \mathsf{env}(\epsilon(m_p)) = q \cup \{v\}
   $}
   \noLine
   \UnaryInfC{$%
   \mathcal{N}' \equiv
-  \mathcal{N}[e_p \mapsto%
-  \langle i_p, b_p, \mathsf{busy}, \mathsf{cfg}_p, \mathsf{env}_p \rangle]%
-  [m_p \mapsto \langle i_{mbox}, b_{mbox}, s_{mbox}, \mathsf{cfg}_{mbox}, q \rangle]
+  \mathcal{N}[\epsilon(e_p) \mapsto%
+  \langle \cdots, \mathsf{busy}(v), %
+  \cdots%
+  % \mathsf{cfg}_p, \mathsf{env}_p 
+  \rangle]%
+  [m_p \mapsto \langle%
+  \cdots%
+  % i_{mbox}, b_{mbox}, s_{mbox}, \mathsf{cfg}_{mbox}
+  , q %
+  \rangle]
   $}
   \UnaryInfC{$\kappa \rightsquigarrow (\mathcal{N}', \mu, \omega)$}
   \end{prooftree}
   \end{definition}
 After a processing engine retrieves a message via the \textsc{Dequeue} rule, it
-enters the \texttt{busy} state to handle the message. This message processing
-involves executing the engine's predefined behaviour through the
+enters the \texttt{busy} state to handle the incoming message. This message
+processing involves executing the engine's predefined behaviour through the
 \textsc{Process} rule, as defined in~\Cref{sec:processing-rules}. However, we
 need first to establish how an engine's behaviour evaluates messages through its
 guarded actions, and how the evaluation of those effects changes the system state.
@@ -949,7 +963,8 @@ defined in~\Cref{def:effects}.
 \begin{prooftree}
 \AxiomC{$%
 p \in \mathcal{E}%
-\quad p \equiv \langle i_p, b_p, \mathsf{busy}, \mathsf{cfg}_p, \mathsf{env}_p \rangle%
+\quad p \equiv \langle i_p, b_p, \mathsf{busy}(m_p), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
+% \quad m_p : i_p%
 $}
 \noLine
 \UnaryInfC{$
@@ -1076,12 +1091,12 @@ This section introduces the final and most critical operational rule:
 \AxiomC{$%
 n_i \in \mathcal{N}%
 \quad p \in \mathcal{E}_i%
-\quad p \equiv \langle i_p, b_p, \mathsf{busy}, \mathsf{cfg}_p, \mathsf{env}_p \rangle%
+\quad p \equiv \langle i_p, b_p, \mathsf{busy}(m_p), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
 $}
 \noLine
 \UnaryInfC{$%
-m : i_p%
-\quad b_p, \mathsf{env}_p \vdash  m \downarrow E%
+% m : i_p \quad%
+b_p, \mathsf{env}_p \vdash  m_p \downarrow E%
 \quad \kappa \vdash E \rightsquigarrow (\mathcal{N}', \mu', \omega')$}
 \UnaryInfC{$\kappa \rightsquigarrow%
 \mathcal{N}'[%
