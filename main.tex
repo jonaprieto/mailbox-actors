@@ -934,72 +934,115 @@ communication, individual engines retain full autonomy over their internal
 message processing. This subsection formalises the evaluation mechanism for
 guarded actions that govern engine responses to messages. Specifically, the
 following rules define the process by which an engine $p$ consumes a message $v$
-from its mailbox, formalised via the judgment
+from its mailbox, formalised via, first the judgment
 \begin{equation}\label{eq:judgement}
 p \vdash v \downarrow E,
 \end{equation}
 that is, processing the message $v$ within the context of a busy engine $p$,
-results in an effect $E$.
+results in an effect $E$, and second, a more fine-grained judgement
+of the former to introduce the guarded action used to produce the effect.
+
+\begin{equation}\label{eq:guarded-action-eval}
+  p , \langle g, a \rangle \vdash v \downarrow E,
+\end{equation}
+
+states that in the context of engine $p$, the guarded action $\langle g, a
+\rangle$ produces the effect $E$ when processing the message $v$.
+
 \begin{definition}[\textsc{GuardedActionEval}]\label{rule:guarded-action-eval}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%s
 p \in \mathcal{E}%
-\quad p \equiv \langle i_p, b_p, \mathsf{busy}(v), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
-\quad S_p: \mathsf{Type}%
-\quad \mathsf{env}_p : \mathsf{Env}_p(S_p)%
+\quad p \equiv \langle \cdots, b_p, \mathsf{busy}(v), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
+% \quad S_p: \mathsf{Type}%
+% \quad \mathsf{env}_p : \mathsf{Env}_p(S_p)%
 $}
 \noLine
 \UnaryInfC{$%
-\exists \langle g, a \rangle \in b_p,\ 
- g(v, \mathsf{cfg}_p, \mathsf{env}_p) = \mathsf{some}(r)
-\quad E = a(r, v, \mathsf{cfg}_p, \mathsf{env}_p)
+\langle g, a \rangle \in b_p,\ 
+g(v, \mathsf{cfg}_p, \mathsf{env}_p) = \mathsf{some}(r)
 $}
-\noLine
-\UnaryInfC{$%
-\forall \langle g', a' \rangle \in b_p,\ 
-\langle g', a' \rangle \neq \langle g, a \rangle \Rightarrow
-g'(v, \mathsf{cfg}_p, \mathsf{env}_p) = \mathsf{none}
-$}
-\UnaryInfC{$p \vdash v \downarrow E$}
+\UnaryInfC{$p, \langle g, a \rangle \vdash v \downarrow a(r, v, \mathsf{cfg}_p, \mathsf{env}_p)$}
 \end{prooftree}
 \end{definition}
 
-The \textsc{GuardedActionEval} rule specifies that engine $p$ produces effect $E$ when processing message $v$ if:
-\begin{enumerate*}[label=(\roman*)]
-    \item There exists a guarded action $\langle g, a \rangle$ in $p$'s behaviour $b_p$
-    \item The guard $g(v, \mathsf{cfg}_p, \mathsf{env}_p)$ evaluates to $\mathsf{some}(r)$
-    \item All other guards in $b_p$ evaluate to $\mathsf{none}$ for this message/state
-    \item The action $a$ computes effect $E$ from parameters $(r, v, \mathsf{cfg}_p, \mathsf{env}_p)$
-\end{enumerate*}
+
 
 \begin{definition}[\textsc{NoMatchingGuard}]\label{rule:no-matching-guard}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
 p \in \mathcal{E}%
-\quad p \equiv \langle i_p, b_p, \mathsf{busy}(v), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
+\quad p \equiv \langle \cdots, b_p, \mathsf{busy}(v), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
 $}
-\noLine
-\UnaryInfC{$
-S : \mathsf{Type}%
-\quad \mathsf{env}_p : \mathsf{Env}(S)%
-\quad v : i_p%
-$}
+% \noLine
+% \UnaryInfC{$
+% S : \mathsf{Type}%
+% \quad \mathsf{env}_p : \mathsf{Env}(S)%
+% \quad v : i_p%
+% $}
 \noLine
 \UnaryInfC{$%
 \langle g, a \rangle \in b_p%
 \quad g(v, \mathsf{cfg}_p, \mathsf{env}_p) = \mathsf{none}%
 $}
-\UnaryInfC{$p \vdash v \downarrow \mathsf{noop}$}
+\UnaryInfC{$p,  \langle g, a \rangle \vdash v \downarrow \mathsf{noop}$}
 \end{prooftree}
 \end{definition}
 
+\paragraph{Guard selection strategy}
+Behaviours consist of guarded actions, requiring a strategy to select which
+effects to execute. The definition below specifies one approach; other
+strategies may cause unintended behaviour, and the study of which strategies
+are valid, and their semantics is out of scope of this paper. Below we present
+one possible strategy for selecting the guarded action to execute, with an abuse
+of notation, where $p, \langle g_i, a_i \rangle \vdash v \downarrow E$ can be
+treated as a proposition that $E$ is the effect of the selected guarded action.
+
+\begin{definition}[\textsc{GuardStrategy}]\label{rule:guard-strategy}
+\hspace{-1.5em}
+\begin{prooftree}
+\AxiomC{$%
+p \in \mathcal{E}%
+\quad p \equiv \langle \cdots, b_p, \mathsf{busy}(v), \cdots \rangle%
+$}
+\noLine
+\UnaryInfC{$%
+\langle g_i, a_i \rangle \in b_p%
+\quad p , \langle g_i, a_i \rangle \vdash v \downarrow E
+$}
+\noLine
+\UnaryInfC{$%
+\forall \langle g_j, a_j \rangle \in b_p, 
+(g_j \neq g_i \implies p , \langle g_j, a_j \rangle \vdash v \downarrow \mathsf{noop})
+$}  
+\UnaryInfC{$p \vdash v \downarrow E$}
+\end{prooftree}
+\end{definition}
+
+\begin{remark}
+Using the guard strategy above, two guards $g_1$ and $g_2$ are matched for the
+same message $v$, producing different effects. There is no rule here that allows
+such a case. This is an example of unexpected behaviour that a different guard
+strategy could avoid/refine.
+\end{remark}
+
 \subsection{Effect execution rules}\label{sec:effect-rules}
 
-The function $\execEffect$ executes effects as defined in \Cref{def:effects}.
-Its definition is given by case analysis on the different constructors of the
-effect data type.
+With rules how to get the effect resulting from processing a message, we now
+need to state how the system evolves when an effect is executed.
+
+\begin{definition}
+Given a system state $\kappa$, an effect $E$ and a new system state $\kappa'$,
+we write $\kappa \vdash E \rightsquigarrow \kappa'$ if the effect $E$ can be
+executed in the system state $\kappa$, resulting in the new system state $\kappa'$.
+\end{definition}
+
+% Recall that $\execEffect$ is the function that executes effects and outputs
+% the new system state after the effect has been executed, this is, precisely what
+% $\kappa \vdash E \rightsquigarrow \kappa'$ expresses.
+
 
 \begin{definition}[\textsc{ESend}]\label{rule:e-send}
 \hspace{-1.5em}
