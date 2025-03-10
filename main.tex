@@ -274,7 +274,7 @@ on the same node.
 
 \begin{definition}[Engine Lifecyle]\label{def:engine-status}
 The \textbf{status} of an engine $e_j$, of type $\mathsf{EngineStatus}$, determines
-the engine's operational mode and thus its lifecycle.
+the engine's operational mode; the \emph{engine life cycle} has transitions as in \Cref{fig:engine-status}.
 \begin{equation}\label{eq:engine-status}
 \mathsf{EngineStatus} :=%
 \mathsf{ready} \mid%
@@ -292,7 +292,7 @@ the engine's operational mode and thus its lifecycle.
 	\arrow[from=2-3, to=1-2, bend right]
 	\arrow[from=2-3, to=2-1, bend left]
 \end{tikzcd}\]%
-\caption{An engine life cycle. Every engine starts in a \textsf{ready} state
+\caption{The engine life cycle: every engine starts in a \textsf{ready} state
 waiting for a message, and once it reacts to a message it changes to
 $\mathsf{busy}(m)$ where $m$ is the message to which the engine reacts to. Then,
 depending on its logic, the engine may either return to \textsf{ready} or
@@ -369,7 +369,7 @@ reacts to a message. This description of computation is via an effect system
 consisting of commands to the system to be executed at runtime.
 
 \begin{definition}[Effect]\label{def:effects}%
-Given a type $S_j$ representing the local state of an engine $e_j$, an
+Given a type $S_j$ representing the local state of an engine~$e_j$, an
 \textbf{effect} is of type $\mathsf{Effect}(j, S_j)$, which considers all the
 possible ways an engine can influence the system by reacting to a message.
 
@@ -1023,8 +1023,8 @@ $}
 $}
 \noLine
 \UnaryInfC{$%
-\forall \langle g_j, a_j \rangle \in b_p, 
-(g_j \neq g_i \implies p , \langle g_j, a_j \rangle \vdash v \downarrow \mathsf{noop})
+\forall_{j\neq i} \langle g_j, a_j \rangle \in b_p.\  
+p , \langle g_j, a_j \rangle \vdash v \downarrow \mathsf{noop}
 $}  
 \UnaryInfC{$p \vdash v \downarrow E$}
 \end{prooftree}
