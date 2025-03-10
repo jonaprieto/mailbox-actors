@@ -94,24 +94,25 @@ is denoted $x : A$. Capital letters or capitalized words are used for types,
 and lowercase letters or lowercase words are used for terms. There is a universe
 of types $U$, so if $A$ is a type, then $A : U$. We also work with inductive
 types presented in the following form:
-
+%
 \begin{align*}
   A := \cdots \mid \mathsf{C}(A_1, \dots, A_n) \, ,
 \end{align*}
-
+%
 where $\mathsf{C}$ is a constructor of the type $A$, and $A_1, \dots, A_n$ are
 the types of the constructor arguments. The inductive type of natural numbers is
-denoted~$\N$. The type $\mathsf{Unit}$ has exactly one term, denoted
-$\mathsf{unit}$. The empty type is denoted $\bot$. Another recurrent type is the
-type of parametric lists, denoted $\mathsf{List}(A)$. The definition that
-term $x$ \emph{is} $y$ is denoted $x :\equiv y$. Definitionally equal terms are
-denoted $a \equiv b$. The proposition that $a$ is equal to $b$ is denoted
+denoted~$\N$. The type $\mathsf{Unit}$ has exactly one term, denoted~$\mathsf{unit}$.
+The empty type is denoted~$\bot$. Another recurrent type is the
+type of parametric lists, denoted $\mathsf{List}(A)$.
+If term $x$ is \emph{defined} to be term~$y$, we write $x :\equiv y$. Definitionally equal terms are
+denoted $a \equiv b$. The proposition that $a$ is equal to $b$ is written
 $a = b$.
 
 Some types are equipped with structure that allows them to behave as sets, and we use some common
 set-theoretic notations: the membership relation is denoted $\in$, so
-$a \in A$ is a proposition that $a$ is an element of $A$ (do not confuse with
-typing $a : A$). For $A$ and $B$, $A \subseteq B$ denotes set inclusion, meaning
+$a \in A$ is a proposition that $a$ is an element of $A$;
+note that this is a different judgment than
+typing $a : A$. For $A$ and $B$, $A \subseteq B$ denotes set inclusion, meaning
 every element of $A$ belongs to $B$. $\varnothing$ denotes the empty set.
 Union between sets $A$ and $B$ is denoted $A \cup B$. The intersection is
 denoted $A \cap B$. The difference between $A$ and $B$ is denoted $A
@@ -141,16 +142,19 @@ notation $\mathcal{N}[a \mapsto c]$ to also apply to sets, so if $\mathcal{N}$ i
 set, then $\mathcal{N}[a \mapsto c]$ is the set resulting from $\mathcal{N}$ by
 replacing the element $a$ with $c$, if $a$ is a valid element of $\mathcal{N}$.
 Otherwise, we extend $\mathcal{N}$ accordingly.
-
+ 
 
 \section{Model}\label{sec:model}
 
-This section presents a model based on the Engine Model \cite{engine-art}
-without any time component. In this actor-like model, the system consists of
-\emph{engines}, which are similar to the notion of actor in Agha's Actor Model
-\cite{foundation97agha} but are equipped with more context.
+This section presents a variation of dynamic effective communicating systems \cite{engine-art}.
+namely a refinement of the restriction to terminating behaviours. This is an actor-like model.
+% the system consists of
+%\emph{engines}, which are similar to the notion of actor in Agha's Actor Model
+%\cite{foundation97agha} but are equipped with more context.
 
-An engine is comprised of three main components: a \emph{configuration}, an
+In the present paper, we refine effective communicating Moore machines to engines,
+which are comprised of three main components:
+a \emph{configuration}, an
 \emph{execution environment}, and a \emph{behaviour}. The configuration
 includes, among other things, the engine's name (different to its unique
 identifier), location within the system, and an optional reference to the parent
@@ -158,14 +162,16 @@ engine. The execution environment includes an \emph{address book} of other
 engines to communicate with, including the engine's own address. Finally, the
 behaviour defines how the engine reacts to messages that follow the engine's
 \emph{message interface}, which is simply a sum type of message types that the
-engine can process. The engine's behaviour is a set of \emph{guarded actions}
+engine can process. The engine's behaviour is described in the form of a set of \emph{guarded actions}
 consisting of pairs of pre-conditions and actions to execute. When an engine
 receives a message, it checks which of its guarded actions have satisfied
-pre-conditions, and executes the corresponding action. However, an avid reader
+pre-conditions, and executes the corresponding action; we say that an action is \emph{activated} if it is the action of some guarded action whose guard predicate is satisfied. However, an avid reader
 may notice that it could be different strategies for selecting which action to
 execute, whether a guard is satisfied, which guard finishes first, etc.
-It must clear that guards semantics could be any for the purposes of this paper,
-and deserves study on its own.
+%It must clear that guards semantics could be any for the purposes of this paper,
+%and deserves study on its own.
+In a similar way as Prolog implementations resolve these ambiguities and also Dijkstra's guarded command language, 
+we give a precise description of what options we have to deal with sitations in which several guarded actions are activated.
 
 \begin{remark}
   This engine behaviour specification resembles the correct-by-construction
@@ -178,10 +184,12 @@ and deserves study on its own.
   %Here, we have a more restricted set of actions, as will be seen in \Cref{def:effects}.
 \end{remark}
 
+% We need a nice picture here; this is (not) a definition? 
 The model assumes an ambient \emph{system} $\kappa$ mainly consisting of a set of
 \emph{nodes}~$\mathcal{N}$, a set of \emph{engines} $\mathcal{E}$, following a
 specific \emph{message-passing mechanism} (MPM for short) that will be described
 later, among other components.
+
 
 Engines are distributed across the nodes of the system, with each engine being
 associated with a unique node. Each entity in the system has a unique identifier,
@@ -208,7 +216,8 @@ $\mu^i$ is the set of messages in the $i$-th step.
 
 \subsection{Addresses}\label{sec:addresses-and-names}
 
-\begin{definition}\label{def:address}
+\begin{definition}[Address]%
+\label{def:address}
 
 An \textbf{address} for an engine $e_j$ is a tuple $a \equiv \langle
 \mathsf{node}, \mathsf{id} \rangle$, where $\mathsf{node}(a)$ is the node
