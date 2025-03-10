@@ -417,11 +417,13 @@ Given an engine $e_j$, the following definition specifies the guard and action
 components of an engine's behaviour.
 
 \begin{definition}[Guard]\label{def:guards}%
-A \textbf{guard} is a pre-condition-alike function that
+A \textbf{guard} is a function that
 returns a value of a given type $R$ if the guard is satisfied, and $\mathsf{none}$
-otherwise. The guard is a mapping of type%
-$\mathsf{Msg}_i \times \mathsf{Cfg}_i \times \mathsf{Env}_i(S_i) \to
-\Option{R}$.%
+otherwise;
+the \emph{guard predicate} is the corresponding Boolean function that maps to false iff the guard maps to $\mathsf{none}$
+The guard is a mapping of type %
+$$\mathsf{Msg}_i \times \mathsf{Cfg}_i \times \mathsf{Env}_i(S_i) \to
+\Option{R}.$$%
 Recall that $R$ is the specific type of data returned when the guard is
 satisfied, and $S_i$ is the type of the engine's local state.
 \end{definition}
@@ -469,7 +471,7 @@ illustrated in \Cref{fig:effect}.
 
 \begin{remark}\label{rem:turing-completeness}%
 A question at this point is whether engines can enable unbounded computation.
-Engines' behaviours as introduced in~\cite{engine-art} are Turing complete. To
+Behaviours as introduced in~\cite{engine-art} are Turing complete. To
 see this, we need to show that the design satisfies the two fundamental
 requirements: conditional branching through guard-state interactions and
 indefinite looping via message-passing recursion. Note that the message-passing
@@ -635,7 +637,7 @@ here for the state in \cref{def:state}, and we assume all messages are
 eventually delivered as stated in the axiom below.
 \end{remark}
 
-\begin{axiom}\label{ax:message-delivery}
+\begin{axiom}[Eventual reliable message delivery]\label{ax:message-delivery}
 For any engines $e, e' \in \mathcal{E}$ and message in transit within
 system state $\kappa$, there exists a subsequent state $\kappa'$ where $m$ is
 eventually delivered to its intended recipient.
