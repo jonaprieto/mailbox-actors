@@ -325,7 +325,7 @@
 \RequirePackage{changepage}                   % change odd/even page at any point
 \RequirePackage{lastpage}                     % Refer to last page of the document
 \RequirePackage{afterpage}                    % execute a command on next page (useful for \clearpage flush)
-\RequirePackage{enumitem}                     % For reducing bullet list item separation
+\RequirePackage[inline]{enumitem}                     % For reducing bullet list item separation
 
 % Figures, tables, equations and listings
 

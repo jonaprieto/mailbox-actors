@@ -670,10 +670,15 @@ for future work.
 The transitions of the associated state machine of the system define both how the
 system evolves and how the message-passing mechanism functions.
 
-Let us recall the notation used below. $\mathcal{E}$ is the set of all engines
-across all nodes in $\mathcal{N}$, where $\mathcal{N}$ is the set of nodes.
-Additionally, $\alpha$ is the global address map and $\mu$ is the set of
-in-transit messages. The operational semantics for the system are defined here
+We first recall a few notation conventions.
+$\mathcal{N}$ denotes the set of nodes in the system, 
+$\epsilon$ denotes a mapping 
+from engine addresses to their corresponding instances. $\mathcal{E}$ is the set of values of
+$\epsilon$, that is the set of engine instances in the system. The function $\alpha$ maps 
+engine instances back to their addresses, while $\mu$ represents the set of all 
+in-transit messages.
+
+The operational semantics for the system are defined here
 via the reduction relation denoted by $(\rightsquigarrow)$, where $\kappa^i
 \rightsquigarrow \kappa^{i+1}$ signifies that the system state $\kappa^i$
 evolves to $\kappa^{i+1}$. The notation $\kappa^i$ is mentioned in
@@ -858,7 +863,7 @@ mailbox. This is done via the \textsc{Enqueue} rule.
   \noLine
   \UnaryInfC{$
   i \equiv \mathsf{fst}(m_t)
-  \quad \epsilon' :\equiv \epsilon[%
+  \quad \epsilon' \equiv \epsilon[%
   m_t \mapsto%
   \langle%
   \cdots,%
@@ -876,14 +881,20 @@ mailbox. This is done via the \textsc{Enqueue} rule.
   \begin{definition}[\textsc{Dequeue}]\label{rule:dequeue}
   \hspace{-1.5em}
   \begin{prooftree}
-  \AxiomC{$e_p \equiv \langle%
-  \cdots,
-  % i_p, b_p, 
-  \mathsf{ready}, %
-  \cdots%
-  % \mathsf{cfg}_p,
-  % \mathsf{env}_p 
-  \rangle
+  \AxiomC{$
+   e_p \in \mathcal{E}%
+   \quad e_p \equiv \langle%
+   \cdots,
+   % i_p, b_p, 
+   \mathsf{ready}, %
+   \cdots%
+   % \mathsf{cfg}_p,
+   % \mathsf{env}_p 
+   \rangle
+  $}
+  \noLine
+  \UnaryInfC{$
+  m_p \in \mathcal{E}%
   \quad m_p \equiv \mathsf{mbox}(e_p)
   \quad \mathsf{env}(\epsilon(m_p)) = q \cup \{v\}
   $}
@@ -923,48 +934,51 @@ communication, individual engines retain full autonomy over their internal
 message processing. This subsection formalises the evaluation mechanism for
 guarded actions that govern engine responses to messages. Specifically, the
 following rules define the process by which an engine $p$ consumes a message $v$
-from its mailbox, formalised via the judgment $b_p,
-\mathsf{env}_p \vdash v \downarrow E$. This relation indicates that evaluating
-message $v$ using behaviour $b_p$ within the context of a busy engine $p$ and its
-environment $\mathsf{env}_p$ results in an effect $E$.
-
+from its mailbox, formalised via the judgment
+\begin{equation}\label{eq:judgement}
+p \vdash v \downarrow E,
+\end{equation}
+that is, processing the message $v$ within the context of a busy engine $p$,
+results in an effect $E$.
 \begin{definition}[\textsc{GuardedActionEval}]\label{rule:guarded-action-eval}
 \hspace{-1.5em}
 \begin{prooftree}
-\AxiomC{$%
+\AxiomC{$%s
 p \in \mathcal{E}%
-\quad p \equiv \langle i_p, b_p, \mathsf{busy}(m), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
-% \quad m : i_p%
-\quad S : \mathsf{Type}%
-\quad \mathsf{env}_p : \mathsf{Env}(S)%
+\quad p \equiv \langle i_p, b_p, \mathsf{busy}(v), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
+\quad S_p: \mathsf{Type}%
+\quad \mathsf{env}_p : \mathsf{Env}_p(S_p)%
 $}
 \noLine
 \UnaryInfC{$%
-\langle g, a \rangle \in b_p%
-\quad g(v, \mathsf{cfg}_p, \mathsf{env}_p) = \mathsf{some}(r)%
-\quad E : \mathsf{Effect}(S)%
-\quad a(r, v, \mathsf{cfg}_p, \mathsf{env}_p) = E%
+\exists \langle g, a \rangle \in b_p,\ 
+ g(v, \mathsf{cfg}_p, \mathsf{env}_p) = \mathsf{some}(r)
+\quad E = a(r, v, \mathsf{cfg}_p, \mathsf{env}_p)
 $}
-\UnaryInfC{$b_p, \mathsf{env}_p \vdash v \downarrow E$}
+\noLine
+\UnaryInfC{$%
+\forall \langle g', a' \rangle \in b_p,\ 
+\langle g', a' \rangle \neq \langle g, a \rangle \Rightarrow
+g'(v, \mathsf{cfg}_p, \mathsf{env}_p) = \mathsf{none}
+$}
+\UnaryInfC{$p \vdash v \downarrow E$}
 \end{prooftree}
 \end{definition}
 
-The \textsc{GuardedActionEval} rule reads as follows. When a guarded action
-$\langle g, a \rangle$ exists in behaviour $b_p$ such that: the guard $g$ is
-satisfied for message $v$, configuration $\mathsf{cfg}_p$, and environment
-$\mathsf{env}_p$, yielding a result $r$; the corresponding action $a$ executed
-using $r$, $v$, $\mathsf{cfg}_p$, and $\mathsf{env}_p$ generates effect $E$.
-
-Similarly, if no matching guard is found, the engine will perform a no-op, as
-defined in~\Cref{def:effects}.
+The \textsc{GuardedActionEval} rule specifies that engine $p$ produces effect $E$ when processing message $v$ if:
+\begin{enumerate*}[label=(\roman*)]
+    \item There exists a guarded action $\langle g, a \rangle$ in $p$'s behaviour $b_p$
+    \item The guard $g(v, \mathsf{cfg}_p, \mathsf{env}_p)$ evaluates to $\mathsf{some}(r)$
+    \item All other guards in $b_p$ evaluate to $\mathsf{none}$ for this message/state
+    \item The action $a$ computes effect $E$ from parameters $(r, v, \mathsf{cfg}_p, \mathsf{env}_p)$
+\end{enumerate*}
 
 \begin{definition}[\textsc{NoMatchingGuard}]\label{rule:no-matching-guard}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
 p \in \mathcal{E}%
-\quad p \equiv \langle i_p, b_p, \mathsf{busy}(m_p), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
-% \quad m_p : i_p%
+\quad p \equiv \langle i_p, b_p, \mathsf{busy}(v), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
 $}
 \noLine
 \UnaryInfC{$
@@ -974,10 +988,10 @@ S : \mathsf{Type}%
 $}
 \noLine
 \UnaryInfC{$%
-\langle g, a \rangle \in b%
+\langle g, a \rangle \in b_p%
 \quad g(v, \mathsf{cfg}_p, \mathsf{env}_p) = \mathsf{none}%
 $}
-\UnaryInfC{$b_p, \mathsf{env}_p \vdash v \downarrow \mathsf{noop}$}
+\UnaryInfC{$p \vdash v \downarrow \mathsf{noop}$}
 \end{prooftree}
 \end{definition}
 
