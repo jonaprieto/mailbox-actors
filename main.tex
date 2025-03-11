@@ -695,12 +695,12 @@ via the reduction relation denoted by $(\rightsquigarrow)$, where $\kappa^i
 evolves to $\kappa^{i+1}$. The notation $\kappa^i$ is mentioned in
 \Cref{rem:system-time-notation}.
 
-\subsection{System initialisation and extension rules}\label{sec:creation-rules}
+\subsection{System-level initialisation}\label{sec:creation-rules}
 
 In the following rules, we assume that $\kappa$ is of the form $(\mathcal{N}, \mu,
 \omega)$, unless otherwise specified.
 
-\begin{definition}[\textsc{S\mbox{-}Node}]\label{rule:create-node-ext}
+\begin{definition}[\textsc{S\mbox{-}Node}]\label{rule:s-node}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$n \equiv \langle \mathsf{freshId}(), \emptyset, \omega_n \rangle$}
@@ -708,12 +708,14 @@ In the following rules, we assume that $\kappa$ is of the form $(\mathcal{N}, \m
 \end{prooftree}
 \end{definition}
 
-\noindent To create an engine in the system on node $n_i$, we require a
+\subsection{Engine creation}\label{sec:engine-creation-rules}
+
+To create an engine in the system on node $n_i$, we require a
 configuration $\mathsf{cfg}$ and an environment $\mathsf{env}$, at least.
 Additionally, the new engine must have a registered message interface and an
 associated behaviour $b$ that defines how it processes messages.
 
-\begin{definition}[\textsc{S\mbox{-}EngineSpawn}]\label{rule:create-engine}
+\begin{definition}[\textsc{S\mbox{-}EngineSpawn}]\label{rule:s-engine-spawn}
 \hspace{-1.5em}
 \begin{prooftree}
 % Level 1: Node and configuration setup
@@ -788,11 +790,13 @@ one question just arises to me: how to handle broken references to those
 engines that are removed?
 \end{comment}
 
+\subsection{Engine garbage collector}\label{sec:engine-termination}
+
 To prevent \emph{zombie} engine instances that could  violate liveness and
 safety guarantees, we need to remove terminated engines from the system. This is
 done via the \textsc{S\mbox{-}Clean} rule.
 
-\begin{definition}[\textsc{S\mbox{-}Clean}]\label{rule:clean}
+\begin{definition}[\textsc{S\mbox{-}Clean}]\label{rule:s-clean}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
@@ -817,24 +821,14 @@ lost.
 %of changing the engine's configuration.
 \end{remark}
 
-We promoted the rules above to a transition rule of the system state $\kappa$.
-For example, if we consider the rule \textsc{S\mbox{-}Node}, we have that
-
-\begin{equation}
-\kappa \rightsquigarrow_{\mathsf{node}} \kappa' \quad \text{implies} \quad \kappa \rightsquigarrow \kappa',
-\end{equation}
-
-where $\kappa'$ is the result of applying the rule \textsc{S\mbox{-}Node} to $\kappa$.
-We do similarly for \textsc{S\mbox{-}EngineSpawn} and \textsc{S\mbox{-}Clean}.
-
-\subsection{Message-passing rules}\label{sec:message-passing-rules}
+\subsection{Message-passing mechanism}\label{sec:message-passing-mechanism}
 
 Our message-passing mechanism aims to support (i) asynchronous communication
 with non-blocking sends, (ii) mailbox isolation with guaranteed eventual
 delivery, and (iii) explicit lifecycle management for engines.
 
 
-\begin{definition}[\textsc{M\mbox{-}Send}]\label{rule:send}
+\begin{definition}[\textsc{M\mbox{-}Send}]\label{rule:m-send}
 \hspace{-1.5em}
   \begin{prooftree}
 \AxiomC{$%
@@ -873,7 +867,7 @@ interface specification, and it is the only way to add a message to $\mu$.
 Now, with a message in-transit, the system needs to deliver it to the target engine's
 mailbox. This is done via the \textsc{M\mbox{-}Enqueue} rule.
 
-\begin{definition}[\textsc{M\mbox{-}Enqueue}]\label{rule:enqueue}
+\begin{definition}[\textsc{M\mbox{-}Enqueue}]\label{rule:m-enqueue}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
@@ -903,7 +897,7 @@ $}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\textsc{M\mbox{-}Dequeue}]\label{rule:dequeue}
+\begin{definition}[\textsc{M\mbox{-}Dequeue}]\label{rule:m-dequeue}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$
@@ -949,7 +943,7 @@ we need first to establish how an engine's behaviour evaluates messages through
 its guarded actions, and how the evaluation of those effects changes the system
 state.
 
-\subsection{Behaviour evaluation rules}\label{sec:behavior-eval-rules}
+\subsection{Behaviour evaluation}\label{sec:behavior-eval-rules}
 
 \begin{comment}
 restrict attention to machines
@@ -966,7 +960,7 @@ from its mailbox, formalised via, first the judgment
 p \vdash v \downarrow E,
 \end{equation}
 that is, processing the message $v$ within the context of a busy engine $p$,
-results in an effect $E$, and second, a more fine-grained judgement
+results in an effect $E$, and second, a more fine-grained judgment
 of the former to introduce the guarded action used to produce the effect.
 
 \begin{equation}\label{eq:guarded-action-eval}
@@ -976,10 +970,10 @@ of the former to introduce the guarded action used to produce the effect.
 states that in the context of engine $p$, the guarded action $\langle g, a
 \rangle$ produces the effect $E$ when processing the message $v$.
 
-\begin{definition}[\textsc{B\mbox{-}GuardedActionEval}]\label{rule:guarded-action-eval}
+\begin{definition}[\textsc{B\mbox{-}GuardedActionEval}]\label{rule:b-guarded-action-eval}
 \hspace{-1.5em}
 \begin{prooftree}
-\AxiomC{$%s
+\AxiomC{$%
 p \in \mathcal{E}%
 \quad p \equiv \langle \cdots, b_p, \mathsf{busy}(v), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
 % \quad S_p: \mathsf{Type}%
@@ -987,16 +981,15 @@ p \in \mathcal{E}%
 $}
 \noLine
 \UnaryInfC{$%
-\langle g, a \rangle \in b_p,\ 
-g(v, \mathsf{cfg}_p, \mathsf{env}_p) = \mathsf{some}(r)
+\langle g, a \rangle \in b_p
+\quad g(v, \mathsf{cfg}_p, \mathsf{env}_p) = \mathsf{some}(r)
 $}
 \UnaryInfC{$p, \langle g, a \rangle \vdash v \downarrow a(r, v, \mathsf{cfg}_p, \mathsf{env}_p)$}
 \end{prooftree}
 \end{definition}
 
 
-
-\begin{definition}[\textsc{B\mbox{-}NoMatchingGuard}]\label{rule:no-matching-guard}
+\begin{definition}[\textsc{B\mbox{-}NoMatchingGuard}]\label{rule:b-no-matching-guard}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
@@ -1030,7 +1023,7 @@ strategies are valid, and their semantics is out of scope of this paper.
 % of notation, where $p, \langle g_i, a_i \rangle \vdash v \downarrow E$ can be
 % treated as a proposition that $E$ is the effect of the selected guarded action.
 
-\begin{definition}[\textsc{B\mbox{-}GuardStrategy}]\label{rule:guard-strategy}
+\begin{definition}[\textsc{B\mbox{-}GuardStrategy}]\label{rule:b-guard-strategy}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
@@ -1057,7 +1050,7 @@ message, that is, producing different non-noop effects. This is an example of
 unexpected behaviour that a different guard strategy could refine.
 \end{remark}
 
-\subsection{Effect execution rules}\label{sec:effect-rules}
+\subsection{Effect execution}\label{sec:effect-execution}
 
 With rules how to get the effect resulting from processing a message, we now
 need to state how the system evolves when an effect is executed.
@@ -1067,9 +1060,10 @@ we write
 \begin{equation}\label{eq:effect-exec}
 \kappa \vdash E \rightsquigarrow \kappa'
 \end{equation}
-if the effect $E$ can be executed in the system state $\kappa$, resulting in the
-new system state $\kappa'$.
-
+to state that when the effect $E$ is executed in the system state $\kappa$,
+it produces the new system state $\kappa'$. As the effect $E$ takes many forms,
+see \Cref{sec:effect-rules}, this judgment is defined by case analysis on the
+effect $E$, as shown in the following definitions.
 
 
 \begin{definition}[\textsc{E\mbox{-}Send}]\label{rule:e-send}
@@ -1091,7 +1085,7 @@ $}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\textsc{E\mbox{-}Update}]\label{rule:e-local-update}
+\begin{definition}[\textsc{E\mbox{-}Update}]\label{rule:e-update}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$
@@ -1129,7 +1123,7 @@ $}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\textsc{E\mbox{-}Chain}]\label{rule:e-chain-eval}
+\begin{definition}[\textsc{E\mbox{-}Chain}]\label{rule:e-chain}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
@@ -1180,47 +1174,122 @@ $}
 %   E \rightsquigarrow \kappa'$}
 %   \end{prooftree}
 % \end{definition}
+\subsection{Engine processing}\label{sec:engine-processing}
 
-\subsection{Processing rules}\label{sec:processing-rules}
+This section introduces the core system-level operational rule
+\textsc{S\mbox{-}Process} that governs message processing by engines
+denoted as follows. Given a system state $\kappa$, an engine $p$ and a message
+$m \in \mu$,
+the judgment
+\begin{equation}\label{eq:process-judgment}
+\kappa , p, m\rightsquigarrow_{\mathsf{process}} \kappa'
+\end{equation}
+reads as with system state $\kappa$, when engine $p$ processes the message $m$,
+it produces a new system state $\kappa'$. This rule coordinates three
+critical aspects:
+\begin{enumerate*}[label=(\roman*)]
+  \item message validation through type checking,
+  \item effect generation from message processing, and
+  \item engine state transitions from \textsf{busy} to \textsf{ready} after successful execution.
+\end{enumerate*}
 
-This section introduces the final and most critical operational rule:
-\textsc{Process}, which governs message handling by engines.
-
-\begin{definition}[\textsc{Process}]\label{rule:process}
+\begin{definition}[\textsc{S\mbox{-}Process}]\label{rule:s-process}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
 n_i \in \mathcal{N}%
 \quad p \in \mathcal{E}_i%
-\quad p \equiv \langle i_p, b_p, \mathsf{busy}(m_p), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
+\quad p \equiv \langle%
+\cdots,%
+ \mathsf{busy}(m),%
+ \cdots
+ \rangle%
 $}
 \noLine
 \UnaryInfC{$%
 % m : i_p \quad%
-b_p, \mathsf{env}_p \vdash  m_p \downarrow E%
-\quad \kappa \vdash E \rightsquigarrow (\mathcal{N}', \mu', \omega')$}
-\UnaryInfC{$\kappa \rightsquigarrow%
+p \vdash  m \downarrow E%
+\qquad \kappa \vdash E \rightsquigarrow (\mathcal{N}', \mu', \omega')
+$}
+\noLine
+\UnaryInfC{$%
+\epsilon' \equiv \epsilon[\alpha(p) \mapsto%
+\langle \cdots, %
+\mathsf{ready},%
+\cdots \rangle
+]
+$}
+\UnaryInfC{$%
+\kappa , p, m \rightsquigarrow_{\mathsf{process}}%
 \mathcal{N}'[%
-\mathcal{E}_i\mapsto \mathcal{E}_i[e_p \mapsto%
-\langle i_p, b_p, \mathsf{ready}, \mathsf{cfg}_p, \mathsf{env}_p' \rangle]%
+\epsilon \mapsto \epsilon'
+]%
 , \mu'
 , \omega'
-]$}
+$}
 \end{prooftree}
 \end{definition}
 
-The formal system established through the set of rules above specifies three key
-aspects: (i) message delivery through mailbox operations, (ii) sequential
-message processing by engines, and (iii) state transitions through effect
-execution. We believe that these core operational rule sets, combined with type
-safety guarantees, enable comprehensive analysis of both individual engine
-behaviours and overall system dynamics.
+\subsection{System state transition rules}
 
-The omission of any rule induces system-level inconsistencies or failures:
-failure to include \textsc{M\mbox{-}Enqueue} leaves messages perpetually in-transit;
-absence of \textsc{M\mbox{-}Dequeue} breaks causal message processing relationships; and,
-for example, exclusion of \textsc{S\mbox{-}Clean} results in resource-leaking dormant
-engines.
+The inference rules defined in previous sections combine to govern system state
+transitions through the relation $\kappa \rightsquigarrow \kappa'$.
+
+Then, the state transition relation is given by:
+
+\begin{equation}
+\kappa \rightsquigarrow_{\mathsf{op}} \kappa'%
+\quad \text{implies}%
+\quad \kappa \rightsquigarrow \kappa' \quad \text{for any atomic operation } \mathsf{op}
+\end{equation}
+
+The collection of all rules introduced here~\cref{fig:state-transition-rules}
+that define the state transition relation are given by:
+\begin{figure}[h]
+  \centering
+  \begin{tabular}{ll}
+    \textbf{Category} & \textbf{Rules} \\ \hline
+    System operations & 
+      \hyperref[rule:s-node]{\textsc{S-Node}},
+      \hyperref[rule:s-engine-spawn]{\textsc{S-EngineSpawn}},
+      \hyperref[rule:s-clean]{\textsc{S-Clean}},
+      \hyperref[rule:s-process]{\textsc{S-Process}} \\
+    Message passing & 
+      \hyperref[rule:m-send]{\textsc{M-Send}},
+      \hyperref[rule:m-enqueue]{\textsc{M-Enqueue}},
+      \hyperref[rule:m-dequeue]{\textsc{M-Dequeue}} \\
+    Behaviour evaluation & 
+      \hyperref[rule:b-guarded-action-eval]{\textsc{B-GuardedActionEval}},
+      \hyperref[rule:b-no-matching-guard]{\textsc{B-NoMatchingGuard}},
+      \hyperref[rule:b-guard-strategy]{\textsc{B-GuardStrategy}} \\
+    Effect execution & 
+      \hyperref[rule:e-send]{\textsc{E-Send}},
+      \hyperref[rule:e-update]{\textsc{E-Update}},
+      \hyperref[rule:e-spawn]{\textsc{E-Spawn}},
+      \hyperref[rule:e-chain]{\textsc{E-Chain}},
+      \hyperref[rule:e-terminate]{\textsc{E-Terminate}},
+      \hyperref[rule:e-noop]{\textsc{E-Noop}} \\
+  \end{tabular}
+  \caption{Rules for the operational semantics categorised by domain.}
+  \label{fig:state-transition-rules}
+\end{figure}
+
+
+This formal system ensures three fundamental properties: (i) reliable message
+routing through dedicated mailbox engines, (ii) atomic processing of messages by
+individual engines, and (iii) coordinated resource management through lifecycle
+operations. The combination of these transition rules with our type system
+enables rigorous analysis of both local engine behaviour and global system
+evolution.
+
+Critical dependencies exist between these rules: \textsc{M\mbox{-}Send} enables
+intem-r-engine communication but requires \textsc{M\mbox{-}Enqueue} for message
+delivery. The \textsc{S\mbox{-}Process} rule depends on successful message
+consumption via \textsc{M\mbox{-}Dequeue}, while \textsc{S\mbox{-}Clean}
+prevents resource leakage by removing terminated engines. Omission of any
+component would break system consistency - for example, excluding
+\textsc{M\mbox{-}Enqueue} would leave messages undelivered, while removing
+\textsc{S\mbox{-}Clean} would allow infinite accumulation of dormant engines.
 
 \section{Concluding remarks}\label{sec:related}
 
