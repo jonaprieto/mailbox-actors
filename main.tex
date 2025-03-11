@@ -704,7 +704,7 @@ In the following rules, we assume that $\kappa$ is of the form $(\mathcal{N}, \m
 \omega)$, unless otherwise specified.
 
 \begin{definition}[\textsc{S\mbox{-}Node}]\label{rule:s-node}
-\hspace{-1.5em}
+\sloppy~\hfill\\[-\baselineskip]%\hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$n \equiv \langle \mathsf{freshId}(), \emptyset, \omega_n \rangle$}
 \UnaryInfC{$\kappa \rightsquigarrow_{\mathsf{node}} (\mathcal{N} \cup \{n\}, \mu, \omega)$}
@@ -954,8 +954,9 @@ whose behaviour is guaranteed to terminate,
 \end{comment}
 
 While the system's operational semantics primarily govern inter-engine
-communication, individual engines retain full autonomy over their internal
-message processing. This subsection formalises the evaluation mechanism for
+communication, individual engines retain full autonomy over the computations 
+that they perform locally to process messages.
+This subsection formalises the evaluation mechanism for
 guarded actions that govern engine responses to messages. Specifically, the
 following rules define the process by which an engine $p$ consumes a message $v$
 from its mailbox, formalised via, first the judgment
@@ -969,7 +970,7 @@ of the former to introduce the guarded action used to produce the effect.
 \begin{equation}\label{eq:guarded-action-eval}
   p , \langle g, a \rangle \vdash v \downarrow E,
 \end{equation}
-
+%
 states that in the context of engine $p$, the guarded action $\langle g, a
 \rangle$ produces the effect $E$ when processing the message $v$.
 
