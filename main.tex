@@ -1287,7 +1287,7 @@ intem-r-engine communication but requires \textsc{M\mbox{-}Enqueue} for message
 delivery. The \textsc{S\mbox{-}Process} rule depends on successful message
 consumption via \textsc{M\mbox{-}Dequeue}, while \textsc{S\mbox{-}Clean}
 prevents resource leakage by removing terminated engines. Omission of any
-component would break system consistency - for example, excluding
+component would break system consistency, for example, excluding
 \textsc{M\mbox{-}Enqueue} would leave messages undelivered, while removing
 \textsc{S\mbox{-}Clean} would allow infinite accumulation of dormant engines.
 
@@ -1296,12 +1296,12 @@ component would break system consistency - for example, excluding
 The Engine Model~\cite{art-engines}, which serves as our focus within the Actor
 model paradigm, shares conceptual ground with Erlang's process-oriented
 architecture and similar Actor model implementations that treat actors as
-processes~\cite{taxonomy-of-actor-models} ---entities we refer to as
+processes ---entities we refer to as
 \emph{engines} in our framework.
 
 Fundamentally, engines represent processes augmented with additional structural
-components but not particularly crucial to the main design proposed here. Here
-we proposed a mailboxes-as-actor approach that naturally extends to any
+components but not particularly crucial to the main design proposed here. In this
+paper, we proposed a mailboxes-as-actor approach that naturally extends to any
 Actor-like model that shares a process-oriented
 paradigm~\cite{taxonomy-of-actor-models}. 
 
@@ -1363,19 +1363,19 @@ implement.
 
 The system-level rules are given in \Cref{sec:creation-rules}. In this section,
 we described how the system grows from the initial empty state, with the addition
-of nodes, engines, and later on messages in \Cref{sec:message-passing-rules}. We
+of nodes, engines, and later on messages in \Cref{sec:message-passing-mechanism}. We
 cover other rules such as \textsc{Clean} as a garbage-collector for engines,
 however, we did not cover rules for on-demand engine or node
 deletion/disconnection. This can be seen as an extension of the model.
 
 Our message-passing mechanism implements the rules given in
-\Cref{sec:message-passing-rules}. The \textsc{Send} rule enables asynchronous
+\Cref{sec:message-passing-mechanism}. The \textsc{M-Send} rule enables asynchronous
 message realisation in the system, allowing concurrent message generation
 without sender blocking. Messages are reliably delivered to mailbox engines
-through the \textsc{M\mbox{-}Enqueue} rule, which implements atomic \say{enqueuing}.
-Message digestion is handled by the \textsc{MDequeue} rule.
+through the \textsc{M-Enqueue} rule, which implements atomic \say{enqueuing}.
+Message digestion is handled by the \textsc{M-Dequeue} rule.
 
-Finally, and probably one of the most interesting rules, the \textsc{Process}
+Finally, and probably one of the most interesting rules, the \textsc{S-Process}
 rule enables atomic state transitions by combining behaviour evaluation, rules
 in \Cref{sec:behavior-eval-rules} with effect handling, and rules in
 \Cref{sec:effect-rules}. Together, the rules in \Cref{sec:semantics} form a
