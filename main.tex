@@ -67,22 +67,24 @@ modified or replaced independently.
 % Discusses the trade-offs and potential drawbacks of the design.
 This design may come with some trade-offs. The primary drawback we foresee is
 increased system complexity due to additional actors and message-passing
-overhead. This manifests as higher resource usage from running more actors and
-potential latency increases when mailbox actors run on different nodes than
-their processing actors. However, with careful design, these costs can be
+overhead.%
+% This manifests as higher resource usage from running more actors and
+% potential latency increases when mailbox actors run on different nodes than
+% their processing actors.
+However, with careful design, these costs can be
 outweighed by the benefits of a more flexible system.
 
 % How this paper is organized and what is the contribution.
 
 \paragraph{Contributions}
-First, we propose a new architectural separation between processing actors and
+First, we propose a formal architectural separation between processing actors and
 their mailboxes in \Cref{sec:model}, which enables improved flexibility and
 scalability for message management. Second, we formulate operational semantics
 in \Cref{sec:semantics} for both the decoupled architecture and its associated
 explicit message-passing mechanism, formally specifying the system's design
 following in the spirit of the approach established for
 Erlang~\cite{formal-semantics-erlang}. This formal specification provides
-sufficient grounding to implement system from scratch or as a library on top
+sufficient grounding to implement a system from scratch or as a library on top
 of a compatible system/platform such as Erlang, and to formalise and prove key
 system properties such as liveness guarantees and correctness under concurrent
 message processing.
@@ -672,7 +674,7 @@ $\mathcal{E}_i$ for $i$ ranging over the node set.
 This allows us to look up addresses for any engine in the system
 regardless of which node it runs.
 
-Not described here are the functions for adding, removing, and modifying nodes.
+Not described here are the functions for removing, and modifying nodes.
 Also, one may want to move engines between nodes. We leave these considerations
 for future work.
 
