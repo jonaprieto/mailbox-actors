@@ -148,7 +148,7 @@ Otherwise, we extend $\mathcal{N}$ accordingly.
 
 \section{Model}\label{sec:model}
 
-This section presents a variation of dynamic effective communicating systems \cite{engine-art}.
+This section presents a variation of dynamic effective communicating systems \cite{art-engines}.
 namely a refinement of the restriction to terminating behaviours. This is an actor-like model.
 % the system consists of
 %\emph{engines}, which are similar to the notion of actor in Agha's Actor Model
@@ -473,7 +473,7 @@ illustrated in \Cref{fig:effect}.
 
 \begin{remark}\label{rem:turing-completeness}%
 A question at this point is whether engines can enable unbounded computation.
-Behaviours as introduced in~\cite{engine-art} are Turing complete. To
+Behaviours as introduced in~\cite{art-engines} are Turing complete. To
 see this, we need to show that the design satisfies the two fundamental
 requirements: conditional branching through guard-state interactions and
 indefinite looping via message-passing recursion. Note that the message-passing
@@ -1240,12 +1240,9 @@ $}
 
 \subsection{System state transition rules}
 
-The inference rules defined in previous sections combine to govern the system state
-transitions.
-
-Then, the state transition type
-is inhabited by stating that system-level judgments
-as described in \Cref{fig:state-transition-rules} induce a system state transition, that is,
+The inference rules from previous sections collectively govern system state
+transitions. We establish the state transition type by showing that system-level
+judgments in \Cref{fig:state-transition-rules} induce state transitions:
 
 \begin{equation}
 \kappa ,\cdots\rightsquigarrow_{\mathsf{op}} \kappa'%
@@ -1253,8 +1250,7 @@ as described in \Cref{fig:state-transition-rules} induce a system state transiti
 \quad \kappa \rightsquigarrow \kappa' \quad \text{for any system-level atomic operation } \mathsf{op}.
 \end{equation}
 
-Recall that system-level operations
-are labelled as, for example, \textsc{S\mbox{-}Name} in  \Cref{fig:state-transition-rules}.
+System-level operations are labelled with identifiers like \textsc{S\mbox{-}Name} in \Cref{fig:state-transition-rules}.
 
 \begin{figure}[h]
   \centering
@@ -1285,23 +1281,23 @@ are labelled as, for example, \textsc{S\mbox{-}Name} in  \Cref{fig:state-transit
   \label{fig:state-transition-rules}
 \end{figure}
 
+% This formal system ensures: (i) reliable message routing via mailbox engines,
+% (ii) atomic per-engine message processing, and (iii) coordinated resource
+% lifecycle management. 
 
-This formal system ensures three fundamental properties: (i) reliable message
-routing through dedicated mailbox engines, (ii) atomic processing of messages by
-individual engines, and (iii) coordinated resource management through lifecycle
-operations. The combination of these transition rules with our type system
-enables rigorous analysis of both local engine behaviour and global system
-evolution.
-
+\begin{remark}
 Critical dependencies exist between these rules: \textsc{M\mbox{-}Send} enables
-intem-r-engine communication but requires \textsc{M\mbox{-}Enqueue} for message
+inter-engine communication but requires \textsc{M\mbox{-}Enqueue} for message
 delivery. The \textsc{S\mbox{-}Process} rule depends on successful message
-consumption via \textsc{M\mbox{-}Dequeue}, while \textsc{S\mbox{-}Clean}
-prevents resource leakage by removing terminated engines. Omission of any
-component would break system consistency, for example, excluding
-\textsc{M\mbox{-}Enqueue} would leave messages undelivered, while removing
-\textsc{S\mbox{-}Clean} would allow infinite accumulation of dormant engines.
-
+consumption via \textsc{M\mbox{-}Dequeue} and the related judgment for behaviour
+evaluation, as defined in \Cref{sec:behavior-eval-rules}. On the other hand, the
+\textsc{S\mbox{-}Clean} rule prevents resource leakage by removing terminated
+engines. Omission of these components, that is, system-level or message-passing,
+would raise undefined behaviour, for example, excluding \textsc{M\mbox{-}Enqueue}
+would leave messages undelivered, while removing \textsc{S\mbox{-}Clean} would
+allow infinite accumulation of dormant engines.
+\end{remark}
+  
 \section{Concluding remarks}\label{sec:related}
 
 The Engine Model~\cite{art-engines}, which serves as our focus within the Actor
