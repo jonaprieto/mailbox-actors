@@ -938,10 +938,10 @@ $}
 After a processing engine retrieves a message via the \textsc{M\mbox{-}Dequeue}
 rule, it enters the \texttt{busy} state to handle the incoming message. This
 message processing involves executing the engine's predefined behaviour through
-the \textsc{Process} rule, as defined in~\Cref{sec:processing-rules}. However,
-we need first to establish how an engine's behaviour evaluates messages through
-its guarded actions, and how the evaluation of those effects changes the system
-state.
+the \textsc{S\mbox{-}Process} rule, as defined in~\Cref{sec:engine-processing}.
+However, we need first to establish how an engine's behaviour evaluates messages
+through its guarded actions, and how the evaluation of those effects changes the
+system state.
 
 \subsection{Behaviour evaluation}\label{sec:behavior-eval-rules}
 
@@ -1060,10 +1060,10 @@ we write
 \begin{equation}\label{eq:effect-exec}
 \kappa \vdash E \rightsquigarrow \kappa'
 \end{equation}
-to state that when the effect $E$ is executed in the system state $\kappa$,
-it produces the new system state $\kappa'$. As the effect $E$ takes many forms,
-see \Cref{sec:effect-rules}, this judgment is defined by case analysis on the
-effect $E$, as shown in the following definitions.
+to state that when the effect $E$ is executed in the system state $\kappa$, it
+produces the new system state $\kappa'$. As the effect $E$ takes many forms,
+this judgment is defined by case analysis on the effect $E$, as shown in the
+following definitions.
 
 
 \begin{definition}[\textsc{E\mbox{-}Send}]\label{rule:e-send}
@@ -1364,7 +1364,7 @@ implement.
 The system-level rules are given in \Cref{sec:creation-rules}. In this section,
 we described how the system grows from the initial empty state, with the addition
 of nodes, engines, and later on messages in \Cref{sec:message-passing-mechanism}. We
-cover other rules such as \textsc{Clean} as a garbage-collector for engines,
+cover other rules such as \textsc{S-Clean} as a garbage-collector for engines,
 however, we did not cover rules for on-demand engine or node
 deletion/disconnection. This can be seen as an extension of the model.
 
@@ -1378,21 +1378,20 @@ Message digestion is handled by the \textsc{M-Dequeue} rule.
 Finally, and probably one of the most interesting rules, the \textsc{S-Process}
 rule enables atomic state transitions by combining behaviour evaluation, rules
 in \Cref{sec:behavior-eval-rules} with effect handling, and rules in
-\Cref{sec:effect-rules}. Together, the rules in \Cref{sec:semantics} form a
+\Cref{sec:effect-execution}. Together, the rules in \Cref{sec:semantics} form a
 complete system for reliable asynchronous communication with proper resource
 management.
 
 \paragraph{Future work}
-We plan to implement a prototype in Elixir leveraging its native actor model
-support on the BEAM virtual machine. The prototype source code will be available
-in the Anoma Foundation's public repository at
-\url{https://github.com/anoma/engine}.
+We plan to implement a prototype in Elixir leveraging its Erlang-compatible
+actor model support on the BEAM virtual machine.%
+% The prototype source code is available in the Anoma Foundation's public
+% repository at \url{https://github.com/anoma/engine}.
 
 \section{Acknowledgements}
 
-This work was inspired by discussions between Jeremy Ornelas and Christophe De
-Troyer. Thanks to Anthony Hart and Tobias Heindel for helpful feedback and
-discussions.
+This work was inspired by discussions  with Jeremy Ornelas and Christophe De
+Troyer.
 
 \bibliography{art.bib,ref.bib}
 \appendix
