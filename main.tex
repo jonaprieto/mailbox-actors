@@ -560,8 +560,8 @@ message ingestion and core computation.
 
 \subsection{Nodes}\label{sec:nodes}
 
-Having previously introduced the system $\kappa$, which comprises a set of nodes
-$\mathcal{N}$ that host engines $\mathcal{E}$ governed by a message-passing
+Having previously introduced the system $\kappa$, which comprises a set of nodes%
+~$\mathcal{N}$ that host engines $\mathcal{E}$ governed by a message-passing
 mechanism defined by the system's requirements, we now formally define what
 constitutes a node.
 
@@ -581,8 +581,10 @@ For convenience, given a node $n_i$, we have the following notation:
   their identifiers.
 \end{itemize}
 
-\begin{remark}\label{rem:node-operations}
-By design, nodes cannot create, destroy, or modify engines directly. These
+\begin{remark}[Modification of nodes and engines]\label{rem:node-operations}
+%By design, nodes cannot create, destroy, or modify engines directly.
+The creation, destruction, and modification of engines will be \todo{describe in a phrase} covered in \todo{ref}. 
+These
 operations require global coordination through system-level mechanisms rather
 than node-local decisions. This architectural constraint exists because nodes
 lack awareness of critical system-wide concerns like address registry management,
@@ -594,9 +596,8 @@ distributed state consistency.
 
 Having defined nodes and their capabilities, we now define the overall system
 state. A system consists of a collection of nodes and a set of in-transit
-messages that represent ongoing communication between engines. Like any state
-machine, we must precisely define the system state before specifying the
-transition rules that govern its evolution.
+messages that represent ongoing communication between engines. We consider the whole system as a variation of Kripke structures: we define the possible system states (the possible worlds) and then specify the
+transition rules that govern its evolution, one labelled transition at time.
 
 \begin{definition}\label{def:state} A \textbf{state} of the system
 $\kappa$ is a tuple $\kappa^{i} \equiv \langle \mathcal{N}^i, \mu^i, \omega^i
@@ -1187,10 +1188,9 @@ the judgment
 \kappa , p, m\rightsquigarrow_{\mathsf{process}} \kappa'
 \end{equation}
 reads as with system state $\kappa$, when engine $p$ processes the message $m$,
-it produces a new system state $\kappa'$. This rule coordinates three
+it produces a new system state $\kappa'$. This rule aims to coordinate three
 critical aspects:
 \begin{enumerate*}[label=(\roman*)]
-  \item message validation through type checking,
   \item effect generation from message processing, and
   \item engine state transitions from \textsf{busy} to \textsf{ready} after successful execution.
 \end{enumerate*}
@@ -1202,9 +1202,11 @@ critical aspects:
 n_i \in \mathcal{N}%
 \quad p \in \mathcal{E}_i%
 \quad p \equiv \langle%
-\cdots,%
+i_p,%
+b_p,
  \mathsf{busy}(m),%
- \cdots
+ \mathsf{cfg}_p,
+ \mathsf{env}_p
  \rangle%
 $}
 \noLine
@@ -1216,9 +1218,13 @@ $}
 \noLine
 \UnaryInfC{$%
 \epsilon' \equiv \epsilon[\alpha(p) \mapsto%
-\langle \cdots, %
-\mathsf{ready},%
-\cdots \rangle
+\langle%
+i_p,%
+b_p,
+ \mathsf{ready},%
+ \mathsf{cfg}_p,
+ \mathsf{env}_p
+ \rangle
 ]
 $}
 \UnaryInfC{$%
@@ -1234,19 +1240,22 @@ $}
 
 \subsection{System state transition rules}
 
-The inference rules defined in previous sections combine to govern system state
-transitions through the relation $\kappa \rightsquigarrow \kappa'$.
+The inference rules defined in previous sections combine to govern the system state
+transitions.
 
-Then, the state transition relation is given by:
+Then, the state transition type
+is inhabited by stating that system-level judgments
+as described in \Cref{fig:state-transition-rules} induce a system state transition, that is,
 
 \begin{equation}
-\kappa \rightsquigarrow_{\mathsf{op}} \kappa'%
+\kappa ,\cdots\rightsquigarrow_{\mathsf{op}} \kappa'%
 \quad \text{implies}%
-\quad \kappa \rightsquigarrow \kappa' \quad \text{for any atomic operation } \mathsf{op}
+\quad \kappa \rightsquigarrow \kappa' \quad \text{for any system-level atomic operation } \mathsf{op}.
 \end{equation}
 
-The collection of all rules introduced here~\cref{fig:state-transition-rules}
-that define the state transition relation are given by:
+Recall that system-level operations
+are labelled as, for example, \textsc{S\mbox{-}Name} in  \Cref{fig:state-transition-rules}.
+
 \begin{figure}[h]
   \centering
   \begin{tabular}{ll}
