@@ -1019,11 +1019,12 @@ $}
 \end{definition}
 
 \paragraph{Guard selection strategy}
-Behaviours consist of guarded actions, requiring a strategy to select which
-effects to execute. The definition below specifies one approach; other
-strategies may cause unintended behaviour, and the study of which strategies
-are valid, and their semantics is out of scope of this paper. Below we present
-one possible strategy for selecting the guarded action to execute
+Behaviours consist of a set of guarded actions. Execution of this behaviour
+requires a strategy to select which guarded action to execute. For the sake of
+simplicity, we assume that the strategy is deterministic, and that the engine
+runs an action only if it is the only one that matches the message. Again, other
+guard selection strategies may cause unintended behaviour, and the study of which
+strategies are valid, and their semantics is out of scope of this paper.
 
 %with an abuse
 % of notation, where $p, \langle g_i, a_i \rangle \vdash v \downarrow E$ can be
@@ -1069,9 +1070,6 @@ we write
 if the effect $E$ can be executed in the system state $\kappa$, resulting in the
 new system state $\kappa'$.
 
-% Recall that $\execEffect$ is the function that executes effects and outputs
-% the new system state after the effect has been executed, this is, precisely what
-% $\kappa \vdash E \rightsquigarrow \kappa'$ expresses.
 
 
 \begin{definition}[\textsc{E\mbox{-}Send}]\label{rule:e-send}
@@ -1083,9 +1081,8 @@ $}
 \noLine
 \UnaryInfC{$%
 v : \mathsf{Msg}_s%
+\quad m : \mathsf{Msg}_t%
 \quad p_s \vdash v \downarrow \mathsf{send}(a_t, m)%
-% e_t \equiv \langle i_t, \cdots, \mathsf{ready}, \cdots \rangle%
-% \quad v : i_t%
 \quad \kappa, a_t, m \rightsquigarrow_{\mathsf{send}} \kappa'
 $}
 \UnaryInfC{$
