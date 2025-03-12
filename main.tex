@@ -94,7 +94,7 @@ message processing.
 We use an informal type-theoretic notation. For example, a term $x$ of type $A$
 is denoted $x : A$. Capital letters or capitalized words are used for types,
 and lowercase letters or lowercase words are used for terms. There is a universe
-of types $U$, so if $A$ is a type, then $A : U$. We also work with inductive
+of types $\U$, so if $A$ is a type, then $A : \U$. We also work with inductive
 types presented in the following form:
 %
 \begin{align*}
@@ -102,53 +102,48 @@ types presented in the following form:
 \end{align*}
 %
 where $\mathsf{C}$ is a constructor of the type $A$, and $A_1, \dots, A_n$ are
-the types of the constructor arguments. The inductive type of natural numbers is
-denoted~$\N$. The type $\mathsf{Unit}$ has exactly one term, denoted~$\mathsf{unit}$.
-The empty type is denoted~$\bot$. Another recurrent type is the
-type of parametric lists, denoted $\mathsf{List}(A)$.
-If term $x$ is \emph{defined} to be term~$y$, we write $x :\equiv y$. Definitionally equal terms are
-denoted $a \equiv b$. The proposition that $a$ is equal to $b$ is written
-$a = b$.
+the types of the constructor arguments.
 
-Some types are equipped with structure that allows them to behave as sets, and we use some common
-set-theoretic notations: the membership relation is denoted $\in$, so
-$a \in A$ is a proposition that $a$ is an element of $A$;
-note that this is a different judgment than
-typing $a : A$. For $A$ and $B$, $A \subseteq B$ denotes set inclusion, meaning
-every element of $A$ belongs to $B$. $\varnothing$ denotes the empty set.
-Union between sets $A$ and $B$ is denoted $A \cup B$. The intersection is
-denoted $A \cap B$. The difference between $A$ and $B$ is denoted $A
-\setminus B$. $A \times B$ denotes the Cartesian product of $A$ and $B$, and
-their terms are denoted $\langle a,b \rangle$, where $a : A$ and $b : B$. A
-\emph{tuple} $\langle a_1, a_2, \dots, a_n \rangle$ is a generalisation of an
+We use standard type notation where $\N$ denotes the inductive type of natural
+numbers, $\EmptyType$ represents the empty type, $\Unit$ denotes the type with
+exactly one term denoted with $*$, $\Bool$ denotes the type with two terms,
+$\mathsf{tt}$ and $\mathsf{ff}$, and $\mathsf{List}(A)$ represents the type of
+parametric lists. For equality relations, $x :\equiv y$ indicates definitional
+equality where term $x$ is defined as $y$, while $a \equiv b$ signifies
+definitional equality between terms, and $a = b$ denotes propositional equality.
+$A \times B$ denotes the product of $A$ and $B$, and their terms are denoted
+with $\langle a,b \rangle$, where $a : A$ and $b : B$. %
+A \emph{tuple} $\langle a_1, a_2, \dots, a_n \rangle$ is a generalisation of an
 ordered pair to an ordered $n$-tuple, where $n \in \N$, of type $A_1 \times
 \cdots \times A_n$, and $a_i$ is of type $A_i$ for all $i \in \{1, \dots, n\}$.
-If the tuple components are named using sans-serif letters, these names are used
-as projections, otherwise, the projections are $\pi_i(a) :\equiv a_i$ for all $i
-\in \{1, \dots, n\}$. For example, if $x :\equiv \langle \mathsf{fst},
-\mathsf{snd} \rangle$ denotes a tuple with components values can be projected
-using $\mathsf{fst}$ and $\mathsf{snd}$ via $\mathsf{fst}(x)$ and
-$\mathsf{snd}(x)$, respectively. $A_1 \oplus \cdots \oplus A_n$
-denotes the disjoint union of $A_1, \dots, A_n$, and $\mathsf{inj_i}(a_i)$ are
-the corresponding injections into $A_1 \oplus \cdots \oplus A_n$ from $A_i$ for
-all $i \in \{1, \dots, n\}$. Given a type $A$, we can define the optional type
-$\Option{A}$ as $A \oplus \mathsf{Unit}$.
-The terms
-$\mathsf{none}$ and $\mathsf{some}(a)$ are the corresponding terms for the
-optional type when $a : A$. Finally, a function $f$ that takes an argument $a$
-of type $A$ and returns a value of type $B$ is denoted $f : A \to B$. We also
-use the notation $f[a \mapsto c]$ to define a new function that is similar to $f$
-except that the output of $f$ is replaced by $c$ when the input is $a$, if $a$ is
-in the domain of $f$. Otherwise, we extend $f$ accordingly. We overload the
-notation $\mathcal{N}[a \mapsto c]$ to also apply to sets, so if $\mathcal{N}$ is a
-set, then $\mathcal{N}[a \mapsto c]$ is the set resulting from $\mathcal{N}$ by
-replacing the element $a$ with $c$, if $a$ is a valid element of $\mathcal{N}$.
-Otherwise, we extend $\mathcal{N}$ accordingly.
+Given a type $A$, we can define the optional type $\Option{A}$ as $A \oplus
+\mathsf{Unit}$. The terms $\mathsf{none}$ and $\mathsf{some}(a)$ are the
+corresponding terms for the optional type when $a : A$. 
+
+Some types are sets, and we equip them with some common set-theoretic notations.
+The membership relation is denoted with $\in$, so $a \in A$ is a proposition
+that $a$ is an element of $A$. Union between sets $A$ and $B$ is denoted with $A
+\cup B$. The difference between $A$ and $B$ is denoted with $A \setminus B$.
+The disjoint union of $A_1, \dots, A_n$ is denoted with $A_1 \oplus \cdots \oplus A_n$.
+%
+% and $\mathsf{inj_i}(a_i)$ are the corresponding injections into $A_1 \oplus \cdots
+% \oplus A_n$ from $A_i$ for all $i \in \{1, \dots, n\}$. 
+
+Finally, a function $f$ that takes an argument $a$ of type $A$ and returns a
+value of type $B$ is denoted $f : A \to B$ and application is denoted with
+$f(a)$. We also use the notation $f[a \mapsto c]$ to define a new function that
+is similar to $f$ except that the output of $f$ is replaced by $c$ when the
+input is $a$, if $a$ is in the domain of $f$. Otherwise, we extend $f$
+accordingly. We overload the notation $\mathcal{N}[a \mapsto c]$ to also apply
+to sets, so if $\mathcal{N}$ is a set, then $\mathcal{N}[a \mapsto c]$ is the
+set resulting from $\mathcal{N}$ by replacing the element $a$ with $c$, if $a$
+is a valid element of $\mathcal{N}$. Otherwise, we extend $\mathcal{N}$
+accordingly.
  
 
 \section{Model}\label{sec:model}
 
-This section presents a variation of dynamic effective communicating systems \cite{art-engines}.
+This section presents a variation of dynamic effective communicating systems \cite{art-engines},
 namely a refinement of the restriction to terminating behaviours. This is an actor-like model.
 % the system consists of
 %\emph{engines}, which are similar to the notion of actor in Agha's Actor Model
@@ -158,8 +153,7 @@ In the present paper, we refine effective communicating Moore machines to engine
 which are comprised of three main components:
 a \emph{configuration}, an
 \emph{execution environment}, and a \emph{behaviour}. The configuration
-includes, among other things, the engine's name (different to its unique
-identifier), location within the system, and an optional reference to the parent
+includes, among other things, the engine's location within the system, and an optional reference to the parent
 engine. The execution environment includes an \emph{address book} of other
 engines to communicate with, including the engine's own address. Finally, the
 behaviour defines how the engine reacts to messages that follow the engine's
@@ -189,7 +183,7 @@ we give a precise description of what options we have to deal with sitations in 
 % We need a nice picture here; this is (not) a definition? 
 The model assumes an ambient \emph{system} $\kappa$ mainly consisting of a set of
 \emph{nodes}~$\mathcal{N}$, a set of \emph{engines} $\mathcal{E}$, following a
-specific \emph{message-passing mechanism} (MPM for short) that will be described
+specific \emph{message-passing mechanism} that will be described
 later, among other components.
 
 
@@ -198,10 +192,10 @@ associated with a unique node. Each entity in the system has a unique identifier
 allowing nodes and engines to be denoted with $n_i$ and $e_j$ respectively, where
 $i, j \in \N$.
 
-Following the message-passing paradigm, the MPM enforces policies for message
-delivery and flow control. This mechanism operates on a set of \emph{messages}
-which we denote with $\mu$. Each message contains information about its
-sender and receiver.
+Following the message-passing paradigm, the message-passing mechanism enforces
+policies for message delivery and flow control. This mechanism operates on a set
+of \emph{messages} which we denote with $\mu$. Each message contains information
+about its sender and receiver.
 
 To reason about the system, we use a state machine that evolves in discrete
 steps. So, there is a notion of \say{previous} and \say{next} for each entity
@@ -217,14 +211,18 @@ $\mu^i$ is the set of messages in the $i$-th step.
 
 
 \subsection{Addresses}\label{sec:addresses-and-names}
-
 \begin{definition}[Address]%
 \label{def:address}
 
-An \textbf{address} for an engine $e_j$ is a tuple $a \equiv \langle
-\mathsf{node}, \mathsf{id} \rangle$, where $\mathsf{node}(a)$ is the node
-identifier where the engine runs, and $\mathsf{id}(a)$ is the engine's unique
-identifier, of type $\mathsf{NodeID}$ and $\mathsf{UID}$, respectively.
+An \textbf{address} is a pair $a \equiv \langle n, \iota \rangle$ of type
+$\mathsf{Addr}$ where:
+\begin{itemize}
+    \item $n : \mathsf{NodeID}$ is the identifier of the node where the engine
+    resides, and
+    \item $\iota : \mathsf{UID}$ is the engine's unique identifier within the node.
+\end{itemize}
+We define projection functions $\mathsf{node}(a)$ and $\mathsf{uid}(a)$ to
+extract the respective components of an address.
 \end{definition}
 
 \begin{axiom}\label{ax:address}
@@ -276,18 +274,20 @@ on the same node.
 
 \begin{definition}[Engine Lifecyle]\label{def:engine-status}
 The \textbf{status} of an engine $e_j$, of type $\mathsf{EngineStatus}$, determines
-the engine's operational mode; the \emph{engine life cycle} has transitions as in \Cref{fig:engine-status}.
+the engine's operational mode.
 \begin{equation}\label{eq:engine-status}
-\mathsf{EngineStatus} :=%
-\mathsf{ready} \mid%
-\mathsf{busy}(\mathsf{Msg}) \mid%
-\mathsf{terminated}  \, .
+\begin{aligned}
+\mathsf{EngineStatus}%
+&:= \mathsf{ready}(\Option{(\mathsf{Msg} \to \mathsf{Bool})}) \\%
+&\, \mid \, \mathsf{busy}(\mathsf{Msg}) \\%
+&\, \mid \,\mathsf{terminated}  \, .
+\end{aligned}
 \end{equation}
 % tikz
 \begin{figure}%[!hbp]
 \centering
 \[\begin{tikzcd}
-	& {\mathsf{ready}} \\
+	& {\mathsf{ready}(p)} \\
 	{\mathsf{terminated}} && {\mathsf{busy}(m)}
 	\arrow[from=1-2, to=2-1]
 	\arrow[from=1-2, to=2-3, bend right]
@@ -296,19 +296,21 @@ the engine's operational mode; the \emph{engine life cycle} has transitions as i
 \end{tikzcd}\]%
 \caption{The engine life cycle: every engine starts in a \textsf{ready} state
 waiting for a message, and once it reacts to a message it changes to
-$\mathsf{busy}(m)$ where $m$ is the message to which the engine reacts to. Then,
-depending on its logic, the engine may either return to \textsf{ready} or
-\textsf{terminated}.}
+$\mathsf{busy}(m)$ where $m$ is the message to which the engine reacts to. The
+\textsf{ready} state can include an optional predicate $p$ that filters which
+messages the engine is interested in processing. Then, depending on its logic,
+the engine may either return to \textsf{ready} or \textsf{terminated}.}
 \label{fig:engine-status}
 \end{figure}
 \end{definition}
 
 As illustrated in \Cref{fig:engine-status}, an engine is said to be
-\textsf{ready} if it can process a message. Being $\mathsf{busy}(m)$
-means the engine is currently processing the message $m$. And \textsf{terminated}
-means the engine will not process any more messages. In such a case, the system
-will remove the engine in the next \emph{step}, and disregard any messages sent
-to it.
+\textsf{ready}$(p)$ if it can process a message, where $p$ is an optional
+predicate that filters which messages the engine is interested in processing.
+Being $\mathsf{busy}(m)$ means the engine is currently processing the message
+$m$. And \textsf{terminated} means the engine will not process any more
+messages. In such a case, the system will remove the engine in the next
+\emph{step}, and disregard any messages sent to it.
 
 An engine's operation requires two fundamental components: a
 \emph{configuration} and an \emph{environment}. The implicit initial state of an
@@ -729,12 +731,12 @@ $n_i \equiv \langle \mathsf{id}_i, \epsilon_i, \omega_i \rangle \in \mathcal{N}%
 \quad \mathsf{cfg} \equiv \langle p, \mathsf{process}\rangle$}
 \noLine
 \UnaryInfC{
-$S : \mathsf{Type} %
+$S : \U %
 \quad \mathsf{env} : \mathsf{Env}(S)  %
 \quad in : \mathsf{Msg} %
 % \quad b : \mathsf{EngineBehaviour}
 \quad e_{\mathsf{new}} \equiv \langle in, b,
-\mathsf{ready}, \mathsf{cfg}, \mathsf{env} \rangle%
+\mathsf{ready}(f), \mathsf{cfg}, \mathsf{env} \rangle% f is the filter function
 $}
 % % Level 3: Engine set and address map updates
 \noLine
@@ -980,7 +982,7 @@ states that in the context of engine $p$, the guarded action $\langle g, a
 \AxiomC{$%
 p \in \mathcal{E}%
 \quad p \equiv \langle \cdots, b_p, \mathsf{busy}(v), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
-% \quad S_p: \mathsf{Type}%
+% \quad S_p: \U%
 % \quad \mathsf{env}_p : \mathsf{Env}_p(S_p)%
 $}
 \noLine
@@ -1002,7 +1004,7 @@ p \in \mathcal{E}%
 $}
 % \noLine
 % \UnaryInfC{$
-% S : \mathsf{Type}%
+% S : \U%
 % \quad \mathsf{env}_p : \mathsf{Env}(S)%
 % \quad v : i_p%
 % $}
@@ -1094,7 +1096,7 @@ $}
 \begin{prooftree}
 \AxiomC{$
 p \in \mathcal{E}%
-\quad S : \mathsf{Type}%
+\quad S : \U%
 \quad \mathsf{env}(p) , s : \mathsf{Env}(S)%
 $}
 \UnaryInfC{$%
@@ -1119,7 +1121,7 @@ n_i \in \mathcal{N}%
 $}
 \noLine
 \UnaryInfC{$%
-S : \mathsf{Type}%
+S : \U%
 \quad s : \mathsf{Env}(S)%
 \quad \kappa, n_i, c, s\rightsquigarrow_{\mathsf{spawn}} \kappa'%
 $}
