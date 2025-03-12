@@ -296,30 +296,30 @@ the engine's operational mode.
 \begin{figure}%[!hbp]
 \centering
 \[\begin{tikzcd}
-	& {\ready(f)} \\
-	{\terminated} && {\busy(m)}
+	& {\textcolor{darkgreen}{\ready{f}}} \\
+	{\textcolor{darkred}{\terminated}} && {\textcolor{darkorange}{\busy{m}}}
 	\arrow[from=1-2, to=2-1]
 	\arrow[from=1-2, to=2-3, bend right]
 	\arrow[from=2-3, to=1-2, bend right]
 	\arrow[from=2-3, to=2-1, bend left]
 \end{tikzcd}\]%
-\caption{The engine life cycle: every engine starts in \ready{f} state
+\caption{The engine life cycle: every engine starts in \textsf{ready} state
 waiting for a message, and once it reacts to a message it changes to
 \busy{m} where $m$ is the message to which the engine reacts to. The
-\ready{f} state can include an optional predicate $p$ that filters which
+\ready{f} state can include an optional predicate $f$ that filters which
 messages the engine is interested in processing. Then, depending on its logic,
-the engine may either return to \ready{f} or \terminated.}
+the engine may either return to \ready{f'} for some $f'$ or \terminated.}
 \label{fig:engine-status}
 \end{figure}
 \end{definition}
 
-As illustrated in \Cref{fig:engine-status}, an engine is said to be
-\ready{f} if it can process a message, where $f$ is an optional
-predicate that filters which messages the engine is interested in processing.
-Being \busy{m} means the engine is currently processing the message
-$m$. And \terminated means the engine will not process any more
-messages. In such a case, the system will remove the engine in the next
-\emph{step}, and disregard any messages sent to it.
+As illustrated in \Cref{fig:engine-status}, an engine is said to be \ready{f} if
+it can process a message. The additional argument $f$ is an optional predicate
+that shares the preferences of the engine to process a particular message type.
+Being \busy{m} means the engine is currently processing the message $m$. And
+\terminated means the engine will not process any more messages. In such a case,
+the system will remove the engine in the next \emph{step}, and disregard any
+messages sent to it.
 
 An engine's operation requires two fundamental components: a
 \emph{configuration} and an \emph{environment}. The implicit initial state of an
