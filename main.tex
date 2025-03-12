@@ -143,40 +143,49 @@ accordingly.
 
 \section{Model}\label{sec:model}
 
-This section presents a variation of dynamic effective communicating systems \cite{art-engines},
-namely a refinement of the restriction to terminating behaviours. This is an actor-like model.
-% the system consists of
-%\emph{engines}, which are similar to the notion of actor in Agha's Actor Model
-%\cite{foundation97agha} but are equipped with more context.
+This section presents a variation of dynamic effective communicating systems
+\cite{art-engines} by introducing terminating behaviour guarantees while
+preserving their actor-like semantics. Building on this foundation, we formalise
+engines as refined effective communicating Moore machines, that is, stateful
+message-processing units structured around four core components:
+a \emph{configuration}, an \emph{execution environment}, \emph{message interface},
+and a \emph{behaviour}.
 
-In the present paper, we refine effective communicating Moore machines to engines,
-which are comprised of three main components:
-a \emph{configuration}, an
-\emph{execution environment}, and a \emph{behaviour}. The configuration
-includes, among other things, the engine's location within the system, and an optional reference to the parent
-engine. The execution environment includes an \emph{address book} of other
-engines to communicate with, including the engine's own address. Finally, the
-behaviour defines how the engine reacts to messages that follow the engine's
-\emph{message interface}, which is simply a sum type of message types that the
-engine can process. The engine's behaviour is described in the form of a set of \emph{guarded actions}
-consisting of pairs of pre-conditions and actions to execute. When an engine
-receives a message, it checks which of its guarded actions have satisfied
-pre-conditions, and executes the corresponding action; we say that an action is \emph{activated} if it is the action of some guarded action whose guard predicate is satisfied. However, an avid reader
-may notice that it could be different strategies for selecting which action to
-execute, whether a guard is satisfied, which guard finishes first, etc.
-%It must clear that guards semantics could be any for the purposes of this paper,
-%and deserves study on its own.
-In a similar way as Prolog implementations resolve these ambiguities and also Dijkstra's guarded command language, 
-we give a precise description of what options we have to deal with sitations in which several guarded actions are activated.
+An engine's configuration (\Cref{def:engine-configuration}) includes, among other things, the engine's location
+within the system and an optional reference to its parent engine. The engine's
+execution environment (\Cref{def:engine-environment}) contains its local state and an \emph{address book} of
+other engines to communicate with, including the engine's own address. The
+engine's \emph{behaviour} defines how it reacts to messages that conform to its
+\emph{message interface} (\Cref{def:message-interface}) ---a sum type of message types that the engine can
+process.
+More precisely, the engine's behaviour is described through a set of
+\emph{guarded actions} (\Cref{def:guarded-action}) consisting of pre-condition/action pairs. When an engine
+receives a message, it checks which of these guarded actions have their pre-conditions
+satisfied and executes the corresponding actions. 
+% the following qualifier may not needed after all.
+% An action is considered
+% \emph{activated} if it belongs to a guarded action whose guard predicate is
+% satisfied. 
+As an avid reader might note, different strategies could exist for selecting
+which action to execute when multiple guards are satisfied or have competing
+priority. While this guard selection problem falls outside our model's scope,
+alternative strategies could be defined drawing from approaches used in
+\textsc{Prolog} implementations and Dijkstra's guarded command
+language~\cite{dijkstra-guarded-commands}. We provide one such strategy (see
+\Cref{rule:b-guard-strategy}), though this is not essential to the model
+presented here, as readers can define alternative strategies according to their
+needs.
 
 \begin{remark}
-  This engine behaviour specification resembles the correct-by-construction
-  approach used in Event-B systems~\cite{dupont:tel-04165215}, where system
-  transitions are governed by preconditions on the current system state/execution
-  context, and corresponding actions that execute when their preconditions are
-  met. The actions are defined using a language derived from process calculi,
-  which often include operations such as parallel composition, a null operation,
-  sequencing, nondeterministic choice, and recursion.
+  The engine behaviour specification described above resembles the correct-by-construction
+  approach used in event-driven systems like Event-B~\cite{dupont:tel-04165215},
+  where system transitions are governed by preconditions on the current state
+  of the machine and corresponding actions that are executed when their
+  preconditions are met. The preconditions are often written in
+  non-deterministic first-order logic, and the actions are defined using a
+  language derived from process calculi, which often includes operations such as
+  parallel composition, a null operation, sequencing, nondeterministic choice,
+  and recursion.
   %Here, we have a more restricted set of actions, as will be seen in \Cref{def:effects}.
 \end{remark}
 
@@ -272,43 +281,43 @@ current location become prohibitive and more favourable resource availability
 exists elsewhere, although for simplicity we assume that engines always remain
 on the same node.
 
-\begin{definition}[Engine Lifecyle]\label{def:engine-status}
-The \textbf{status} of an engine $e_j$, of type $\mathsf{EngineStatus}$, determines
+\begin{definition}[Engine Lifecycle]\label{def:engine-status}
+The engine's \textbf{status} of type $\mathsf{EngineStatus}$, determines
 the engine's operational mode.
 \begin{equation}\label{eq:engine-status}
 \begin{aligned}
 \mathsf{EngineStatus}%
-&:= \mathsf{ready}(\Option{(\mathsf{Msg} \to \mathsf{Bool})}) \\%
-&\, \mid \, \mathsf{busy}(\mathsf{Msg}) \\%
-&\, \mid \,\mathsf{terminated}  \, .
+&:= \ready{\Option{\Msg \to \Bool}} \\%
+&\, \mid \, \busy{\Msg} \\%
+&\, \mid \,\terminated  \, .
 \end{aligned}
 \end{equation}
 % tikz
 \begin{figure}%[!hbp]
 \centering
 \[\begin{tikzcd}
-	& {\mathsf{ready}(p)} \\
-	{\mathsf{terminated}} && {\mathsf{busy}(m)}
+	& {\ready(f)} \\
+	{\terminated} && {\busy(m)}
 	\arrow[from=1-2, to=2-1]
 	\arrow[from=1-2, to=2-3, bend right]
 	\arrow[from=2-3, to=1-2, bend right]
 	\arrow[from=2-3, to=2-1, bend left]
 \end{tikzcd}\]%
-\caption{The engine life cycle: every engine starts in a \textsf{ready} state
+\caption{The engine life cycle: every engine starts in \ready{f} state
 waiting for a message, and once it reacts to a message it changes to
-$\mathsf{busy}(m)$ where $m$ is the message to which the engine reacts to. The
-\textsf{ready} state can include an optional predicate $p$ that filters which
+\busy{m} where $m$ is the message to which the engine reacts to. The
+\ready{f} state can include an optional predicate $p$ that filters which
 messages the engine is interested in processing. Then, depending on its logic,
-the engine may either return to \textsf{ready} or \textsf{terminated}.}
+the engine may either return to \ready{f} or \terminated.}
 \label{fig:engine-status}
 \end{figure}
 \end{definition}
 
 As illustrated in \Cref{fig:engine-status}, an engine is said to be
-\textsf{ready}$(p)$ if it can process a message, where $p$ is an optional
+\ready{f} if it can process a message, where $f$ is an optional
 predicate that filters which messages the engine is interested in processing.
-Being $\mathsf{busy}(m)$ means the engine is currently processing the message
-$m$. And \textsf{terminated} means the engine will not process any more
+Being \busy{m} means the engine is currently processing the message
+$m$. And \terminated means the engine will not process any more
 messages. In such a case, the system will remove the engine in the next
 \emph{step}, and disregard any messages sent to it.
 
@@ -336,12 +345,10 @@ attribute goes into the engine's configuration.
 
 \begin{definition}\label{def:engine-configuration} The \textbf{configuration} of
 an engine $e_j$ often denoted by $\mathsf{cfg}_j$ is a tuple $\langle
-\mathsf{name}, \mathsf{parent} , \mathsf{mode} \rangle$.
-The inferred type of the configuration is denoted with $\mathsf{Cfg}_j$, indicating
-the configuration of engine $e_j$. The engine's
-\textsf{parent} is an optional reference (address) of the engine's parent. The
-third component, the $\mathsf{mode}$, is the engine's operational mode as in
-\Cref{def:engine-mode}.
+p , \mathsf{mode} \rangle$ where $p$ is an optional reference (address) of the
+engine's parent, and $\mathsf{mode}$ is the engine's operational mode as in
+\Cref{def:engine-mode}. The inferred type of the configuration is denoted with
+$\mathsf{Cfg}_j$, indicating the configuration of engine $e_j$.
 \end{definition}
 
 \begin{remark}

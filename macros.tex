@@ -13,13 +13,15 @@
 \newcommand{\engineConfig}{\ensuremath{\mathsf{engineConfig}}}
 \newcommand{\engineEnv}{\ensuremath{\mathsf{engineEnv}}}
 \usepackage{xcolor}
-\newcommand{\Option}[1]{\ensuremath{#1{\color{blue!60!black}?}}}
+\newcommand{\Option}[1]{\ensuremath{\mathsf{Maybe}(#1)}}
 \newcommand{\Node}{\ensuremath{\mathcal{N}}}
 
 
-
 % Common mathematical operators and symbols
-% \newcommand{\N}{\mathbb{N}}
+\newcommand{\Msg}{\ensuremath{\mathsf{Msg}}}
+\newcommand{\ready}[1]{\ensuremath{\mathsf{ready}(#1)}}
+\newcommand{\busy}[1]{\ensuremath{\mathsf{busy}(#1)}}
+\newcommand{\terminated}{\ensuremath{\mathsf{terminated}}}
 
 % % Common text formatting
 % \newcommand{\ie}{\textit{i.e.}}
