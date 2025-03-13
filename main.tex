@@ -235,7 +235,7 @@ extract the respective components of an address.
 \end{definition}
 
 \begin{axiom}\label{ax:address}
-Each engine is uniquely identified by an \emph{address} in the system.
+Each engine is uniquely identified by an address in the system.
 \end{axiom}
 
 \subsection{Message structure}\label{sec:message-structure}
@@ -377,7 +377,7 @@ $\mathsf{addrbook}(s)$ is of type $\mathsf{List}(\mathsf{Addr})$.
 
 \subsection{Execution directives}\label{sec:execution-directives}
 
-The behaviour of an engine is a declarative description of what it does when it
+The behaviour of an engine is a description of what it does when it
 reacts to a message. This description of computation is via an effect system
 consisting of commands to the system to be executed at runtime.
 
@@ -432,16 +432,16 @@ components of an engine's behaviour.
 \begin{definition}[Guard]\label{def:guards}%
 A \textbf{guard} is a function that returns a value of a given type $R$ if the
 guard is satisfied, and $\none$ otherwise; the \emph{guard predicate} is the
-corresponding Boolean function that maps to false iff the guard maps to $\none$
+corresponding function that maps to false if and only if the guard maps to $\none$.
 The guard is a mapping of type %
-$$\Msg_i \times \Cfg_i \times \Env_i(S_i) \to \Option{R}.$$%
+$$\Msg_i \times \Cfg_i \times \Env_i(S_i) \to \Option{R}.$$
 Recall that $R$ is the specific type of data returned when the guard is
 satisfied, and $S_i$ is the type of the engine's local state.
 \end{definition}
 
-On the computational aspects of an engine, the behaviour evaluating the
-different guards, and for each guard, the action to be executed, whenever the
-guard is satisfied, is as follows:
+% On the computational aspects of an engine, the behaviour evaluating the
+% different guards, and for each guard, the action to be executed, whenever the
+% guard is satisfied, is as follows:
 
 \begin{definition}\label{def:action}%
 Given an engine $e_j$, an \textbf{action} acting on data of type $R$ is a
@@ -471,12 +471,17 @@ Together, both the guard and action induce a mapping of type
 \begin{equation*}\label{eq:guarded-action}%
 \Msg_j \times \Cfg_j \times \Env_j(S_j) \to \Effect{j}{S_j}\,.
 \end{equation*}
+
+%FIXME: The guard can fail, so shouldn't this be Option{\mathsf{Effect}(S_j)}?
+
 This mapping takes in a message, engine configuration, and environment, and
 outputs the effect to execute when the guard is satisfied.
 
 So, upon receiving a message, an engine $e_j$ checks which of its guards is
 satisfied, and if so, the engine executes the corresponding action, as
 illustrated in \Cref{fig:effect}.
+
+%TODO: comment on the given guard action evaluation strategy in the corresponding op. rule
 
 \begin{remark}\label{rem:turing-completeness}%
 A question at this point is whether engines can enable unbounded computation.
@@ -485,10 +490,10 @@ see this, we need to show that the design satisfies the two fundamental
 requirements: conditional branching through guard-state interactions and
 indefinite looping via message-passing recursion. Note that the message-passing
 mechanism says nothing about forbidding engines from sending messages to
-themselves, and this is a powerful mechanism that allows for recursive patterns.
+themselves, which is a powerful mechanism that allows for recursive patterns.
 So, while individual effects as listed in \Cref{def:effects} lack explicit
-looping constructs, and it may not seem at first glance there is a recursive
-mechanism, the combination of guarded actions acting as conditional statements
+looping constructs, and it may not seem there is a recursive
+mechanism at first glance, the combination of guarded actions acting as conditional statements
 with open-ended message passing enables computational universality.
 \end{remark}
 
@@ -532,16 +537,16 @@ its configuration's mode field. The internals of mailbox engines are described
 in \Cref{def:mailbox-engine}.
 
 \begin{definition}\label{def:mailbox-engine}
-A \emph{mailbox engine} $m_j$ is a system-configured companion engine
+A \emph{mailbox engine} $m_j$ is a system-pre-configured engine
 automatically created when instantiating a processing engine $e_j$. It must
 satisfy:
 \begin{itemize}
 \item Operational mode set to $\mathsf{mail}$ (per \Cref{def:engine-mode})
 \item Parent reference pointing to its paired processing engine $e_j$
-\item Fixed message interface $i_\mathsf{mbox}$ with one message type:
+\item Fixed message interface with one message type:
 \begin{equation*}
 \begin{array}{rcl}
-  i_\mathsf{mbox} &:= &\mathsf{append}(\mathsf{Msg_j})\,. %TODO: remove pull from the text
+  \mathsf{Msg}_{\mathsf{mbox}_j} &:= &\mathsf{append}(\mathsf{Msg_j})\,. %TODO: remove pull from the text
                   % &|  &\mathsf{pull}(\mathsf{Msg_j})
 \end{array}
 \end{equation*}
@@ -554,8 +559,6 @@ carrying a payload of type $\mathsf{Msg_j}$
   \item Message delation to support $\mathsf{pull}$ messages,%
   $$(\backslash) : S \times \mathsf{Msg}_j \to S.$$
   \end{itemize}
-% \item Behaviour enforcing semantics: $\mathsf{append}$ operations always precede
-% $\mathsf{pull}$ operations in message processing
 \end{itemize}
 \end{definition}
 
@@ -576,9 +579,9 @@ constitutes a node.
 A \textbf{node} $n_i$ in $\mathcal{N}$ is a tuple
 $\langle \mathsf{id}, \epsilon_i, \omega_i \rangle$ where $\mathsf{id}$
 corresponds to the node's unique identifier across the system, $\epsilon_i$
-is a mapping from identifiers to engines instances
+is a mapping from identifiers to engine instances
 on the node, and $\omega_i$ represents this specific
-node's operations.
+node's operations. %TODO: omega is never clarified.
 \end{definition}
 
 For convenience, given a node $n_i$, we have the following notation:
@@ -597,14 +600,18 @@ than node-local decisions. This architectural constraint exists because nodes
 lack awareness of critical system-wide concerns like address registry management,
 topology relationships between components, and coordination mechanisms for
 distributed state consistency.
+
+%TODO: introduce a forward reference to the related op. rules
 \end{remark}
 
 \subsection{System state}\label{sec:state}
 
-Having defined nodes and their capabilities, we now define the overall system
-state. A system consists of a collection of nodes and a set of in-transit
-messages that represent ongoing communication between engines. We consider the whole system as a variation of Kripke structures: we define the possible system states (the possible worlds) and then specify the
-transition rules that govern its evolution, one labelled transition at time.
+Having defined nodes and their capabilities, we now define the overall system. A system state consists of a collection of nodes and a set of in-transit
+messages that represent ongoing communication between engines. The system is then a variation of a Kripke structure: we define the possible system states (the possible worlds) and then specify the
+transition rules that govern its evolution, one labelled transition at a time.
+%TODO: Review this one more time
+% When referecing a "system" we are really
+% referencing a "system state". It's confusing.
 
 \begin{definition}\label{def:state} A \textbf{state} of the system
 $\kappa$ is a tuple $\kappa^{i} \equiv \langle \mathcal{N}^i, \mu^i, \omega^i
