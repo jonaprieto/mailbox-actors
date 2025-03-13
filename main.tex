@@ -94,7 +94,7 @@ message processing.
 We use an informal type-theoretic notation. For example, a term $x$ of type $A$
 is denoted $x : A$. Capital letters or capitalized words are used for types,
 and lowercase letters or lowercase words are used for terms. There is a universe
-of types $U$, so if $A$ is a type, then $A : U$. We also work with inductive
+of types $\U$, so if $A$ is a type, then $A : \U$. We also work with inductive
 types presented in the following form:
 %
 \begin{align*}
@@ -102,94 +102,97 @@ types presented in the following form:
 \end{align*}
 %
 where $\mathsf{C}$ is a constructor of the type $A$, and $A_1, \dots, A_n$ are
-the types of the constructor arguments. The inductive type of natural numbers is
-denoted~$\N$. The type $\mathsf{Unit}$ has exactly one term, denoted~$\mathsf{unit}$.
-The empty type is denoted~$\bot$. Another recurrent type is the
-type of parametric lists, denoted $\mathsf{List}(A)$.
-If term $x$ is \emph{defined} to be term~$y$, we write $x :\equiv y$. Definitionally equal terms are
-denoted $a \equiv b$. The proposition that $a$ is equal to $b$ is written
-$a = b$.
+the types of the constructor arguments.
 
-Some types are equipped with structure that allows them to behave as sets, and we use some common
-set-theoretic notations: the membership relation is denoted $\in$, so
-$a \in A$ is a proposition that $a$ is an element of $A$;
-note that this is a different judgment than
-typing $a : A$. For $A$ and $B$, $A \subseteq B$ denotes set inclusion, meaning
-every element of $A$ belongs to $B$. $\varnothing$ denotes the empty set.
-Union between sets $A$ and $B$ is denoted $A \cup B$. The intersection is
-denoted $A \cap B$. The difference between $A$ and $B$ is denoted $A
-\setminus B$. $A \times B$ denotes the Cartesian product of $A$ and $B$, and
-their terms are denoted $\langle a,b \rangle$, where $a : A$ and $b : B$. A
-\emph{tuple} $\langle a_1, a_2, \dots, a_n \rangle$ is a generalisation of an
+We use standard type notation where $\N$ denotes the inductive type of natural
+numbers, $\EmptyType$ represents the empty type, $\Unit$ denotes the type with
+exactly one term denoted with $*$, $\Bool$ denotes the type with two terms,
+$\mathsf{tt}$ and $\mathsf{ff}$, and $\mathsf{List}(A)$ represents the type of
+parametric lists. For equality relations, $x :\equiv y$ indicates definitional
+equality where term $x$ is defined as $y$, while $a \equiv b$ signifies
+definitional equality between terms, and $a = b$ denotes propositional equality.
+$A \times B$ denotes the product of $A$ and $B$, and their terms are denoted
+with $\langle a,b \rangle$, where $a : A$ and $b : B$. %
+A \emph{tuple} $\langle a_1, a_2, \dots, a_n \rangle$ is a generalisation of an
 ordered pair to an ordered $n$-tuple, where $n \in \N$, of type $A_1 \times
 \cdots \times A_n$, and $a_i$ is of type $A_i$ for all $i \in \{1, \dots, n\}$.
-If the tuple components are named using sans-serif letters, these names are used
-as projections, otherwise, the projections are $\pi_i(a) :\equiv a_i$ for all $i
-\in \{1, \dots, n\}$. For example, if $x :\equiv \langle \mathsf{fst},
-\mathsf{snd} \rangle$ denotes a tuple with components values can be projected
-using $\mathsf{fst}$ and $\mathsf{snd}$ via $\mathsf{fst}(x)$ and
-$\mathsf{snd}(x)$, respectively. $A_1 \oplus \cdots \oplus A_n$
-denotes the disjoint union of $A_1, \dots, A_n$, and $\mathsf{inj_i}(a_i)$ are
-the corresponding injections into $A_1 \oplus \cdots \oplus A_n$ from $A_i$ for
-all $i \in \{1, \dots, n\}$. Given a type $A$, we can define the optional type
-$\Option{A}$ as $A \oplus \mathsf{Unit}$.
-The terms
-$\mathsf{none}$ and $\mathsf{some}(a)$ are the corresponding terms for the
-optional type when $a : A$. Finally, a function $f$ that takes an argument $a$
-of type $A$ and returns a value of type $B$ is denoted $f : A \to B$. We also
-use the notation $f[a \mapsto c]$ to define a new function that is similar to $f$
-except that the output of $f$ is replaced by $c$ when the input is $a$, if $a$ is
-in the domain of $f$. Otherwise, we extend $f$ accordingly. We overload the
-notation $\mathcal{N}[a \mapsto c]$ to also apply to sets, so if $\mathcal{N}$ is a
-set, then $\mathcal{N}[a \mapsto c]$ is the set resulting from $\mathcal{N}$ by
-replacing the element $a$ with $c$, if $a$ is a valid element of $\mathcal{N}$.
-Otherwise, we extend $\mathcal{N}$ accordingly.
+Given a type $A$, we can define the optional type $\Option{A}$ as $A \oplus
+\mathsf{Unit}$. The terms $\mathsf{none}$ and $\mathsf{some}(a)$ are the
+corresponding terms for the optional type when $a : A$. 
+
+Some types are sets, and we equip them with some common set-theoretic notations.
+The membership relation is denoted with $\in$, so $a \in A$ is a proposition
+that $a$ is an element of $A$. Union between sets $A$ and $B$ is denoted with $A
+\cup B$. The difference between $A$ and $B$ is denoted with $A \setminus B$.
+The disjoint union of $A_1, \dots, A_n$ is denoted with $A_1 \oplus \cdots \oplus A_n$.
+%
+% and $\mathsf{inj_i}(a_i)$ are the corresponding injections into $A_1 \oplus \cdots
+% \oplus A_n$ from $A_i$ for all $i \in \{1, \dots, n\}$. 
+
+Finally, a function $f$ that takes an argument $a$ of type $A$ and returns a
+value of type $B$ is denoted $f : A \to B$ and application is denoted with
+$f(a)$. We also use the notation $f[a \mapsto c]$ to define a new function that
+is similar to $f$ except that the output of $f$ is replaced by $c$ when the
+input is $a$, if $a$ is in the domain of $f$. Otherwise, we extend $f$
+accordingly. We overload the notation $\mathcal{N}[a \mapsto c]$ to also apply
+to sets, so if $\mathcal{N}$ is a set, then $\mathcal{N}[a \mapsto c]$ is the
+set resulting from $\mathcal{N}$ by replacing the element $a$ with $c$, if $a$
+is a valid element of $\mathcal{N}$. Otherwise, we extend $\mathcal{N}$
+accordingly.
  
 
 \section{Model}\label{sec:model}
 
-This section presents a variation of dynamic effective communicating systems \cite{art-engines}.
-namely a refinement of the restriction to terminating behaviours. This is an actor-like model.
-% the system consists of
-%\emph{engines}, which are similar to the notion of actor in Agha's Actor Model
-%\cite{foundation97agha} but are equipped with more context.
+This section presents a variation of dynamic effective communicating systems
+\cite{art-engines} by introducing terminating behaviour guarantees while
+preserving their actor-like semantics. Building on this foundation, we formalise
+engines as refined effective communicating Moore machines, that is, stateful
+message-processing units structured around four core components:
+a \emph{configuration}, an \emph{execution environment}, \emph{message interface},
+and a \emph{behaviour}.
 
-In the present paper, we refine effective communicating Moore machines to engines,
-which are comprised of three main components:
-a \emph{configuration}, an
-\emph{execution environment}, and a \emph{behaviour}. The configuration
-includes, among other things, the engine's name (different to its unique
-identifier), location within the system, and an optional reference to the parent
-engine. The execution environment includes an \emph{address book} of other
-engines to communicate with, including the engine's own address. Finally, the
-behaviour defines how the engine reacts to messages that follow the engine's
-\emph{message interface}, which is simply a sum type of message types that the
-engine can process. The engine's behaviour is described in the form of a set of \emph{guarded actions}
-consisting of pairs of pre-conditions and actions to execute. When an engine
-receives a message, it checks which of its guarded actions have satisfied
-pre-conditions, and executes the corresponding action; we say that an action is \emph{activated} if it is the action of some guarded action whose guard predicate is satisfied. However, an avid reader
-may notice that it could be different strategies for selecting which action to
-execute, whether a guard is satisfied, which guard finishes first, etc.
-%It must clear that guards semantics could be any for the purposes of this paper,
-%and deserves study on its own.
-In a similar way as Prolog implementations resolve these ambiguities and also Dijkstra's guarded command language, 
-we give a precise description of what options we have to deal with sitations in which several guarded actions are activated.
+An engine's configuration (\Cref{def:engine-configuration}) includes, among other things, the engine's location
+within the system and an optional reference to its parent engine. The engine's
+execution environment (\Cref{def:engine-environment}) contains its local state and an \emph{address book} of
+other engines to communicate with, including the engine's own address. The
+engine's \emph{behaviour} defines how it reacts to messages that conform to its
+\emph{message interface} (\Cref{def:message-interface}) ---a sum type of message types that the engine can
+process.
+More precisely, the engine's behaviour is described through a set of
+\emph{guarded actions} (\Cref{def:guarded-action}) consisting of pre-condition/action pairs. When an engine
+receives a message, it checks which of these guarded actions have their pre-conditions
+satisfied and executes the corresponding actions. 
+% the following qualifier may not needed after all.
+% An action is considered
+% \emph{activated} if it belongs to a guarded action whose guard predicate is
+% satisfied. 
+As an avid reader might note, different strategies could exist for selecting
+which action to execute when multiple guards are satisfied or have competing
+priority. While this guard selection problem falls outside our model's scope,
+alternative strategies could be defined drawing from approaches used in
+\textsc{Prolog} implementations and Dijkstra's guarded command
+language~\cite{dijkstra-guarded-commands}. We provide one such strategy (see
+\Cref{rule:b-guard-strategy}), though this is not essential to the model
+presented here, as readers can define alternative strategies according to their
+needs.
 
 \begin{remark}
-  This engine behaviour specification resembles the correct-by-construction
-  approach used in Event-B systems~\cite{dupont:tel-04165215}, where system
-  transitions are governed by preconditions on the current system state/execution
-  context, and corresponding actions that execute when their preconditions are
-  met. The actions are defined using a language derived from process calculi,
-  which often include operations such as parallel composition, a null operation,
-  sequencing, nondeterministic choice, and recursion.
+  The engine behaviour specification described above resembles the correct-by-construction
+  approach used in event-driven systems like Event-B~\cite{dupont:tel-04165215},
+  where system transitions are governed by preconditions on the current state
+  of the machine and corresponding actions that are executed when their
+  preconditions are met. The preconditions are often written in
+  non-deterministic first-order logic, and the actions are defined using a
+  language derived from process calculi, which often includes operations such as
+  parallel composition, a null operation, sequencing, nondeterministic choice,
+  and recursion.
   %Here, we have a more restricted set of actions, as will be seen in \Cref{def:effects}.
 \end{remark}
 
 % We need a nice picture here; this is (not) a definition? 
 The model assumes an ambient \emph{system} $\kappa$ mainly consisting of a set of
 \emph{nodes}~$\mathcal{N}$, a set of \emph{engines} $\mathcal{E}$, following a
-specific \emph{message-passing mechanism} (MPM for short) that will be described
+specific \emph{message-passing mechanism} that will be described
 later, among other components.
 
 
@@ -198,10 +201,10 @@ associated with a unique node. Each entity in the system has a unique identifier
 allowing nodes and engines to be denoted with $n_i$ and $e_j$ respectively, where
 $i, j \in \N$.
 
-Following the message-passing paradigm, the MPM enforces policies for message
-delivery and flow control. This mechanism operates on a set of \emph{messages}
-which we denote with $\mu$. Each message contains information about its
-sender and receiver.
+Following the message-passing paradigm, the message-passing mechanism enforces
+policies for message delivery and flow control. This mechanism operates on a set
+of \emph{messages} which we denote with $\mu$. Each message contains information
+about its sender and receiver.
 
 To reason about the system, we use a state machine that evolves in discrete
 steps. So, there is a notion of \say{previous} and \say{next} for each entity
@@ -217,14 +220,18 @@ $\mu^i$ is the set of messages in the $i$-th step.
 
 
 \subsection{Addresses}\label{sec:addresses-and-names}
-
 \begin{definition}[Address]%
 \label{def:address}
 
-An \textbf{address} for an engine $e_j$ is a tuple $a \equiv \langle
-\mathsf{node}, \mathsf{id} \rangle$, where $\mathsf{node}(a)$ is the node
-identifier where the engine runs, and $\mathsf{id}(a)$ is the engine's unique
-identifier, of type $\mathsf{NodeID}$ and $\mathsf{UID}$, respectively.
+An \textbf{address} is a pair $a \equiv \langle n, \iota \rangle$ of type
+$\mathsf{Addr}$ where:
+\begin{itemize}
+    \item $n : \mathsf{NodeID}$ is the identifier of the node where the engine
+    resides, and
+    \item $\iota : \mathsf{UID}$ is the engine's unique identifier within the node.
+\end{itemize}
+We define projection functions $\mathsf{node}(a)$ and $\mathsf{uid}(a)$ to
+extract the respective components of an address.
 \end{definition}
 
 \begin{axiom}\label{ax:address}
@@ -274,41 +281,45 @@ current location become prohibitive and more favourable resource availability
 exists elsewhere, although for simplicity we assume that engines always remain
 on the same node.
 
-\begin{definition}[Engine Lifecyle]\label{def:engine-status}
-The \textbf{status} of an engine $e_j$, of type $\mathsf{EngineStatus}$, determines
-the engine's operational mode; the \emph{engine life cycle} has transitions as in \Cref{fig:engine-status}.
+\begin{definition}[Engine Lifecycle]\label{def:engine-status}
+The \textbf{status} of an engine, of type $\mathsf{EngineStatus}$, determines
+the engine's operational mode.
 \begin{equation}\label{eq:engine-status}
-\mathsf{EngineStatus} :=%
-\mathsf{ready} \mid%
-\mathsf{busy}(\mathsf{Msg}) \mid%
-\mathsf{terminated}  \, .
+\begin{aligned}
+\mathsf{EngineStatus}%
+:= &\quad \ready{\Option{\Msg \to \Bool}} \\%
+\mid & \quad \busy{\Msg} \\%
+\mid & \quad \terminated  \, .
+\end{aligned}
 \end{equation}
 % tikz
 \begin{figure}%[!hbp]
 \centering
 \[\begin{tikzcd}
-	& {\mathsf{ready}} \\
-	{\mathsf{terminated}} && {\mathsf{busy}(m)}
+	& {\textcolor{darkgreen}{\ready{f}}} \\
+	{\textcolor{darkred}{\terminated}} && {\textcolor{darkorange}{\busy{m}}}
 	\arrow[from=1-2, to=2-1]
 	\arrow[from=1-2, to=2-3, bend right]
 	\arrow[from=2-3, to=1-2, bend right]
 	\arrow[from=2-3, to=2-1, bend left]
 \end{tikzcd}\]%
-\caption{The engine life cycle: every engine starts in a \textsf{ready} state
+\caption{The engine life cycle: every engine starts in \textsf{ready} state
 waiting for a message, and once it reacts to a message it changes to
-$\mathsf{busy}(m)$ where $m$ is the message to which the engine reacts to. Then,
-depending on its logic, the engine may either return to \textsf{ready} or
-\textsf{terminated}.}
+\busy{m} where $m$ is the message to which the engine reacts to. The
+\textsf{ready}state can include an optional predicate $f$ that communicates
+which messages the engine is interested in processing. Then, depending on its
+logic, the engine may either return to \ready{f'} for some $f'$ or \terminated.}
 \label{fig:engine-status}
 \end{figure}
 \end{definition}
 
-As illustrated in \Cref{fig:engine-status}, an engine is said to be
-\textsf{ready} if it can process a message. Being $\mathsf{busy}(m)$
-means the engine is currently processing the message $m$. And \textsf{terminated}
-means the engine will not process any more messages. In such a case, the system
-will remove the engine in the next \emph{step}, and disregard any messages sent
-to it.
+As illustrated in \Cref{fig:engine-status}, an engine is said to be \ready{f} if
+it can process a message. The additional argument $f$ is an optional predicate
+that shares the preferences of the engine to process a particular message type.
+Being \busy{m} means the engine is currently processing the message $m$. And
+\terminated means the engine will not process any more messages. In such a case,
+the system will remove the engine in the next \emph{step}, and disregard any
+messages sent to it.
 
 An engine's operation requires two fundamental components: a
 \emph{configuration} and an \emph{environment}. The implicit initial state of an
@@ -332,20 +343,20 @@ receive special treatment within the message-passing mechanism. Since the
 operational mode becomes immutable once an engine is created, this critical
 attribute goes into the engine's configuration.
 
-\begin{definition}\label{def:engine-configuration} The \textbf{configuration} of
-an engine $e_j$ often denoted by $\mathsf{cfg}_j$ is a tuple $\langle
-\mathsf{name}, \mathsf{parent} , \mathsf{mode} \rangle$.
-The inferred type of the configuration is denoted with $\mathsf{Cfg}_j$, indicating
-the engine configuration $e_j$. The engine's
-\textsf{parent} is an optional reference (address) of the engine's parent. The
-third component, the $\mathsf{mode}$, is the engine's operational mode as in
-\Cref{def:engine-mode}.
+\begin{definition}\label{def:engine-configuration}%
+The \textbf{configuration} of an engine $e_j$, often denoted by
+$\mathsf{cfg}_j$, is a tuple $\langle p , \mathsf{mode} \rangle$ where $p$ is an
+optional reference (address) of the engine's parent, and $\mathsf{mode}$ is the
+engine's operational mode as in \Cref{def:engine-mode}. The inferred type of the
+configuration is denoted with $\mathsf{Cfg}_j$, indicating the configuration of
+engine $e_j$.
 \end{definition}
 
 \begin{remark}
 Similar to message interfaces, we collect all configurations into a single type,
-$\mathsf{Cfg}$, the sum type of all configuration types. Subtyping for configurations
-means that the configuration of an engine $j$, $\mathsf{Cfg_j}$, is also a type of $\mathsf{Cfg}$.
+$\mathsf{Cfg}$, the sum type of all configuration types. Subtyping for
+configurations means that the configuration of an engine $j$, $\mathsf{Cfg_j}$,
+is also a type of $\mathsf{Cfg}$.
 \end{remark}
 
 Recall that engines are isolated from each other and process messages
@@ -372,17 +383,17 @@ consisting of commands to the system to be executed at runtime.
 
 \begin{definition}[Effect]\label{def:effects}%
 Given a type $S_j$ representing the local state of an engine~$e_j$, an
-\textbf{effect} is of type $\mathsf{Effect}(j, S_j)$, which considers all the
+\textbf{effect} is of type $\Effect{j}{S_j}$, which considers all the
 possible ways an engine can influence the system by reacting to a message.
 
 \begin{equation}\label{eq:effects}
 \begin{aligned} %TODO: review this grammar
-\mathsf{Effect}(j, S_j) := &\quad \mathsf{send}(\mathsf{Addr}, \mathsf{Msg}) & &\text{(message dispatch)} \\
-\mid & \quad \mathsf{update}(\mathsf{Env}_j(S_j)) & &\text{(engine state modification)} \\
-\mid & \quad \mathsf{spawn}(i, \mathsf{Cfg}_i, \mathsf{Env}_i(S_i)) & &\text{(engine creation)} \\
-\mid & \quad \mathsf{chain}(\mathsf{Effect}(j, S_j), \mathsf{Effect}(j, S_j)) & &\text{(action sequencing)} \\
-\mid & \quad \mathsf{terminate} & &\text{(engine shutdown)} \\
-\mid & \quad \mathsf{noop} & &\text{(null operation)\, .}
+\Effect{j}{S_j} := &\quad \send{\Address, \Msg} & &\text{(message dispatch)} \\
+\mid & \quad \update{\Env(S_j)} & &\text{(engine state modification)} \\
+\mid & \quad \spawn{\Cfg_i}{\Env_i(S_i)} & &\text{(engine creation)} \\
+\mid & \quad \chain{\Effect{j}{S_j}}{\Effect{j}{S_j}} & &\text{(action sequencing)} \\
+\mid & \quad \terminate & &\text{(engine shutdown)} \\
+\mid & \quad \noop & &\text{(null operation)\, .}
 \end{aligned}
 \end{equation}
 \end{definition}
@@ -395,7 +406,7 @@ possible ways an engine can influence the system by reacting to a message.
 	{} & {(m, \mathsf{cfg_j},\mathsf{env}_j)} & {} \\
 	\\
 	{r_1} & \cdots & {r_k} \\
-	{e_1:\mathsf{Effect}(j, S_j)} & \cdots & {e_k:\mathsf{Effect}(j, S_j)}
+	{e_1:\Effect{j}{S_j}} & \cdots & {e_k:\Effect{j}{S_j}}
 	\arrow[curve={height=24pt}, shorten <=24pt, shorten >=24pt, dashed, no head, from=1-1, to=1-3]
 	\arrow["{g_1}"', maps to, from=1-2, to=3-1]
 	\arrow["{g_i}"', maps to, from=1-2, to=3-2]
@@ -405,8 +416,8 @@ possible ways an engine can influence the system by reacting to a message.
 	\arrow["{c_k}", maps to, from=3-3, to=4-3]
 \end{tikzcd}\]%
 \caption{For an engine $e_j$, its behaviour acts on a message $m$ of type
-$\mathsf{Msg}_j$ and an engine's configuration $\mathsf{cfg}_j$
-and environment $\mathsf{env}_j$. The pre-conditions, denoted as $g_i$, are
+$\Msg_j$ and an engine's configuration $\Cfg_j$
+and environment $\Env_j(S_j)$. The pre-conditions, denoted as $g_i$, are
 guards that determine which action is executed. The symbols $r_i$ represent
 output that feeds into the actions $c_i$. The actions, denoted as $c_i$ return
 one of the effects as in \Cref{def:effects}. These effects are executed if their
@@ -419,14 +430,12 @@ Given an engine $e_j$, the following definition specifies the guard and action
 components of an engine's behaviour.
 
 \begin{definition}[Guard]\label{def:guards}%
-A \textbf{guard} is a function that
-returns a value of a given type $R$ if the guard is satisfied, and $\mathsf{none}$
-otherwise;
-the \emph{guard predicate} is the corresponding Boolean function that maps to false if and only if the guard maps to $\mathsf{none}$
+A \textbf{guard} is a function that returns a value of a given type $R$ if the
+guard is satisfied, and $\none$ otherwise; the \emph{guard predicate} is the
+corresponding function that maps to false if and only if the guard maps to $\none$.
 The guard is a mapping of type %
-$$\mathsf{Msg}_i \times \mathsf{Cfg}_i \times \mathsf{Env}_i(S_i) \to
-\Option{R}.$$%
-Recall that $R : \mathsf{Type}$, a parameter to the engine's guard actions, is the specific type of data returned when the guard is
+$$\Msg_i \times \Cfg_i \times \Env_i(S_i) \to \Option{R}.$$
+Recall that $R$ is the specific type of data returned when the guard is
 satisfied, and $S_i$ is the type of the engine's local state.
 \end{definition}
 
@@ -436,8 +445,7 @@ satisfied, and $S_i$ is the type of the engine's local state.
 
 \begin{definition}\label{def:action}%
 Given an engine $e_j$, an \textbf{action} acting on data of type $R$ is a
-mapping of type $R \times \mathsf{Msg}_j \times \mathsf{Cfg}_j \times
-\mathsf{Env}_j(S_j) \to \mathsf{Effect}(j, S_j)$.
+mapping of type $R \times \Msg_j \times \Cfg_j \times \Env_j(S_j) \to \Effect{j}{S_j}$.
 \end{definition}
 
 Then, we compose a guard and an action to form a \emph{guarded action}, which is
@@ -453,7 +461,7 @@ where the action is not applicable.
   \begin{itemize}
     \item $g_j$ is a guard as in \Cref{def:guards} that determines when the
     action $a_j$ should execute, and
-    \item $a_j$ is an action of type $\mathsf{Effect}(S)$ as in
+    \item $a_j$ is an action of type $\Effect{j}{S_j}$ as in
     \Cref{def:effects} that specifies what to execute,
   \end{itemize}
 \end{definition}
@@ -461,8 +469,7 @@ where the action is not applicable.
 Together, both the guard and action induce a mapping of type
 
 \begin{equation*}\label{eq:guarded-action}%
-\mathsf{Msg}_j \times \mathsf{Cfg}_j
-\times \mathsf{Env}_j(S_j) \to \mathsf{Effect}(j, S_j)\,.
+\Msg_j \times \Cfg_j \times \Env_j(S_j) \to \Effect{j}{S_j}\,.
 \end{equation*}
 
 %FIXME: The guard can fail, so shouldn't this be Option{\mathsf{Effect}(S_j)}?
@@ -736,12 +743,12 @@ $n_i \equiv \langle \mathsf{id}_i, \epsilon_i, \omega_i \rangle \in \mathcal{N}%
 \quad \mathsf{cfg} \equiv \langle p, \mathsf{process}\rangle$}
 \noLine
 \UnaryInfC{
-$S : \mathsf{Type} %
+$S : \U %
 \quad \mathsf{env} : \mathsf{Env}(S)  %
 \quad in : \mathsf{Msg} %
 % \quad b : \mathsf{EngineBehaviour}
 \quad e_{\mathsf{new}} \equiv \langle in, b,
-\mathsf{ready}, \mathsf{cfg}, \mathsf{env} \rangle%
+\mathsf{ready}(f), \mathsf{cfg}, \mathsf{env} \rangle% f is the filter function
 $}
 % % Level 3: Engine set and address map updates
 \noLine
@@ -987,7 +994,7 @@ states that in the context of engine $p$, the guarded action $\langle g, a
 \AxiomC{$%
 p \in \mathcal{E}%
 \quad p \equiv \langle \cdots, b_p, \mathsf{busy}(v), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
-% \quad S_p: \mathsf{Type}%
+% \quad S_p: \U%
 % \quad \mathsf{env}_p : \mathsf{Env}_p(S_p)%
 $}
 \noLine
@@ -1009,7 +1016,7 @@ p \in \mathcal{E}%
 $}
 % \noLine
 % \UnaryInfC{$
-% S : \mathsf{Type}%
+% S : \U%
 % \quad \mathsf{env}_p : \mathsf{Env}(S)%
 % \quad v : i_p%
 % $}
@@ -1101,7 +1108,7 @@ $}
 \begin{prooftree}
 \AxiomC{$
 p \in \mathcal{E}%
-\quad S : \mathsf{Type}%
+\quad S : \U%
 \quad \mathsf{env}(p) , s : \mathsf{Env}(S)%
 $}
 \UnaryInfC{$%
@@ -1126,7 +1133,7 @@ n_i \in \mathcal{N}%
 $}
 \noLine
 \UnaryInfC{$%
-S : \mathsf{Type}%
+S : \U%
 \quad s : \mathsf{Env}(S)%
 \quad \kappa, n_i, c, s\rightsquigarrow_{\mathsf{spawn}} \kappa'%
 $}
