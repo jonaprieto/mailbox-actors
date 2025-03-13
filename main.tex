@@ -75,19 +75,17 @@ However, with careful design, these costs can be
 outweighed by the benefits of a more flexible system.
 
 % How this paper is organized and what is the contribution.
-
 \paragraph{Contributions}
-First, we propose a formal architectural separation between processing actors and
-their mailboxes in \Cref{sec:model}, which enables improved flexibility and
-scalability for message management. Second, we formulate operational semantics
-in \Cref{sec:semantics} for both the decoupled architecture and its associated
-explicit message-passing mechanism, formally specifying the system's design
-following in the spirit of the approach established for
-Erlang~\cite{formal-semantics-erlang}. This formal specification provides
-sufficient grounding to implement a system from scratch or as a library on top
-of a compatible system/platform such as Erlang, and to formalise and prove key
-system properties such as liveness guarantees and correctness under concurrent
-message processing.
+First, we propose an architectural separation between actors and
+their mailboxes in \Cref{sec:model}. This separation enables improved
+flexibility and scalability for message management. Second, we formulate
+operational semantics in \Cref{sec:semantics} for the decoupled architecture
+and its associated explicit message-passing mechanism, formally specifying the
+system's design of a variant of Erlang~\cite{formal-semantics-erlang}. This
+formal specification provides sufficient grounding to implement a system from
+scratch or as a library on top of a compatible system/platform such as Erlang,
+and to formalize and prove key system properties such as liveness guarantees and
+correctness under concurrent message processing.
 
 \section{Notation}\label{sec:notation}
 
@@ -107,7 +105,7 @@ the types of the constructor arguments.
 We use standard type notation where $\N$ denotes the inductive type of natural
 numbers, $\EmptyType$ represents the empty type, $\Unit$ denotes the type with
 exactly one term denoted with $*$, $\Bool$ denotes the type with two terms,
-$\mathsf{tt}$ and $\mathsf{ff}$, and $\mathsf{List}(A)$ represents the type of
+$\mathsf{tt}$ and $\mathsf{ff}$, and $\List{A}$ represents the type of
 parametric lists. For equality relations, $x :\equiv y$ indicates definitional
 equality where term $x$ is defined as $y$, while $a \equiv b$ signifies
 definitional equality between terms, and $a = b$ denotes propositional equality.
@@ -151,17 +149,18 @@ message-processing units structured around four core components:
 a \emph{configuration}, an \emph{execution environment}, \emph{message interface},
 and a \emph{behaviour}.
 
-An engine's configuration (\Cref{def:engine-configuration}) includes, among other things, the engine's location
-within the system and an optional reference to its parent engine. The engine's
-execution environment (\Cref{def:engine-environment}) contains its local state and an \emph{address book} of
-other engines to communicate with, including the engine's own address. The
-engine's \emph{behaviour} defines how it reacts to messages that conform to its
-\emph{message interface} (\Cref{def:message-interface}) ---a sum type of message types that the engine can
-process.
-More precisely, the engine's behaviour is described through a set of
-\emph{guarded actions} (\Cref{def:guarded-action}) consisting of pre-condition/action pairs. When an engine
-receives a message, it checks which of these guarded actions have their pre-conditions
-satisfied and executes the corresponding actions. 
+An engine's configuration (\Cref{def:engine-configuration}) includes, among
+other things, the engine's location within the system and an optional reference
+to its parent engine. The engine's execution environment
+(\Cref{def:engine-environment}) contains its local state and an \emph{address
+book} of other engines to communicate with, including the engine's own address.
+The engine's \emph{behaviour} defines how it reacts to messages that conform to
+its \emph{message interface} (\Cref{def:message-interface}) ---a sum type of
+message types that the engine can process. More precisely, the engine's
+behaviour is described through a set of \emph{guarded actions}
+(\Cref{def:guarded-action}) consisting of pre-condition/action pairs. When an
+engine receives a message, it checks which of these guarded actions have their
+pre-conditions satisfied and executes the corresponding actions. 
 % the following qualifier may not needed after all.
 % An action is considered
 % \emph{activated} if it belongs to a guarded action whose guard predicate is
@@ -255,15 +254,15 @@ $\mathsf{msg}(m)$ to extract the respective components of a message.
 
 \begin{definition}[Message Interface]\label{def:message-interface}%
 The \textbf{message interface} of an engine $e_j$ is the sum type
-$\mathsf{Msg_j}$ where the type constructors address the different message types
+$\Msg_j$ where the type constructors address the different message types
 that the engine can process.
 \end{definition}
 
 To refer to an arbitrary message type \emph{within the system}, we use the type
-$\mathsf{Msg}$, the sum type of all message interfaces, and therefore the valid
-message types, that is, $\mathsf{Msg} :\equiv \bigoplus_{j} \mathsf{Msg_j}$
+$\Msg$, the sum type of all message interfaces, and therefore the valid
+message types, that is, $\Msg :\equiv \bigoplus_{j} \Msg_j$
 where $j$ ranges over all engines in the system. To simplify the notation, we
-assume message type subtyping, that is, $\mathsf{Msg_j} : \mathsf{Msg}$
+assume message type subtyping, that is, $\Msg_j : \Msg$
 for all $j \in \mathcal{E}$.
 
 % An alternative approach defines message interfaces through untagged unions, permitting
@@ -282,11 +281,11 @@ exists elsewhere, although for simplicity we assume that engines always remain
 on the same node.
 
 \begin{definition}[Engine Lifecycle]\label{def:engine-status}
-The \textbf{status} of an engine, of type $\mathsf{EngineStatus}$, determines
+The \textbf{status} of an engine, of type $\EngineStatus$, determines
 the engine's operational mode.
 \begin{equation}\label{eq:engine-status}
 \begin{aligned}
-\mathsf{EngineStatus}%
+\EngineStatus%
 := &\quad \ready{\Option{\Msg \to \Bool}} \\%
 \mid & \quad \busy{\Msg} \\%
 \mid & \quad \terminated  \, .
@@ -303,12 +302,13 @@ the engine's operational mode.
 	\arrow[from=2-3, to=1-2, bend right]
 	\arrow[from=2-3, to=2-1, bend left]
 \end{tikzcd}\]%
-\caption{The engine life cycle: every engine starts in \textsf{ready} state
-waiting for a message, and once it reacts to a message it changes to
-\busy{m} where $m$ is the message to which the engine reacts to. The
-\textsf{ready}state can include an optional predicate $f$ that communicates
-which messages the engine is interested in processing. Then, depending on its
-logic, the engine may either return to \ready{f'} for some $f'$ or \terminated.}
+\caption{The engine life cycle: every engine starts in \ready{f} state waiting
+for a message where $f$ is an optional predicate that communicates which
+messages the engine is interested in processing. Once it reacts to a message, it
+changes to \busy{m} where $m$ is the message to which the engine reacts to.
+Then, depending on its logic, the engine may either return to \ready{f'} for
+some optional predicate $f'$ or \terminated, meaning the engine will not process
+any more messages.}
 \label{fig:engine-status}
 \end{figure}
 \end{definition}
@@ -329,11 +329,11 @@ operational mode. We first formalise this operational mode concept to establish
 precise semantics.
 
 \begin{definition}\label{def:engine-mode}
-The \textbf{operational mode} of an engine $e_j$, of type $\mathsf{EngineMode}$,
+The \textbf{operational mode} of an engine $e_j$, of type $\EngineMode$,
 determines the engine's operational mode, a tag used by the system to
 distinguish the purpose of the engine.
 \begin{equation}\label{eq:engine-mode}
-\mathsf{EngineMode} := \mathsf{process} \mid \mathsf{mail} \, .
+\EngineMode := \process \mid \mail \, .
 \end{equation}
 \end{definition}
 
@@ -345,18 +345,18 @@ attribute goes into the engine's configuration.
 
 \begin{definition}\label{def:engine-configuration}%
 The \textbf{configuration} of an engine $e_j$, often denoted by
-$\mathsf{cfg}_j$, is a tuple $\langle p , \mathsf{mode} \rangle$ where $p$ is an
-optional reference (address) of the engine's parent, and $\mathsf{mode}$ is the
+$\mathsf{cfg}_j$, is a tuple $\langle p , \mode \rangle$ where $p$ is an
+optional reference (address) of the engine's parent, and $\mode$ is the
 engine's operational mode as in \Cref{def:engine-mode}. The inferred type of the
-configuration is denoted with $\mathsf{Cfg}_j$, indicating the configuration of
+configuration is denoted with $\Cfg_j$, indicating the configuration of
 engine $e_j$.
 \end{definition}
 
 \begin{remark}
 Similar to message interfaces, we collect all configurations into a single type,
-$\mathsf{Cfg}$, the sum type of all configuration types. Subtyping for
-configurations means that the configuration of an engine $j$, $\mathsf{Cfg_j}$,
-is also a type of $\mathsf{Cfg}$.
+$\Cfg$, the sum type of all configuration types. Subtyping for
+configurations means that the configuration of an engine $j$, $\Cfg_j$,
+is also a type of $\Cfg$.
 \end{remark}
 
 Recall that engines are isolated from each other and process messages
@@ -369,10 +369,10 @@ as the engine's \emph{environment}.
 
 Given a type $S$ representing the local state of an engine $e_j$, an execution
 \textbf{environment} of $e_j$ is a tuple $s \equiv\langle \mathsf{state},
-\mathsf{addrbook} \rangle$ of type $\mathsf{Env}(S)$, where $\mathsf{state}(s)$
+\mathsf{addrbook} \rangle$ of type $\Env(S)$, where $\mathsf{state}(s)$
 is of type $S$, and $\mathsf{addrbook}(s)$ is the engine's address book, a
 non-empty list containing the names of other engines, including its own.
-$\mathsf{addrbook}(s)$ is of type $\mathsf{List}(\mathsf{Addr})$.
+$\mathsf{addrbook}(s)$ is of type $\List{\Address}$.
 \end{definition}
 
 \subsection{Execution directives}\label{sec:execution-directives}
@@ -422,7 +422,7 @@ guards that determine which action is executed. The symbols $r_i$ represent
 output that feeds into the actions $c_i$. The actions, denoted as $c_i$ return
 one of the effects as in \Cref{def:effects}. These effects are executed if their
 pre-conditions are satisfied. If no pre-conditions are satisfied, the action is a
-null operation, $\mathsf{noop}$.}
+null operation, $\noop$.}
 \label{fig:effect}
 \end{figure}
 
@@ -485,16 +485,16 @@ illustrated in \Cref{fig:effect}.
 
 \begin{remark}\label{rem:turing-completeness}%
 A question at this point is whether engines can enable unbounded computation.
-Behaviours as introduced in~\cite{art-engines} are Turing complete. To
-see this, we need to show that the design satisfies the two fundamental
-requirements: conditional branching through guard-state interactions and
-indefinite looping via message-passing recursion. Note that the message-passing
-mechanism says nothing about forbidding engines from sending messages to
-themselves, which is a powerful mechanism that allows for recursive patterns.
-So, while individual effects as listed in \Cref{def:effects} lack explicit
-looping constructs, and it may not seem there is a recursive
-mechanism at first glance, the combination of guarded actions acting as conditional statements
-with open-ended message passing enables computational universality.
+Behaviours as introduced in~\cite{art-engines} are Turing complete. To see this,
+we need to show that the design satisfies the two fundamental requirements:
+conditional branching through guard-state interactions and indefinite looping
+via message-passing recursion. Note that the message-passing mechanism says
+nothing about forbidding engines from sending messages to themselves, which is a
+powerful mechanism that allows for recursive patterns. So, while individual
+effects as listed in \Cref{def:effects} lack explicit looping constructs, and it
+may not seem there is a recursive mechanism at first glance, the combination of
+guarded actions acting as conditional statements with open-ended message passing
+enables computational universality.
 \end{remark}
 
 \begin{definition}\label{def:engine-behaviour}
@@ -512,11 +512,11 @@ guards, actions, configurations and environments.
 
 \begin{definition}\label{def:engine}
 An \textbf{engine} is the computational unit of the system, formally specified by a tuple
-$\langle i, b, \mathsf{status}, \mathsf{cfg}, \mathsf{env} \rangle$ where:
+$\langle i, b, s, \mathsf{cfg}, \mathsf{env} \rangle$ where:
 \begin{itemize}
 \item $i$ is the engine's message interface, a type as described in \Cref{def:message-interface},
 \item $b$ is the engine's behaviour ---a set of guarded actions as defined in \Cref{def:guarded-action},
-\item $\mathsf{status}$ is the engine's status flag as specified in \Cref{def:engine-status},
+\item $s$ is the engine's status flag as specified in \Cref{def:engine-status},
 \item $\mathsf{cfg}$ is the engine's configuration as described in
 \Cref{def:engine-configuration}, and
 \item $\mathsf{env}$ is the engine's execution environment as outlined in \Cref{def:engine-environment}.
@@ -532,7 +532,7 @@ Our system defines two engine types: \emph{processing engines} and \emph{mailbox
 engines}. Users can only explicitly create processing engines, while mailbox
 engines are automatically created by the system when a processing engine is
 instantiated, as detailed in \Cref{sec:creation-rules}. A processing engine is
-distinguished by having its operational mode set to $\mathsf{process}$ through
+distinguished by having its operational mode set to $\process$ through
 its configuration's mode field. The internals of mailbox engines are described
 in \Cref{def:mailbox-engine}.
 
@@ -541,23 +541,20 @@ A \emph{mailbox engine} $m_j$ is a system-pre-configured engine
 automatically created when instantiating a processing engine $e_j$. It must
 satisfy:
 \begin{itemize}
-\item Operational mode set to $\mathsf{mail}$ (per \Cref{def:engine-mode})
+\item Operational mode set to $\mail$ (per \Cref{def:engine-mode})
 \item Parent reference pointing to its paired processing engine $e_j$
 \item Fixed message interface with one message type:
 \begin{equation*}
-\begin{array}{rcl}
-  \mathsf{Msg}_{\mathsf{mbox}_j} &:= &\mathsf{append}(\mathsf{Msg_j})\,. %TODO: remove pull from the text
-                  % &|  &\mathsf{pull}(\mathsf{Msg_j})
-\end{array}
+  \Msg_{\mailbox_j} := \append(\Msg_j)
 \end{equation*}
-carrying a payload of type $\mathsf{Msg_j}$
+carrying a payload of type $\Msg_j$
 \item State $q$ of type $S$ implementing a queue-like structure with:
   \begin{itemize}
   \item $\emptyset$ denoting empty state.
-  \item Message insertion to support $\mathsf{append}$ messages, 
-  $$(\cup) : S \times \mathsf{Msg_j} \to S.$$
+  \item Message insertion to support $\append$ messages, 
+  $$(\cup) : S \times \Msg_j \to S.$$
   \item Message delation to support $\mathsf{pull}$ messages,%
-  $$(\backslash) : S \times \mathsf{Msg}_j \to S.$$
+  $$(\backslash) : S \times \Msg_j \to S.$$
   \end{itemize}
 \end{itemize}
 \end{definition}
@@ -571,29 +568,33 @@ message ingestion and core computation.
 \subsection{Nodes}\label{sec:nodes}
 
 Having previously introduced the system $\kappa$, which comprises a set of nodes%
-~$\mathcal{N}$ that host engines $\mathcal{E}$ governed by a message-passing
+~$\SetOfNodes$ that host engines $\SetOfEngines$ governed by a message-passing
 mechanism defined by the system's requirements, we now formally define what
 constitutes a node.
 
-\begin{definition}\label{def:node}
-A \textbf{node} $n_i$ in $\mathcal{N}$ is a tuple
-$\langle \mathsf{id}, \epsilon_i, \omega_i \rangle$ where $\mathsf{id}$
-corresponds to the node's unique identifier across the system, $\epsilon_i$
-is a mapping from identifiers to engine instances
-on the node, and $\omega_i$ represents this specific
-node's operations. %TODO: omega is never clarified.
+\begin{definition}\label{def:node}%
+A \textbf{node} in $\SetOfNodes$ is a tuple $\langle n_i, \epsilon_i, \omega_i
+\rangle$ where $n_i$ corresponds to the node's unique identifier across the
+system, $\epsilon_i$ is a mapping from identifiers to engine instances on the
+node, and $\omega_i$ represents node-specific functionality, including, e.g.,
+storage and freshness of unique engine identifiers.
 \end{definition}
 
-For convenience, given a node $n_i$, we have the following notation:
+For convenience, given a node with identifier $n_i$, we have the following notation:
 \begin{itemize}
-  \item $\mathcal{E}_i$ is the set of values of the mapping $\epsilon_i$, and
+  \item $\SetOfEngines_i$ is the set of engines on the node, which are precisely
+  the values of the mapping $\epsilon_i$, and
   \item $\alpha_i$ is a mapping from engine instances into
   their identifiers.
 \end{itemize}
 
 \begin{remark}[Modification of nodes and engines]\label{rem:node-operations}
 %By design, nodes cannot create, destroy, or modify engines directly.
-The creation, destruction, and modification of engines will be \todo{describe in a phrase} covered in \todo{ref}. 
+The creation, destruction, and modification of engines will be \todo{describe in
+a phrase} covered in \todo{ref}. 
+% J:to consider, if an engine is destroyed, is its mailbox engine also destroyed?
+% also, what does it implies if an engine is modified? What can be modified any
+% way?
 These
 operations require global coordination through system-level mechanisms rather
 than node-local decisions. This architectural constraint exists because nodes
@@ -604,21 +605,23 @@ distributed state consistency.
 %TODO: introduce a forward reference to the related op. rules
 \end{remark}
 
-\subsection{System state}\label{sec:state}
-
-Having defined nodes and their capabilities, we now define the overall system. A system state consists of a collection of nodes and a set of in-transit
-messages that represent ongoing communication between engines. The system is then a variation of a Kripke structure: we define the possible system states (the possible worlds) and then specify the
-transition rules that govern its evolution, one labelled transition at a time.
+\subsection{System state}\label{sec:state}%
+Having defined the concept of nodes, we now define the overall system. A system
+state consists of a collection of nodes and a set of in-transit messages that
+represent ongoing communication between engines. The system is a variation of a
+Kripke structure. We therefore define the possible system states, \emph{the
+possible worlds}, and then specify the transition rules that govern its evolution,
+one labelled transition at a time.
 %TODO: Review this one more time
 % When referecing a "system" we are really
 % referencing a "system state". It's confusing.
 
 \begin{definition}\label{def:state} A \textbf{state} of the system
-$\kappa$ is a tuple $\kappa^{i} \equiv \langle \mathcal{N}^i, \mu^i, \omega^i
+$\kappa$ is a tuple $\kappa^{i} \equiv \langle \SetOfNodes^i, \SetOfMessages^i, \omega^i
 \rangle$ where,
 \begin{itemize}
-\item $\mathcal{N}^i$ is the set of nodes,
-\item $\mu^i$ is the set of in-transit messages representing ongoing communications, and
+\item $\SetOfNodes^i$ is the set of nodes,
+\item $\SetOfMessages^i$ is the set of in-transit messages representing ongoing communications, and
 \item $\omega^i$ represents the system capabilities and operations.
 \end{itemize}
 \end{definition}
@@ -635,13 +638,14 @@ system at a point in time denoted by index $i$, with the ability to evolve to a
 successor state $\kappa^{i+1}$.
 \end{remark}
 
-The \emph{initial state} of the system is denoted by $\kappa^0$. In principle, we could
-define the initial state as $\kappa^0 \equiv \langle \emptyset, \emptyset,
-\emptyset \rangle$, no nodes, no messages, and no capabilities.
-Via primitives that we will define later, we can step from the initial state to a
+The \emph{initial state} of the system is denoted by $\kappa^0$. In principle,
+we could define the initial state as $\kappa^0 \equiv \langle \emptyset,
+\emptyset, \emptyset \rangle$, no nodes, no messages, and no capabilities. Via
+primitives that we will define later, we can step from the initial state to a
 successor state with nodes, messages, and capabilities.
 
-\begin{remark}\label{rem:system-model} The Engine Model \cite{engine-art}, which
+\begin{remark}\label{rem:system-model}%
+The Engine Model \cite{art-engines}, which
 inspires the system described here, is a communication-based system model
 incorporating temporal aspects and dynamic process creation. Here we retain only
 the dynamic process creation capability, leaving temporal considerations for
@@ -650,15 +654,11 @@ where transitions occur when processes react to messages by updating their
 state, generating new messages and engines. The associated system in
 \textsc{DETC} is defined in terms of active processes and a set of messages $M$,
 assuming all messages eventually get delivered. A similar approach is adopted
-here for the state in \cref{def:state}, and we assume all messages are
-eventually delivered as stated in the axiom below.
+here for the state in \cref{def:state}, and we adopt as principle that all
+messages are eventually delivered, see \Cref{lem:message-delivery}.
 \end{remark}
 
-\begin{axiom}[Eventual reliable message delivery]\label{ax:message-delivery}
-For any engines $e, e' \in \mathcal{E}$ and message in transit within
-system state $\kappa$, there exists a subsequent state $\kappa'$ where $m$ is
-eventually delivered to its intended recipient.
-\end{axiom}
+
 
 The system must provide primitives to aid in the creation of different
 entities such as nodes and engines. The system provides the following functions:
@@ -1313,6 +1313,13 @@ would raise undefined behaviour, for example, excluding \textsc{M\mbox{-}Enqueue
 would leave messages undelivered, while removing \textsc{S\mbox{-}Clean} would
 allow infinite accumulation of dormant engines.
 \end{remark}
+
+% This should be provable.
+% \begin{lemma}[Eventual reliable message delivery]\label{ax:message-delivery}%
+%   For any message in transit within
+%   system state $\kappa$, there exists a subsequent state $\kappa'$ where $m$ is
+%   eventually delivered to its intended recipient.
+% \end{lemma}
   
 \section{Concluding remarks}\label{sec:related}
 

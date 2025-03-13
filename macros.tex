@@ -1,11 +1,16 @@
 % MACROS
+\definecolor{darkred}{RGB}{139,0,0}
+\definecolor{darkgreen}{RGB}{0,100,0}
+\definecolor{darkorange}{RGB}{200,80,0}
+
+
 \newcommand{\U}{\mathfrak{U}}
-\newcommand{\N}{\mathbf{N}}
-\newcommand{\Bool}{\mathbf{B}}
+\newcommand{\N}{\ensuremath{\mathbf{N}}}
+\newcommand{\Bool}{\ensuremath{\mathbf{B}}}
 % \newcommand{\unit}{\ensuremath{*}}
-\newcommand{\EmptyType}{\mathbf{0}}
-\newcommand{\Unit}{\mathbf{1}}
-\newcommand{\List}[1]{\mathsf{List}(#1)}
+\newcommand{\EmptyType}{\ensuremath{\mathbf{0}}}
+\newcommand{\Unit}{\ensuremath{\mathbf{1}}}
+\newcommand{\List}[1]{\ensuremath{\mathsf{List}(#1)}}
 
 \newcommand{\execEffect}{\ensuremath{\mathsf{eval}}}
 \newcommand{\engine}{\ensuremath{\mathsf{engine}}}
@@ -17,17 +22,29 @@
 \newcommand{\Option}[1]{\ensuremath{\mathsf{Maybe}(#1)}}
 \newcommand{\none}{\ensuremath{\mathsf{none}}}
 \newcommand{\some}[1]{\ensuremath{\mathsf{some}(#1)}}
-\newcommand{\Node}{\ensuremath{\mathcal{N}}}
 
+\newcommand{\SetOfNodes}{\ensuremath{\mathfrak{N}}}
+\newcommand{\SetOfEngines}{\ensuremath{\mathfrak{E}}}
+\newcommand{\SetOfMessages}{\ensuremath{\mathfrak{M}}}
+
+\newcommand{\append}{\ensuremath{\mathsf{append}}}
 
 % Common mathematical operators and symbols
 \newcommand{\Msg}{\ensuremath{\mathsf{Msg}}}
 \newcommand{\Address}{\ensuremath{\mathsf{Addr}}}
 \newcommand{\Cfg}{\ensuremath{\mathsf{Cfg}}}
 \newcommand{\Env}{\ensuremath{\mathsf{Env}}}
+
+\newcommand{\EngineStatus}{\ensuremath{\mathsf{EngineStatus}}}
 \newcommand{\ready}[1]{\ensuremath{\mathsf{ready}(#1)}}
 \newcommand{\busy}[1]{\ensuremath{\mathsf{busy}(#1)}}
 \newcommand{\terminated}{\ensuremath{\mathsf{terminated}}}
+
+\newcommand{\EngineMode}{\ensuremath{\mathsf{EngineMode}}}
+\newcommand{\mode}{\ensuremath{\mathsf{mode}}}
+\newcommand{\process}{\ensuremath{\mathsf{process}}}
+\newcommand{\mail}{\ensuremath{\mathsf{mail}}}
+\newcommand{\mailbox}{\ensuremath{\mathsf{mailbox}}}
 
 \newcommand{\Effect}[2]{\ensuremath{\mathsf{Effect}(#1, #2)}}
 \newcommand{\send}[1]{\ensuremath{\mathsf{send}(#1)}}
@@ -38,53 +55,6 @@
 \newcommand{\noop}{\ensuremath{\mathsf{noop}}}
 
 
-\definecolor{darkred}{RGB}{139,0,0}
-\definecolor{darkgreen}{RGB}{0,100,0}
-\definecolor{darkorange}{RGB}{200,80,0}
 
-% % Common text formatting
-% \newcommand{\ie}{\textit{i.e.}}
-% \newcommand{\eg}{\textit{e.g.}}
 
-% % Engine-related macros
-% \newcommand{\engine}[1]{\ensuremath{e_{#1}}}
-% \newcommand{\mbox}[1]{\ensuremath{m_{#1}}}
-% \newcommand{\node}[1]{\ensuremath{n_{#1}}}
-% \newcommand{\addr}{\ensuremath{\mathsf{Addr}}}
-% \newcommand{\cfg}{\ensuremath{\mathsf{cfg}}}
-% \newcommand{\env}{\ensuremath{\mathsf{env}}}
 
-% % State and transition related
-% \newcommand{\state}[1]{\ensuremath{\kappa^{#1}}}
-% \newcommand{\trans}{\ensuremath{\rightsquigarrow}}
-% \newcommand{\optrans}[1]{\ensuremath{\trans_{\mathsf{#1}}}}
-
-% % Judgments
-% \newcommand{\systemtransition}[2]{#1 \trans #2}
-% \newcommand{\systemoptransition}[2]{#1 \optrans{#2} \state{#3}}
-% \newcommand{\systemeffecttransition}[3]{#1 \vdash #2 \downarrow #3 }
-% \newcommand{\behaviortransition}[3]{#1 \trans #2 \downarrow #3}
-% \newcommand{\behaviorEngMsgtransition}[3]{#1 ,#2, #3 \vdash #4 \downarrow #5}
-
-% % Common effect operations
-% \newcommand{\send}{\ensuremath{\mathsf{send}}}
-% \newcommand{\update}{\ensuremath{\mathsf{update}}}
-% \newcommand{\spawn}{\ensuremath{\mathsf{spawn}}}
-% \newcommand{\chain}{\ensuremath{\mathsf{chain}}}
-% \newcommand{\noop}{\ensuremath{\mathsf{noop}}}
-% \newcommand{\terminate}{\ensuremath{\mathsf{terminate}}}
-
-% % Common status and modes
-% \newcommand{\ready}{\ensuremath{\mathsf{ready}}}
-% \newcommand{\busy}[1]{\ensuremath{\mathsf{busy}[#1]}}
-% \newcommand{\process}{\ensuremath{\mathsf{process}}}
-% \newcommand{\mail}{\ensuremath{\mathsf{mail}}}
-
-% % Common type-related macros
-% \newcommand{\type}[1]{\ensuremath{\mathsf{#1}}}
-% \newcommand{\Msg}{\type{Msg}}
-% \newcommand{\Cfg}{\type{Cfg}}
-% \newcommand{\Env}{\type{Env}}
-% \newcommand{\Effect}{\type{Effect}}
-
-% \newcommand{\packet}[3]{\ensuremath{\langle #1, \xrightarrow{#2},#3\rangle}}
