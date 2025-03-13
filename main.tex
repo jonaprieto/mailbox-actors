@@ -388,7 +388,7 @@ possible ways an engine can influence the system by reacting to a message.
 
 \begin{equation}\label{eq:effects}
 \begin{aligned} %TODO: review this grammar
-\Effect{j}{S_j} := &\quad \send{\Address, \Msg} & &\text{(message dispatch)} \\
+\Effect{j}{S_j} := &\quad \send{\Address}{\Msg} & &\text{(message dispatch)} \\
 \mid & \quad \update{\Env(S_j)} & &\text{(engine state modification)} \\
 \mid & \quad \spawn{\Cfg_i}{\Env_i(S_i)} & &\text{(engine creation)} \\
 \mid & \quad \chain{\Effect{j}{S_j}}{\Effect{j}{S_j}} & &\text{(action sequencing)} \\
@@ -677,7 +677,7 @@ engine.
 %   &\mathsf{mbox}(\langle n_i, \mathsf{id}_j \rangle) \equiv \langle n_i, \mathsf{id}_j \rangle
 % \end{aligned}
 % \end{equation*}
-
+% TODO: check if this is used somewhere else
 \item $\execEffect$ is the function that executes effects as in \Cref{def:effects}
 and outputs the new system state after the effect has been executed.
 \end{itemize}

@@ -1,4 +1,5 @@
 % MACROS
+\usepackage{xcolor}
 \definecolor{darkred}{RGB}{139,0,0}
 \definecolor{darkgreen}{RGB}{0,100,0}
 \definecolor{darkorange}{RGB}{200,80,0}
@@ -13,11 +14,7 @@
 \newcommand{\List}[1]{\ensuremath{\mathsf{List}(#1)}}
 
 \newcommand{\execEffect}{\ensuremath{\mathsf{eval}}}
-\newcommand{\engine}{\ensuremath{\mathsf{engine}}}
-\newcommand{\engineBehavior}{\ensuremath{\mathsf{engineBehavior}}}
-\newcommand{\engineConfig}{\ensuremath{\mathsf{engineConfig}}}
-\newcommand{\engineEnv}{\ensuremath{\mathsf{engineEnv}}}
-\usepackage{xcolor}
+% \newcommand{\engine}{\ensuremath{\mathsf{engine}}}
 
 \newcommand{\Option}[1]{\ensuremath{\mathsf{Maybe}(#1)}}
 \newcommand{\none}{\ensuremath{\mathsf{none}}}
@@ -46,15 +43,73 @@
 \newcommand{\mail}{\ensuremath{\mathsf{mail}}}
 \newcommand{\mailbox}{\ensuremath{\mathsf{mailbox}}}
 
+
+
+%% For operational semantics
+
+% System state and components
+\newcommand{\systemstate}{\kappa}
+\newcommand{\engines}{\SetOfEngines}
+\newcommand{\nodes}{\SetOfNodes}
+\newcommand{\messages}{\SetOfMessages}
+\newcommand{\nodeops}{\omega}
+\newcommand{\enginemap}{\epsilon}
+
+% Rules
+
+% Engine components
+\newcommand{\engine}[1]{e_{#1}}
+\newcommand{\procengine}[1]{p_{#1}}
+\newcommand{\mboxengine}[1]{m_{#1}}
+\newcommand{\interface}[1]{i_{#1}}
+\newcommand{\behavior}[1]{b_{#1}}
+\newcommand{\config}[1]{\mathsf{cfg}_{#1}}
+\newcommand{\localenv}[1]{\mathsf{env}_{#1}}
+
+% Message handling
+\newcommand{\payload}[1]{v_{#1}}
+\newcommand{\msgtype}[1]{\mathsf{Msg}_{#1}}
+\newcommand{\addr}[1]{\alpha(#1)}
+\newcommand{\mailboxOf}[1]{\mathsf{mbox}(#1)}
+\newcommand{\sendmsg}[3]{(#1\triangleright #2?#3)}
+
+
+% Effects
+\newcommand{\effectsym}{E}
 \newcommand{\Effect}[2]{\ensuremath{\mathsf{Effect}(#1, #2)}}
-\newcommand{\send}[1]{\ensuremath{\mathsf{send}(#1)}}
+\newcommand{\send}[2]{\ensuremath{\mathsf{send}(#1, #2)}}
 \newcommand{\update}[1]{\ensuremath{\mathsf{update}(#1)}}
 \newcommand{\spawn}[2]{\ensuremath{\mathsf{spawn}(#1, #2)}}
 \newcommand{\chain}[2]{\ensuremath{\mathsf{chain}(#1, #2)}}
 \newcommand{\terminate}{\ensuremath{\mathsf{terminate}}}
 \newcommand{\noop}{\ensuremath{\mathsf{noop}}}
 
+% Common functions
+\newcommand{\freshid}{\mathsf{freshId}()}
+\newcommand{\status}[1]{\mathsf{status}(#1)}
 
 
+% Judgment forms
+\newcommand{\sysstep}[2]{#1 \rightsquigarrow #2}
+\newcommand{\opstep}[3]{#1 \rightsquigarrow_{\mathsf{#2}} #3}
+\newcommand{\evalstep}[3]{#1 \vdash #2 \downarrow #3}
+\newcommand{\guardeval}[4]{#1, \langle #2, #3 \rangle \vdash #4}
+\newcommand{\effstep}[3]{#1 \vdash #2 \rightsquigarrow #3}
+\newcommand{\processstep}[4]{#1, #2, #3 \rightsquigarrow_{\mathsf{process}} #4}
 
+% Rule references
+\newcommand{\srule}[1]{\textsc{S\mbox{-}#1}}
+\newcommand{\mrule}[1]{\textsc{M\mbox{-}#1}}
+\newcommand{\brule}[1]{\textsc{B\mbox{-}#1}}
+\newcommand{\erule}[1]{\textsc{E\mbox{-}#1}}
 
+% Cref references for different rule types
+\newcommand{\sref}[1]{\hyperref[rule:s-#1]{\srule{#1}}}
+\newcommand{\mref}[1]{\hyperref[rule:m-#1]{\mrule{#1}}}
+\newcommand{\bref}[1]{\hyperref[rule:b-#1]{\brule{#1}}}
+\newcommand{\eref}[1]{\hyperref[rule:e-#1]{\erule{#1}}}
+
+% Guard and actions
+\newcommand{\guard}[1]{g_{#1}}
+\newcommand{\action}[1]{a_{#1}}
+\newcommand{\guardaction}[2]{\langle #1, #2 \rangle}
