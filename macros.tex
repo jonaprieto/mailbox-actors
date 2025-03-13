@@ -13,15 +13,30 @@
 \newcommand{\engineConfig}{\ensuremath{\mathsf{engineConfig}}}
 \newcommand{\engineEnv}{\ensuremath{\mathsf{engineEnv}}}
 \usepackage{xcolor}
+
 \newcommand{\Option}[1]{\ensuremath{\mathsf{Maybe}(#1)}}
+\newcommand{\none}{\ensuremath{\mathsf{none}}}
+\newcommand{\some}[1]{\ensuremath{\mathsf{some}(#1)}}
 \newcommand{\Node}{\ensuremath{\mathcal{N}}}
 
 
 % Common mathematical operators and symbols
 \newcommand{\Msg}{\ensuremath{\mathsf{Msg}}}
+\newcommand{\Address}{\ensuremath{\mathsf{Addr}}}
+\newcommand{\Cfg}{\ensuremath{\mathsf{Cfg}}}
+\newcommand{\Env}{\ensuremath{\mathsf{Env}}}
 \newcommand{\ready}[1]{\ensuremath{\mathsf{ready}(#1)}}
 \newcommand{\busy}[1]{\ensuremath{\mathsf{busy}(#1)}}
 \newcommand{\terminated}{\ensuremath{\mathsf{terminated}}}
+
+\newcommand{\Effect}[2]{\ensuremath{\mathsf{Effect}(#1, #2)}}
+\newcommand{\send}[1]{\ensuremath{\mathsf{send}(#1)}}
+\newcommand{\update}[1]{\ensuremath{\mathsf{update}(#1)}}
+\newcommand{\spawn}[2]{\ensuremath{\mathsf{spawn}(#1, #2)}}
+\newcommand{\chain}[2]{\ensuremath{\mathsf{chain}(#1, #2)}}
+\newcommand{\terminate}{\ensuremath{\mathsf{terminate}}}
+\newcommand{\noop}{\ensuremath{\mathsf{noop}}}
+
 
 \definecolor{darkred}{RGB}{139,0,0}
 \definecolor{darkgreen}{RGB}{0,100,0}

@@ -282,14 +282,14 @@ exists elsewhere, although for simplicity we assume that engines always remain
 on the same node.
 
 \begin{definition}[Engine Lifecycle]\label{def:engine-status}
-The engine's \textbf{status} of type $\mathsf{EngineStatus}$, determines
+The \textbf{status} of an engine, of type $\mathsf{EngineStatus}$, determines
 the engine's operational mode.
 \begin{equation}\label{eq:engine-status}
 \begin{aligned}
 \mathsf{EngineStatus}%
-&:= \ready{\Option{\Msg \to \Bool}} \\%
-&\, \mid \, \busy{\Msg} \\%
-&\, \mid \,\terminated  \, .
+:= &\quad \ready{\Option{\Msg \to \Bool}} \\%
+\mid & \quad \busy{\Msg} \\%
+\mid & \quad \terminated  \, .
 \end{aligned}
 \end{equation}
 % tikz
@@ -306,9 +306,9 @@ the engine's operational mode.
 \caption{The engine life cycle: every engine starts in \textsf{ready} state
 waiting for a message, and once it reacts to a message it changes to
 \busy{m} where $m$ is the message to which the engine reacts to. The
-\ready{f} state can include an optional predicate $f$ that filters which
-messages the engine is interested in processing. Then, depending on its logic,
-the engine may either return to \ready{f'} for some $f'$ or \terminated.}
+\textsf{ready}state can include an optional predicate $f$ that communicates
+which messages the engine is interested in processing. Then, depending on its
+logic, the engine may either return to \ready{f'} for some $f'$ or \terminated.}
 \label{fig:engine-status}
 \end{figure}
 \end{definition}
@@ -343,18 +343,20 @@ receive special treatment within the message-passing mechanism. Since the
 operational mode becomes immutable once an engine is created, this critical
 attribute goes into the engine's configuration.
 
-\begin{definition}\label{def:engine-configuration} The \textbf{configuration} of
-an engine $e_j$ often denoted by $\mathsf{cfg}_j$ is a tuple $\langle
-p , \mathsf{mode} \rangle$ where $p$ is an optional reference (address) of the
-engine's parent, and $\mathsf{mode}$ is the engine's operational mode as in
-\Cref{def:engine-mode}. The inferred type of the configuration is denoted with
-$\mathsf{Cfg}_j$, indicating the configuration of engine $e_j$.
+\begin{definition}\label{def:engine-configuration}%
+The \textbf{configuration} of an engine $e_j$, often denoted by
+$\mathsf{cfg}_j$, is a tuple $\langle p , \mathsf{mode} \rangle$ where $p$ is an
+optional reference (address) of the engine's parent, and $\mathsf{mode}$ is the
+engine's operational mode as in \Cref{def:engine-mode}. The inferred type of the
+configuration is denoted with $\mathsf{Cfg}_j$, indicating the configuration of
+engine $e_j$.
 \end{definition}
 
 \begin{remark}
 Similar to message interfaces, we collect all configurations into a single type,
-$\mathsf{Cfg}$, the sum type of all configuration types. Subtyping for configurations
-means that the configuration of an engine $j$, $\mathsf{Cfg_j}$, is also a type of $\mathsf{Cfg}$.
+$\mathsf{Cfg}$, the sum type of all configuration types. Subtyping for
+configurations means that the configuration of an engine $j$, $\mathsf{Cfg_j}$,
+is also a type of $\mathsf{Cfg}$.
 \end{remark}
 
 Recall that engines are isolated from each other and process messages
@@ -381,17 +383,17 @@ consisting of commands to the system to be executed at runtime.
 
 \begin{definition}[Effect]\label{def:effects}%
 Given a type $S_j$ representing the local state of an engine~$e_j$, an
-\textbf{effect} is of type $\mathsf{Effect}(j, S_j)$, which considers all the
+\textbf{effect} is of type $\Effect{j}{S_j}$, which considers all the
 possible ways an engine can influence the system by reacting to a message.
 
 \begin{equation}\label{eq:effects}
 \begin{aligned} %TODO: review this grammar
-\mathsf{Effect}(j, S_j) := &\quad \mathsf{send}(\mathsf{Addr}, \mathsf{Msg}) & &\text{(message dispatch)} \\
-\mid & \quad \mathsf{update}(\mathsf{Env}_j(S_j)) & &\text{(engine state modification)} \\
-\mid & \quad \mathsf{spawn}(i, \mathsf{Cfg}_i, \mathsf{Env}_i(S_i)) & &\text{(engine creation)} \\
-\mid & \quad \mathsf{chain}(\mathsf{Effect}(j, S_j), \mathsf{Effect}(j, S_j)) & &\text{(action sequencing)} \\
-\mid & \quad \mathsf{terminate} & &\text{(engine shutdown)} \\
-\mid & \quad \mathsf{noop} & &\text{(null operation)\, .}
+\Effect{j}{S_j} := &\quad \send{\Address, \Msg} & &\text{(message dispatch)} \\
+\mid & \quad \update{\Env(S_j)} & &\text{(engine state modification)} \\
+\mid & \quad \spawn{\Cfg_i}{\Env_i(S_i)} & &\text{(engine creation)} \\
+\mid & \quad \chain{\Effect{j}{S_j}}{\Effect{j}{S_j}} & &\text{(action sequencing)} \\
+\mid & \quad \terminate & &\text{(engine shutdown)} \\
+\mid & \quad \noop & &\text{(null operation)\, .}
 \end{aligned}
 \end{equation}
 \end{definition}
@@ -404,7 +406,7 @@ possible ways an engine can influence the system by reacting to a message.
 	{} & {(m, \mathsf{cfg_j},\mathsf{env}_j)} & {} \\
 	\\
 	{r_1} & \cdots & {r_k} \\
-	{e_1:\mathsf{Effect}(j, S_j)} & \cdots & {e_k:\mathsf{Effect}(j, S_j)}
+	{e_1:\Effect{j}{S_j}} & \cdots & {e_k:\Effect{j}{S_j}}
 	\arrow[curve={height=24pt}, shorten <=24pt, shorten >=24pt, dashed, no head, from=1-1, to=1-3]
 	\arrow["{g_1}"', maps to, from=1-2, to=3-1]
 	\arrow["{g_i}"', maps to, from=1-2, to=3-2]
@@ -414,8 +416,8 @@ possible ways an engine can influence the system by reacting to a message.
 	\arrow["{c_k}", maps to, from=3-3, to=4-3]
 \end{tikzcd}\]%
 \caption{For an engine $e_j$, its behaviour acts on a message $m$ of type
-$\mathsf{Msg}_j$ and an engine's configuration $\mathsf{cfg}_j$
-and environment $\mathsf{env}_j$. The pre-conditions, denoted as $g_i$, are
+$\Msg_j$ and an engine's configuration $\Cfg_j$
+and environment $\Env_j(S_j)$. The pre-conditions, denoted as $g_i$, are
 guards that determine which action is executed. The symbols $r_i$ represent
 output that feeds into the actions $c_i$. The actions, denoted as $c_i$ return
 one of the effects as in \Cref{def:effects}. These effects are executed if their
@@ -428,13 +430,11 @@ Given an engine $e_j$, the following definition specifies the guard and action
 components of an engine's behaviour.
 
 \begin{definition}[Guard]\label{def:guards}%
-A \textbf{guard} is a function that
-returns a value of a given type $R$ if the guard is satisfied, and $\mathsf{none}$
-otherwise;
-the \emph{guard predicate} is the corresponding Boolean function that maps to false iff the guard maps to $\mathsf{none}$
+A \textbf{guard} is a function that returns a value of a given type $R$ if the
+guard is satisfied, and $\none$ otherwise; the \emph{guard predicate} is the
+corresponding Boolean function that maps to false iff the guard maps to $\none$
 The guard is a mapping of type %
-$$\mathsf{Msg}_i \times \mathsf{Cfg}_i \times \mathsf{Env}_i(S_i) \to
-\Option{R}.$$%
+$$\Msg_i \times \Cfg_i \times \Env_i(S_i) \to \Option{R}.$$%
 Recall that $R$ is the specific type of data returned when the guard is
 satisfied, and $S_i$ is the type of the engine's local state.
 \end{definition}
@@ -445,8 +445,7 @@ guard is satisfied, is as follows:
 
 \begin{definition}\label{def:action}%
 Given an engine $e_j$, an \textbf{action} acting on data of type $R$ is a
-mapping of type $R \times \mathsf{Msg}_j \times \mathsf{Cfg}_j \times
-\mathsf{Env}_j(S_j) \to \mathsf{Effect}(j, S_j)$.
+mapping of type $R \times \Msg_j \times \Cfg_j \times \Env_j(S_j) \to \Effect{j}{S_j}$.
 \end{definition}
 
 Then, we compose a guard and an action to form a \emph{guarded action}, which is
@@ -462,7 +461,7 @@ where the action is not applicable.
   \begin{itemize}
     \item $g_j$ is a guard as in \Cref{def:guards} that determines when the
     action $a_j$ should execute, and
-    \item $a_j$ is an action of type $\mathsf{Effect}(S)$ as in
+    \item $a_j$ is an action of type $\Effect{j}{S_j}$ as in
     \Cref{def:effects} that specifies what to execute,
   \end{itemize}
 \end{definition}
@@ -470,8 +469,7 @@ where the action is not applicable.
 Together, both the guard and action induce a mapping of type
 
 \begin{equation*}\label{eq:guarded-action}%
-\mathsf{Msg}_j \times \mathsf{Cfg}_j
-\times \mathsf{Env}_j(S_j) \to \mathsf{Effect}(j, S_j)\,.
+\Msg_j \times \Cfg_j \times \Env_j(S_j) \to \Effect{j}{S_j}\,.
 \end{equation*}
 This mapping takes in a message, engine configuration, and environment, and
 outputs the effect to execute when the guard is satisfied.
