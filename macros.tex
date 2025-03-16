@@ -6,8 +6,9 @@
 
 \newcommand{\equal}[2]{\ensuremath{#1 \equiv #2}}
 \newcommand{\propequal}[2]{\ensuremath{#1 = #2}}
-\newcommand{\defequal}[2]{\ensuremath{#1 := #2}}
+\newcommand{\defequal}[2]{\ensuremath{#1 :\equiv #2}}
 \newcommand{\typing}[2]{\ensuremath{#1 : #2}}
+\newcommand{\typedef}[2]{\ensuremath{#1 := #2}}
 
 \newcommand{\U}{\mathfrak{U}}
 \newcommand{\N}{\ensuremath{\mathbf{N}}}
@@ -85,8 +86,8 @@
 \ensuremath{%
 \langle%
     #1, % id
-    #2, % \epsilon_i, 
-    #3  % \omega_i
+    #2, % \enginemap_i, 
+    #3  % \plugins_i
 \rangle%
 }}
 
@@ -163,8 +164,9 @@
 
 
 % Judgment forms
-\newcommand{\sysstep}[2]{#1 \rightsquigarrow #2}
-\newcommand{\opstep}[3]{#1 \rightsquigarrow_{\mathsf{#2}} #3}
+\newcommand{\stepsymbol}{\ensuremath{\rightsquigarrow}}
+\newcommand{\sysstep}[2]{#1 \stepsymbol #2}
+\newcommand{\opstep}[3]{#1 \stepsymbol_{\mathsf{#2}} #3}
 \newcommand{\evalstep}[3]{#1 \vdash #2 \downarrow #3}
 
 \newcommand{\guardeval}[4]{#1, \langle #2, #3 \rangle \vdash #4}
@@ -173,16 +175,16 @@
 \newcommand{\processstep}[4]{#1, #2, #3 \rightsquigarrow_{\mathsf{process}} #4}
 
 % Rule references
-\newcommand{\srule}[1]{\textsc{S\mbox{-}#1}}
+\newcommand{\srule}[1]{\textsc{s\mbox{-}#1}}
 \newcommand{\mrule}[1]{\textsc{M\mbox{-}#1}}
 \newcommand{\brule}[1]{\textsc{B\mbox{-}#1}}
 \newcommand{\erule}[1]{\textsc{E\mbox{-}#1}}
 
 % Cref references for different rule types
-\newcommand{\sref}[1]{\hyperref[rule:s-#1]{\srule{#1}}}
-\newcommand{\mref}[1]{\hyperref[rule:m-#1]{\mrule{#1}}}
-\newcommand{\bref}[1]{\hyperref[rule:b-#1]{\brule{#1}}}
-\newcommand{\eref}[1]{\hyperref[rule:e-#1]{\erule{#1}}}
+\newcommand{\sruleref}[1]{\hyperref[rule:s-#1]{\srule{#1}}}
+\newcommand{\mruleref}[1]{\hyperref[rule:m-#1]{\mrule{#1}}}
+\newcommand{\bruleref}[1]{\hyperref[rule:b-#1]{\brule{#1}}}
+\newcommand{\eruleref}[1]{\hyperref[rule:e-#1]{\erule{#1}}}
 
 % Guard and actions
 \newcommand{\guard}[1]{g_{#1}}

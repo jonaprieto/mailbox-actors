@@ -137,7 +137,6 @@ to sets, so if $\mathcal{N}$ is a set, then $\mathcal{N}[a \mapsto c]$ is the
 set resulting from $\mathcal{N}$ by replacing the element $a$ with $c$, if $a$
 is a valid element of $\mathcal{N}$. Otherwise, we extend $\mathcal{N}$
 accordingly.
- 
 
 \section{Model}\label{sec:model}
 
@@ -307,7 +306,7 @@ for a message where $f$ is an optional predicate that communicates which
 messages the engine is interested in processing. Once it reacts to a message, it
 changes to \busy{m} where $m$ is the message to which the engine reacts to.
 Then, depending on its logic, the engine may either return to \ready{f'} for
-some optional predicate $f'$ or \terminated, meaning the engine will not process
+some optional predicate $f'$ or \terminated{}, meaning the engine will not process
 any more messages.}
 \label{fig:engine-status}
 \end{figure}
@@ -316,10 +315,11 @@ any more messages.}
 As illustrated in \Cref{fig:engine-status}, an engine is said to be \ready{f} if
 it can process a message. The additional argument $f$ is an optional predicate
 that shares the preferences of the engine to process a particular message type.
-Being \busy{m} means the engine is currently processing the message $m$. And
-\terminated means the engine will not process any more messages. In such a case,
-the system will remove the engine in the next \emph{step}, and disregard any
-messages sent to it.
+For example, this function $f$ could always return true, meaning the engine is
+interested in all messages at the moment. Being \busy{m} means the engine is currently
+processing the message $m$. And \terminated means the engine will not process
+any more messages. In such a case, the system will remove the engine in the next
+\emph{step}, and disregard any messages sent to it.
 
 An engine's operation requires two fundamental components: a
 \emph{configuration} and an \emph{environment}. The implicit initial state of an
@@ -333,9 +333,7 @@ The \textbf{operational mode} of an engine $\engine{j}$, of type $\EngineMode$,
 determines the engine's operational mode, a tag used by the system to
 distinguish the purpose of the engine.
 \begin{equation}\label{eq:engine-mode}
-\EngineMode :=%
-\process%
-\mid \mail \, .
+\typedef{\EngineMode}{\process \mid \mail}.
 \end{equation}
 \end{definition}
 
@@ -389,12 +387,22 @@ ways an engine can influence the system by reacting to a message.
 
 \begin{equation}\label{eq:effects}
 \begin{aligned} %TODO: review this grammar
-\effecttype{j}{S_j} := &\quad \send{\Address}{\Msg} & &\text{(message dispatch)} \\
-\mid & \quad \update{\envtype{j}{S_j}} & &\text{(engine state modification)} \\
-\mid & \quad \spawn{\configtype{i}}{\envtype{i}{S_i}} & &\text{(engine creation)} \\
-\mid & \quad \chain{\effecttype{j}{S_j}}{\effecttype{j}{S_j}} & &\text{(action sequencing)} \\
-\mid & \quad \terminate & &\text{(engine shutdown)} \\
-\mid & \quad \noop & &\text{(null operation)\, .}
+\typedef{%
+   \effecttype{j}{S_j}
+}{%
+      &\quad \send{\Address}{\Msg} & &%
+        \text{(message dispatch)} \\
+\mid & \quad \update{\envtype{j}{S_j}} & &%
+        \text{(engine state modification)} \\
+\mid & \quad \spawn{\configtype{i}}{\envtype{i}{S_i}} & &%
+        \text{(engine creation)} \\
+\mid & \quad \chain{\effecttype{j}{S_j}}{\effecttype{j}{S_j}} & &%
+        \text{(action sequencing)} \\
+\mid & \quad \terminate & &%
+        \text{(engine shutdown)} \\
+\mid & \quad \noop & &%
+        \text{(null operation)\, .}
+}
 \end{aligned}
 \end{equation}
 \end{definition}
@@ -647,7 +655,7 @@ index $i$, with the ability to evolve to a successor state $\SystemState^{i+1}$.
 
 The \emph{initial state} of the system is denoted by $\SystemState^0$. In principle,
 we could define the initial state as %
-$\defequal{\SystemState^0}{\langle \emptyset, \emptyset, \emptyset \rangle}$, %
+$\defequal{\SystemState^0}{\systemval{\emptyset}{\emptyset}{\emptyset}}$, %
 no nodes, no messages, and no services. Via primitives that we will define
 later, we can step from the initial state to a successor state with nodes,
 messages, and capabilities.
@@ -690,7 +698,7 @@ and outputs the new system state after the effect has been executed.
 
 
 We could also extend the node-specific function $\enginemap_i$ to construct
-a global version $\epsilon$ that operates over all engines instances $\SetOfEngines$ in
+a global version $\enginemap$ that operates over all engines instances $\SetOfEngines$ in
 $\SystemState^i$. Recall $\SetOfEngines_i$ is the collection of engine instances
 $\SetOfEngines_i$ for $i$ ranging over the node set.
 This allows us to look up addresses for any engine in the system
@@ -710,12 +718,12 @@ $\SetOfNodes$ denotes the set of nodes in the system,
 $\enginemap$ denotes a mapping 
 from engine addresses to their corresponding instances. $\SetOfEngines$ is the set of values of
 $\enginemap$, that is the set of engine instances in the system. The function $\alpha$ maps 
-engine instances back to their addresses, while $\mu$ represents the set of all 
+engine instances back to their addresses, while $\SetOfMessages$ represents the set of all 
 in-transit messages.
 
 The operational semantics for the system are defined here
-via the reduction relation denoted by $(\rightsquigarrow)$, where $\SystemState^i
-\rightsquigarrow \SystemState^{i+1}$ signifies that the system state $\SystemState^i$
+via the reduction relation denoted by $\stepsymbol$, where %
+$\sysstep{\SystemState^i}{\SystemState^{i+1}}$ signifies that the system state $\SystemState^i$
 evolves to $\SystemState^{i+1}$. The notation $\SystemState^i$ is mentioned in
 \Cref{rem:system-time-notation}.
 
@@ -726,11 +734,17 @@ evolves to $\SystemState^{i+1}$. The notation $\SystemState^i$ is mentioned in
 In the following rules, we assume that $\SystemState$ is of the form %
 $(\SetOfNodes, \SetOfMessages, \SetOfPlugins)$, unless otherwise specified.
 
-\begin{definition}[\textsc{S\mbox{-}Node}]\label{rule:s-node}
+\begin{definition}[\srule{Node}]\label{rule:s-Node}
 \sloppy~\hfill\\[-\baselineskip]%\hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
-\equal{n}{\langle \freshid, \emptyset, \plugins_n \rangle}
+\defequal{\iota}{\freshid}
+\quad %
+\equal{%
+  n
+}{%
+\nodeval{\iota}{\emptyset}{\plugins_n}
+}
 $}
 \UnaryInfC{$%
 \opstep%
@@ -743,49 +757,67 @@ $}
 
 \subsection{Engine creation}\label{sec:engine-creation-rules}
 
-To create an engine in the system on node $n_i$, we require a
+To create an engine in the system on node $\node{i}$, we require a
 configuration $\mathsf{cfg}$ and an environment $\mathsf{env}$, at least.
 Additionally, the new engine must have a registered message interface and an
-associated behaviour $b$ that defines how it processes messages.
+associated behaviour $b$ that defines how it processes messages, and to be in
+ready state, the filter function $f$ must be the identity function.
 
-\begin{definition}[\textsc{S\mbox{-}EngineSpawn}]\label{rule:s-engine-spawn}
+\begin{definition}[\srule{EngineSpawn}]\label{rule:s-EngineSpawn}
 \hspace{-1.5em}
 \begin{prooftree}
 % Level 1: Node and configuration setup
-\AxiomC{%
-$n_i \equiv \langle \mathsf{id}_i, \enginemap_i, \plugins_i \rangle \in \mathcal{N}%
+\AxiomC{$%
+\equal{%
+  \node{i}
+}{%
+  \nodeval{\mathsf{id}_i}{\enginemap_i}{\plugins_i}
+}
+\in \SetOfNodes%
 % \quad m : \mathsf{ \mathsf{EngineMode}} %
-\quad p : \mathsf{Option}(\Address) %
-\quad \mathsf{cfg} \equiv \langle p, \mathsf{process}\rangle$}
+\quad \typing{p}{\mathsf{Option}(\Address)} %
+\quad \equal{\mathsf{cfg}}{\configval{p}{\process}}
+$}
 \noLine
 \UnaryInfC{$%
 \typing{S}{\U} %
-\quad \mathsf{env} : \mathsf{Env}(S)  %
-\quad in : \Msg %
-% \quad b : \mathsf{EngineBehaviour}
-\quad \engine{\mathsf{new}} \equiv \langle in, b,
-\ready{\cdots}, \mathsf{cfg}, \mathsf{env} \rangle% f is the filter function
+\quad \typing{\mathsf{env}}{\Env(S)}
+\quad \typing{in}{\Msg} %
+\quad %
+\equal{%
+  \engine{\mathsf{new}}
+}{
+  \engineval%
+  {in} %
+  {b} %
+  {\ready{\cdots}} %
+  {\mathsf{cfg}} %
+  {\mathsf{env}}
+}
 $}
 % % Level 3: Engine set and address map updates
 \noLine
 \UnaryInfC{$%
-\iota :\equiv \mathsf{freshId}()%
-\quad \eta :\equiv \mathsf{freshId}() %
-\quad \mathsf{cfg}_{\mathsf{mbox}} \equiv %
-    \langle %
-    \alpha_i(e_\mathsf{new}), %
-    \mathsf{mail}%
-    \rangle
+\typing{\iota}{\freshid}%
+\quad \typing{\eta}{\freshid} %
+\quad %
+ \equal{%
+  \mathsf{cfg}_{\mathsf{mbox}}
+ }{%
+ \configval%
+  {\alpha_i(e_\mathsf{new})} %
+  {\mathsf{mail}}
+}
 $}
 \noLine
 \UnaryInfC{$%
 \equal{%
-  \engine{\mathsf{new}}
+  \mailbox{\mathsf{new}}
 }{%
   \engineval%
   {\interface{\mathsf{mbox}}} %
   {\behaviour{\mathsf{mbox}}} %
-  {\status{\mathsf{ready}(\cdots)}} %
+  {\status{\mathsf{ready}(\none)}} %
   {\config{\mathsf{mbox}}} %
   {\environment{\mathsf{mbox}}}%
   }%
@@ -812,7 +844,8 @@ $\interface{\mathsf{mbox}}$, %
 $\behaviour{\mathsf{mbox}}$, and %
 $\environment{\mathsf{mbox}}$
 are the message interface, the behaviour, and the environment of the mailbox engine,
-respectively, which follow the specification as in \Cref{def:mailbox-engine}.
+respectively, which follow the specification as in \Cref{def:mailbox-engine}
+and when no provided, default values are used.
 % TODO: it may seems the function to get mailbox address needs to be defined
 % in the node-specific operations.
 \end{definition}
@@ -840,7 +873,7 @@ To prevent \emph{zombie} engine instances that could  violate liveness and
 safety guarantees, we need to remove terminated engines from the system. This is
 done via the \srule{Clean} rule.
 
-\begin{definition}[\srule{Clean}]\label{rule:s-clean}
+\begin{definition}[\srule{Clean}]\label{rule:s-Clean}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
@@ -875,13 +908,13 @@ with non-blocking sends, (ii) mailbox isolation with guaranteed eventual
 delivery, and (iii) explicit lifecycle management for engines.
 
 
-\begin{definition}[\mrule{Send}]\label{rule:m-send}
+\begin{definition}[\mrule{Send}]\label{rule:m-Send}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
 \engine{s}, \engine{t} \in \SetOfEngines%
-\quad v : \msgtype{t}%
-\quad \SystemState \equiv (\SetOfNodes, \SetOfMessages, \SetOfPlugins)
+\quad \typing{v}{\msgtype{t}}%
+\quad \equal{\SystemState}{(\SetOfNodes, \SetOfMessages, \SetOfPlugins)}
 $}
 \UnaryInfC{$%
 \opstep%
@@ -890,40 +923,43 @@ $}
 }
 {send}%
 {(\SetOfNodes,
-\SetOfMessages \cup%
-\{ 
-\msgpacket{\alpha(\engine{s})}{\mathsf{mbox}(\epsilon(\engine{t}))}{v}
-\},%
-\SetOfPlugins%
+  \SetOfMessages \cup%
+    \{ 
+      \msgpacket{\alpha(\engine{s})}{\mathsf{mbox}(\epsilon(\engine{t}))}{v}
+    \},%
+  \SetOfPlugins%
 )}%
 $}
 \end{prooftree}
 \end{definition}
 
-The \textsc{M\mbox{-}Send} rule above supports the sending of messages between engines in
-the context of a system state $\kappa$. When engine $e_s$ sends a message to
-engine $e_t$, the rule handles the registration of the message in $e_t$'s
-dedicated mailbox. This message must be well-typed according to $e_t$'s message
-interface specification, and it is the only way to add a message to $\mu$.
+The \mrule{Send} rule above supports the sending of messages between engines in
+the context of a system state $\SystemState$. When engine $\engine{s}$ sends a message to
+engine $\engine{t}$, the rule handles the registration of the message in $\engine{t}$'s
+dedicated mailbox. This message must be well-typed according to $\engine{t}$'s message
+interface specification, and it is the only way to add a message to $\SetOfMessages$.
 
 %TODO: add a lemma stating that the operational mode
 % of an engine found in the destination of a message is
 % always an mailbox.
 
 Now, with a message in-transit, the system needs to deliver it to the target engine's
-mailbox. This is done via the \textsc{M\mbox{-}Enqueue} rule.
+mailbox. This is done via the \mrule{Enqueue} rule.
 
-\begin{definition}[\textsc{M\mbox{-}Enqueue}]\label{rule:m-enqueue}
+\begin{definition}[\mrule{Enqueue}]\label{rule:m-Enqueue}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
-m \equiv \langle%
-\cdots,%
-%s, 
-m_t, 
-\mathsf{append}(v) \rangle \in \mu
-% \quad m_t \equiv \mathsf{mbox}(\epsilon(e_t))%
-\quad q \equiv \mathsf{env}(\epsilon(m_t))%
+\equal{%
+  m
+}{
+  \messagepacket%
+  {\cdots}
+  {m_t}
+  {\mathsf{append}(v)}
+}
+\in \SetOfMessages
+\quad \equiv{q}{\mathsf{env}(\epsilon(m_t))}%
 $}
 \noLine
 \UnaryInfC{$
