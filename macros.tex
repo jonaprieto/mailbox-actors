@@ -4,6 +4,10 @@
 \definecolor{darkgreen}{RGB}{0,100,0}
 \definecolor{darkorange}{RGB}{200,80,0}
 
+\newcommand{\equal}[2]{\ensuremath{#1 \equiv #2}}
+\newcommand{\propequal}[2]{\ensuremath{#1 = #2}}
+\newcommand{\defequal}[2]{\ensuremath{#1 := #2}}
+\newcommand{\typing}[2]{\ensuremath{#1 : #2}}
 
 \newcommand{\U}{\mathfrak{U}}
 \newcommand{\N}{\ensuremath{\mathbf{N}}}
@@ -20,17 +24,24 @@
 \newcommand{\none}{\ensuremath{\mathsf{none}}}
 \newcommand{\some}[1]{\ensuremath{\mathsf{some}(#1)}}
 
-\newcommand{\SetOfNodes}{\ensuremath{\mathfrak{N}}}
-\newcommand{\SetOfEngines}{\ensuremath{\mathfrak{E}}}
-\newcommand{\SetOfMessages}{\ensuremath{\mathfrak{M}}}
-
+\newcommand{\SetOfNodes}{\ensuremath{\mathcal{N}}}
+\newcommand{\SetOfEngines}{\ensuremath{\mathcal{E}}}
+\newcommand{\SetOfMessages}{\ensuremath{\mathcal{M}}}
+\newcommand{\SetOfPlugins}{\ensuremath{\Omega}}
 \newcommand{\append}{\ensuremath{\mathsf{append}}}
 
 % Common mathematical operators and symbols
 \newcommand{\Msg}{\ensuremath{\mathsf{Msg}}}
+\newcommand{\msgtype}[1]{\mathsf{Msg}_{#1}}
+\newcommand{\payload}[1]{\ensuremath{v_{#1}}}
+
 \newcommand{\Address}{\ensuremath{\mathsf{Addr}}}
-\newcommand{\Cfg}{\ensuremath{\mathsf{Cfg}}}
+\newcommand{\AddressType}[1]{\ensuremath{\Address_{#1}}}
+
 \newcommand{\Env}{\ensuremath{\mathsf{Env}}}
+\newcommand{\envtype}[2]{\ensuremath{\Env_{#1}(#2)}}
+
+\newcommand{\behaviourtype}[1]{\ensuremath{\mathsf{B}_{#1}}}
 
 \newcommand{\EngineStatus}{\ensuremath{\mathsf{EngineStatus}}}
 \newcommand{\ready}[1]{\ensuremath{\mathsf{ready}(#1)}}
@@ -41,42 +52,103 @@
 \newcommand{\mode}{\ensuremath{\mathsf{mode}}}
 \newcommand{\process}{\ensuremath{\mathsf{process}}}
 \newcommand{\mail}{\ensuremath{\mathsf{mail}}}
-\newcommand{\mailbox}{\ensuremath{\mathsf{mailbox}}}
+
+\newcommand{\mailbox}[1]{\ensuremath{m_{#1}}}
+\newcommand{\insertmsgop}{\ensuremath{\cup}}
+\newcommand{\insertmsg}[2]{%
+#1 \cup #2
+}
+\newcommand{\deletemsgop}{\ensuremath{\cup}}
+\newcommand{\deletemsg}[2]{%
+#1 \backslash #2
+}
 
 
 
 %% For operational semantics
 
 % System state and components
-\newcommand{\systemstate}{\kappa}
+\newcommand{\SystemState}{\kappa}
+\newcommand{\systemval}[3]{
+    \ensuremath{%
+        \langle
+            #1,  % nodes
+            #2,  % in-transit messages
+            #3%  % services
+        \rangle%
+    }%
+}
+
 \newcommand{\engines}{\SetOfEngines}
 \newcommand{\nodes}{\SetOfNodes}
+\newcommand{\nodeval}[3]{%
+\ensuremath{%
+\langle%
+    #1, % id
+    #2, % \epsilon_i, 
+    #3  % \omega_i
+\rangle%
+}}
+
+
 \newcommand{\messages}{\SetOfMessages}
-\newcommand{\nodeops}{\omega}
+\newcommand{\plugins}{\omega}
 \newcommand{\enginemap}{\epsilon}
+
+\newcommand{\uid}[1]{\ensuremath{\mathsf{uid}(#1)}}
+\newcommand{\loc}[2]{\ensuremath{ \langle #1, #2 \rangle}}
 
 % Rules
 
 % Engine components
-\newcommand{\engine}[1]{e_{#1}}
-\newcommand{\procengine}[1]{p_{#1}}
-\newcommand{\mboxengine}[1]{m_{#1}}
-\newcommand{\interface}[1]{i_{#1}}
-\newcommand{\behavior}[1]{b_{#1}}
-\newcommand{\config}[1]{\mathsf{cfg}_{#1}}
-\newcommand{\localenv}[1]{\mathsf{env}_{#1}}
+\newcommand{\node}[1]{\ensuremath{n_{#1}}}
+
+\newcommand{\engine}[1]{\ensuremath{e_{#1}}}
+\newcommand{\engineval}[5]{%
+\ensuremath{%
+\langle
+    #1, %interface
+    #2, %behaviour
+    #3, %mode
+    #4, %config
+    #5 %localenviron
+\rangle %
+}%
+}
+\newcommand{\procengine}[1]{\ensuremath{p_{#1}}}
+\newcommand{\mboxengine}[1]{\ensuremath{m_{#1}}}
+\newcommand{\interface}[1]{\ensuremath{i_{#1}}}
+\newcommand{\behaviour}[1]{\ensuremath{b_{#1}}}
+
+\newcommand{\Cfg}{\ensuremath{\mathsf{Cfg}}}
+\newcommand{\configtype}[1]{\ensuremath{\Cfg{}_{#1}}}
+\newcommand{\config}[1]{\ensuremath{\mathsf{cfg}_{#1}}}
+\newcommand{\configval}[2]{\ensuremath{\langle #1 , #2 \rangle}}
+
+\newcommand{\localenv}[1]{\ensuremath{\mathsf{env}_{#1}}}
+\newcommand{\environment}[1]{\localenv{#1}}
+\newcommand{\localenvval}[2]{\ensuremath{\langle #1, #2 \rangle}}
 
 % Message handling
-\newcommand{\payload}[1]{v_{#1}}
-\newcommand{\msgtype}[1]{\mathsf{Msg}_{#1}}
-\newcommand{\addr}[1]{\alpha(#1)}
-\newcommand{\mailboxOf}[1]{\mathsf{mbox}(#1)}
-\newcommand{\sendmsg}[3]{(#1\triangleright #2?#3)}
+
+
+\newcommand{\addr}[1]{\ensuremath{\alpha(#1)}}
+\newcommand{\mailboxOfname}{\ensuremath{\mathsf{mbox}}}
+\newcommand{\mailboxOf}[1]{\ensuremath{\mailboxOfname(#1)}}
+\newcommand{\msgpacket}[3]{\ensuremath{\langle%
+#1,% sender
+#2,% target
+#3% payload
+\rangle}}
+% \newcommand{\msgpacket}[3]{(#1\triangleright #2?#3)}
+\newcommand{\sender}[1]{\ensuremath{\mathsf{sender}(#1)}}
+\newcommand{\target}[1]{\ensuremath{\mathsf{target}(#1)}}
 
 
 % Effects
 \newcommand{\effectsym}{E}
-\newcommand{\Effect}[2]{\ensuremath{\mathsf{Effect}(#1, #2)}}
+\newcommand{\effecttype}[2]{\ensuremath{\mathsf{Effect}(#1, #2)}}
+
 \newcommand{\send}[2]{\ensuremath{\mathsf{send}(#1, #2)}}
 \newcommand{\update}[1]{\ensuremath{\mathsf{update}(#1)}}
 \newcommand{\spawn}[2]{\ensuremath{\mathsf{spawn}(#1, #2)}}
@@ -85,7 +157,8 @@
 \newcommand{\noop}{\ensuremath{\mathsf{noop}}}
 
 % Common functions
-\newcommand{\freshid}{\mathsf{freshId}()}
+\newcommand{\freshidname}{\ensuremath{\mathsf{freshId}}}
+\newcommand{\freshid}{\ensuremath{\freshidname}()}
 \newcommand{\status}[1]{\mathsf{status}(#1)}
 
 
@@ -93,7 +166,9 @@
 \newcommand{\sysstep}[2]{#1 \rightsquigarrow #2}
 \newcommand{\opstep}[3]{#1 \rightsquigarrow_{\mathsf{#2}} #3}
 \newcommand{\evalstep}[3]{#1 \vdash #2 \downarrow #3}
+
 \newcommand{\guardeval}[4]{#1, \langle #2, #3 \rangle \vdash #4}
+
 \newcommand{\effstep}[3]{#1 \vdash #2 \rightsquigarrow #3}
 \newcommand{\processstep}[4]{#1, #2, #3 \rightsquigarrow_{\mathsf{process}} #4}
 
@@ -112,4 +187,6 @@
 % Guard and actions
 \newcommand{\guard}[1]{g_{#1}}
 \newcommand{\action}[1]{a_{#1}}
-\newcommand{\guardaction}[2]{\langle #1, #2 \rangle}
+\newcommand{\returntype}{R}
+\newcommand{\guardedaction}[1]{%
+\ensuremath{\langle \guard{#1}, \action{#1} \rangle}}
