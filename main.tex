@@ -115,7 +115,7 @@ A \emph{tuple} $\langle a_1, a_2, \dots, a_n \rangle$ is a generalisation of an
 ordered pair to an ordered $n$-tuple, where $n \in \N$, of type $A_1 \times
 \cdots \times A_n$, and $a_i$ is of type $A_i$ for all $i$ from $1$ to $n$.
 Given a type $A$, we can define the optional type $\Option{A}$ as $A \oplus
-$. The terms $\mathsf{none}$ and $\mathsf{some}(a)$ are the
+$. The terms $\none$ and $\some{a}$ are the
 corresponding terms for the optional type when $\typing{a}{A}$. 
 
 Some types are sets, and we equip them with some common set-theoretic notations.
@@ -262,7 +262,7 @@ $\Msg$, the sum type of all message interfaces, and therefore the valid
 message types, that is, $\defequal{\Msg}{\bigoplus_{j} \msgtype{j}}$
 where $j$ ranges over all engines in the system. To simplify the notation, we
 assume message type subtyping, i.e., $\msgtype{j} : \Msg$
-for all $j \in \mathcal{E}$.
+for all $j \in \SetOfEngines$.
 
 % An alternative approach defines message interfaces through untagged unions, permitting
 % overlapping message types across engines. This is consistent with our approach,
@@ -697,12 +697,12 @@ and outputs the new system state after the effect has been executed.
 \end{itemize}
 
 
-We could also extend the node-specific function $\enginemap_i$ to construct
-a global version $\enginemap$ that operates over all engines instances $\SetOfEngines$ in
-$\SystemState^i$. Recall $\SetOfEngines_i$ is the collection of engine instances
-$\SetOfEngines_i$ for $i$ ranging over the node set.
-This allows us to look up addresses for any engine in the system
-regardless of which node it runs.
+We could also extend the node-specific function $\enginemap_i$ to construct a
+global version $\enginemap$ that operates over all engines instances
+$\SetOfEngines$ in $\SystemState^i$. Recall $\SetOfEngines_i$ is the collection
+of engine instances $\SetOfEngines_i$ for $i$ ranging over the node set. This
+allows us to look up addresses for any engine in the system regardless of which
+node it runs.
 
 Not described here are the functions for removing, and modifying nodes.
 Also, one may want to move engines between nodes. We leave these considerations
@@ -713,19 +713,18 @@ for future work.
 The transitions of the associated state machine of the system define both how the
 system evolves and how the message-passing mechanism functions.
 
-We first recall a few notation conventions.
-$\SetOfNodes$ denotes the set of nodes in the system, 
-$\enginemap$ denotes a mapping 
-from engine addresses to their corresponding instances. $\SetOfEngines$ is the set of values of
-$\enginemap$, that is the set of engine instances in the system. The function $\alpha$ maps 
-engine instances back to their addresses, while $\SetOfMessages$ represents the set of all 
-in-transit messages.
+We first recall a few notation conventions. $\SetOfNodes$ denotes the set of
+nodes in the system, $\enginemap$ denotes a mapping from engine addresses to
+their corresponding instances. $\SetOfEngines$ is the set of values of
+$\enginemap$, that is the set of engine instances in the system. The function
+$\alpha$ maps engine instances back to their addresses, while $\SetOfMessages$
+represents the set of all in-transit messages.
 
 The operational semantics for the system are defined here
 via the reduction relation denoted by $\stepsymbol$, where %
-$\sysstep{\SystemState^i}{\SystemState^{i+1}}$ signifies that the system state $\SystemState^i$
-evolves to $\SystemState^{i+1}$. The notation $\SystemState^i$ is mentioned in
-\Cref{rem:system-time-notation}.
+$\sysstep{\SystemState^i}{\SystemState^{i+1}}$ signifies that the system state
+$\SystemState^i$ evolves to $\SystemState^{i+1}$. The notation $\SystemState^i$
+is mentioned in \Cref{rem:system-time-notation}.
 
 % Jonathan: I'm here.
 
@@ -738,19 +737,27 @@ $(\SetOfNodes, \SetOfMessages, \SetOfPlugins)$, unless otherwise specified.
 \sloppy~\hfill\\[-\baselineskip]%\hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
-\defequal{\iota}{\freshid}
+      \defequal{\iota}{\freshid}
 \quad %
-\equal{%
-  n
-}{%
-\nodeval{\iota}{\emptyset}{\plugins_n}
-}
+      \equal{%
+        n
+      }{%
+        \nodeval%
+          {\iota}
+          {\emptyset}
+          {\plugins_n}
+      }
 $}
 \UnaryInfC{$%
 \opstep%
 {\SystemState}%
 {node}%
-{(\SetOfNodes \cup \{n\}, \SetOfMessages, \SetOfPlugins)}%
+{%
+  ( \SetOfNodes \cup \{n\}
+  , \SetOfMessages
+  , \SetOfPlugins
+  )
+}%
 $}
 \end{prooftree}
 \end{definition}
@@ -771,43 +778,50 @@ ready state, the filter function $f$ must be the identity function.
 \equal{%
   \node{i}
 }{%
-  \nodeval{\mathsf{id}_i}{\enginemap_i}{\plugins_i}
+  \nodeval%
+    {\mathsf{id}_i}
+    {\enginemap_i}
+    {\plugins_i}
 }
 \in \SetOfNodes%
 % \quad m : \mathsf{ \mathsf{EngineMode}} %
 \quad \typing{p}{\mathsf{Option}(\Address)} %
-\quad \equal{\mathsf{cfg}}{\configval{p}{\process}}
+\quad %
+      \equal{%
+        \mathsf{cfg}%
+      }{%
+        \configval{p}{\process}
+      }%
 $}
 \noLine
 \UnaryInfC{$%
-\typing{S}{\U} %
+      \typing{S}{\U} %
 \quad \typing{\mathsf{env}}{\Env(S)}
 \quad \typing{in}{\Msg} %
 \quad %
-\equal{%
-  \engine{\mathsf{new}}
-}{
-  \engineval%
-  {in} %
-  {b} %
-  {\ready{\cdots}} %
-  {\mathsf{cfg}} %
-  {\mathsf{env}}
-}
+      \equal{%
+        \engine{\mathsf{new}}
+      }{
+        \engineval%
+          {in} %
+          {b} %
+          {\ready{\cdots}} %
+          {\mathsf{cfg}} %
+          {\mathsf{env}}
+      }
 $}
-% % Level 3: Engine set and address map updates
 \noLine
 \UnaryInfC{$%
-\typing{\iota}{\freshid}%
+      \typing{\iota}{\freshid}%
 \quad \typing{\eta}{\freshid} %
 \quad %
- \equal{%
-  \mathsf{cfg}_{\mathsf{mbox}}
- }{%
- \configval%
-  {\alpha_i(e_\mathsf{new})} %
-  {\mathsf{mail}}
-}
+      \equal{%
+        \mathsf{cfg}_{\mathsf{mbox}}
+      }{%
+        \configval%
+          {\alpha_i(\engine{\mathsf{new}})} %
+          {\mathsf{mail}}
+      }%
 $}
 \noLine
 \UnaryInfC{$%
@@ -815,34 +829,44 @@ $}
   \mailbox{\mathsf{new}}
 }{%
   \engineval%
-  {\interface{\mathsf{mbox}}} %
-  {\behaviour{\mathsf{mbox}}} %
-  {\status{\mathsf{ready}(\none)}} %
-  {\config{\mathsf{mbox}}} %
-  {\environment{\mathsf{mbox}}}%
+    {\interface{\mathsf{mbox}}} %
+    {\behaviour{\mathsf{mbox}}} %
+    {\status{\mathsf{ready}(\none)}} %
+    {\config{\mathsf{mbox}}} %
+    {\environment{\mathsf{mbox}}}%
   }%
 $}
 \noLine
 \UnaryInfC{$%
-\epsilon' \equiv \enginemap_i[\iota \mapsto \engine{\mathsf{new}} ]%
-[\eta \mapsto \mboxengine{\mathsf{new}}] 
+\equal{%
+  \enginemap'
+}{
+  \enginemap_i%
+    [\iota \mapsto \engine{\mathsf{new}} ]%
+    [\eta  \mapsto \mailbox{\mathsf{new}}] 
+}% 
 $}
 \UnaryInfC{$%
 \opstep%
-{\SystemState, \node{i}, c, s}
-{spawn}%
-{%
-(\SetOfNodes[\enginemap_i \mapsto \epsilon'],%
-   \SetOfMessages, %
-   \SetOfPlugins%
-)}%
+  { \SystemState
+  , \node{i}
+  , c % the configuration of the engine
+  , s % the local environment of the engine
+  }
+  {spawn}%
+  {%
+    ( \SetOfNodes[\enginemap_i \mapsto \enginemap']%
+    , \SetOfMessages%
+    , \SetOfPlugins%
+    )
+  }%
 $}
 \end{prooftree}
 
 The terms%
-$\interface{\mathsf{mbox}}$, %
-$\behaviour{\mathsf{mbox}}$, and %
-$\environment{\mathsf{mbox}}$
+$\interface{\mailboxOfname}$, %
+$\behaviour{\mailboxOfname}$, and %
+$\environment{\mailboxOfname}$
 are the message interface, the behaviour, and the environment of the mailbox engine,
 respectively, which follow the specification as in \Cref{def:mailbox-engine}
 and when no provided, default values are used.
@@ -851,7 +875,7 @@ and when no provided, default values are used.
 \end{definition}
 
 \begin{remark}
-The rule \srule{EngineSpawn} takes place in the context of a node $\node{i}$. When defining a
+The rule \sruleref{EngineSpawn} takes place in the context of a node $\node{i}$. When defining a
 processing engine $\engine{\mathsf{new}}$, the system also creates a mailbox engine on the same
 node, $\mailbox{\mathsf{new}}$. While the only parameters required by this rule are the
 processing engine parameters (configuration and environment) for $\engine{\mathsf{new}}$,
@@ -871,29 +895,36 @@ engines that are removed?
 
 To prevent \emph{zombie} engine instances that could  violate liveness and
 safety guarantees, we need to remove terminated engines from the system. This is
-done via the \srule{Clean} rule.
+done via the \sruleref{Clean} rule.
 
 \begin{definition}[\srule{Clean}]\label{rule:s-Clean}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
-e \in \SetOfEngines%
-\quad \propequal{\mathsf{terminated}}{\mathsf{status}(e)}
+  e \in \SetOfEngines%
+\quad %
+  \propequal{%
+    \terminated
+  }{%
+    \status{e}
+  }
 $}
 \UnaryInfC{$%
 \opstep%
-{\SystemState}%
-{clean}%
-{(\SetOfNodes \setminus \{e\},%
-\SetOfMessages,% TODO: Do we NEED to remove references to e???
-\SetOfPlugins%
-)}%
+  {\SystemState}%
+  {clean}%
+  {%
+    ( \SetOfNodes \setminus \{e\}%
+    , \SetOfMessages% TODO: Do we NEED to remove references to e???
+    , \SetOfPlugins%
+    )
+  }%
 $}
 \end{prooftree}
 \end{definition}
 
 \begin{remark}
-Notice how the \srule{Clean} rule does not remove the engine's mailbox.
+Notice how the \sruleref{Clean} rule does not remove the engine's mailbox.
 Even when removing the processing engine, the mailbox is kept in the system
 receiving messages, but not being processed. This ensures that messages are not
 lost.
@@ -913,22 +944,33 @@ delivery, and (iii) explicit lifecycle management for engines.
 \begin{prooftree}
 \AxiomC{$%
 \engine{s}, \engine{t} \in \SetOfEngines%
-\quad \typing{v}{\msgtype{t}}%
-\quad \equal{\SystemState}{(\SetOfNodes, \SetOfMessages, \SetOfPlugins)}
+\quad %
+  \typing{v}{\msgtype{t}}%
+\quad %
+  \equal{%
+    \SystemState
+  }{%
+    (\SetOfNodes, \SetOfMessages, \SetOfPlugins)
+  }%
 $}
 \UnaryInfC{$%
 \opstep%
-{%
-\SystemState, \alpha(\engine{t}), v%
-}
-{send}%
-{(\SetOfNodes,
-  \SetOfMessages \cup%
-    \{ 
-      \msgpacket{\alpha(\engine{s})}{\mathsf{mbox}(\epsilon(\engine{t}))}{v}
-    \},%
-  \SetOfPlugins%
-)}%
+  {%
+    \SystemState, \alpha(\engine{t}), v%
+  }
+  {send}%
+  {%
+    ( \SetOfNodes
+    , \SetOfMessages \cup%
+      \{ 
+        \msgpacket%
+          {\alpha(\engine{s})}
+          {\mailboxOf{\enginemap(\engine{t})}}
+          {v}
+      \}%
+    , \SetOfPlugins%
+    )
+  }%
 $}
 \end{prooftree}
 \end{definition}
@@ -944,7 +986,7 @@ interface specification, and it is the only way to add a message to $\SetOfMessa
 % always an mailbox.
 
 Now, with a message in-transit, the system needs to deliver it to the target engine's
-mailbox. This is done via the \mrule{Enqueue} rule.
+mailbox. This is done via the \mruleref{Enqueue} rule.
 
 \begin{definition}[\mrule{Enqueue}]\label{rule:m-Enqueue}
 \hspace{-1.5em}
@@ -952,75 +994,128 @@ mailbox. This is done via the \mrule{Enqueue} rule.
 \AxiomC{$%
 \equal{%
   m
-}{
-  \messagepacket%
-  {\cdots}
-  {m_t}
-  {\mathsf{append}(v)}
-}
-\in \SetOfMessages
-\quad \equiv{q}{\mathsf{env}(\epsilon(m_t))}%
+}{%
+  \msgpacket%
+    {\cdots}
+    {\mailbox{t}} 
+    {\append(v)}
+} \in \SetOfMessages
+\quad %
+  \equal{%
+    q
+  }{%
+    \mathsf{env}(\enginemap(\mailbox{t}))
+  }%
 $}
+%
 \noLine
 \UnaryInfC{$
-i \equiv \mathsf{fst}(m_t)
-\quad \epsilon' \equiv \epsilon[%
-m_t \mapsto%
-\langle%
-\cdots,%
-% i_{mbox}, b_{mbox}, s_{mbox}, \mathsf{cfg}_{mbox}, 
-q \cup \{v\} \rangle%
-]%
+\equal{%
+  \eta
+}{%
+  \mathsf{fst}(\mailbox{t})
+}
+\quad %
+  \equal{%
+    \enginemap'
+  }{%
+    \enginemap[%
+      \mailbox{t}
+        \mapsto%
+          \langle%
+            \cdots,%
+            q \cup \{v\} %
+          \rangle%
+    ]%
+  }
 $}
-\UnaryInfC{$\kappa \rightsquigarrow_{\mathsf{enqueue}} (\mathcal{N}[%
-\enginemap_i \mapsto \epsilon'],
-\mu \setminus \{m\},%
-\omega)$}
+\UnaryInfC{$%
+\opstep%
+  {\SystemState}
+  {enqueue}
+  {%
+    ( \SetOfNodes[ \enginemap_\eta \mapsto \enginemap' ]
+    , \SetOfMessages \setminus \{m\}
+    , \SetOfPlugins%
+    )
+  }
+$}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\textsc{M\mbox{-}Dequeue}]\label{rule:m-dequeue}
+\begin{definition}[\mrule{Dequeue}]\label{rule:m-Dequeue}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$
-  e_p \in \mathcal{E}%
-  \quad e_p \equiv \langle%
-  \cdots,
-  % i_p, b_p, 
-  \mathsf{ready}, %
-  \cdots%
-  % \mathsf{cfg}_p,
-  % \mathsf{env}_p 
-  \rangle
+  \engine{p} \in \SetOfMessages%
+\quad %
+  \equal{
+    \engine{p}
+  }{%
+      \langle%
+      \cdots,
+      \ready{\cdots}, %
+      \cdots%
+      \rangle
+  }
 $}
 \noLine
 \UnaryInfC{$
-m_p \in \mathcal{E}%
-\quad m_p \equiv \mathsf{mbox}(e_p)
-\quad \mathsf{env}(\epsilon(m_p)) = q \cup \{v\}
+  \mailbox{p} \in \SetOfEngines%
+\quad %
+  \equal{
+    \mailbox{p}
+  }{%
+    \mailboxOf{\engine{p}}
+  }
+\quad %
+  \propequal{%
+    \mathsf{env}(\enginemap(\mailbox{p}))
+  }{%
+   q \cup \{v\}
+  }
 $}
 \noLine
 \UnaryInfC{$%
-\mathcal{N}' \equiv
-\mathcal{N}[\epsilon(e_p) \mapsto%
-\langle \cdots, \mathsf{busy}(v), %
-\cdots%
-% \mathsf{cfg}_p, \mathsf{env}_p 
-\rangle]%
-[m_p \mapsto \langle%
-\cdots%
-% i_{mbox}, b_{mbox}, s_{mbox}, \mathsf{cfg}_{mbox}
-, q %
-\rangle]
+\equal{%
+  \SetOfNodes'
+}{%
+  \SetOfNodes[%
+    \enginemap(\engine{p})%
+      \mapsto%
+        \langle %
+          \cdots, %
+          \busy{v}, %
+          \cdots %
+        \rangle
+    ]%
+    [\mailbox{p}
+        \mapsto 
+          \langle %
+            \cdots %
+            , q %
+          \rangle %
+    ]%
+}
 $}
-\UnaryInfC{$\kappa \rightsquigarrow_{\mathsf{dequeue}} (\mathcal{N}', \mu, \omega)$}
+\UnaryInfC{$%
+\opstep%
+  {\SystemState}
+  {dequeue}
+  {
+    ( \SetOfNodes'
+    , \SetOfMessages
+    , \SetOfPlugins
+    )
+  }
+$}
 \end{prooftree}
 \end{definition}
 
-After a processing engine retrieves a message via the \textsc{M\mbox{-}Dequeue}
+After a processing engine retrieves a message via the \mruleref{Dequeue}
 rule, it enters the \texttt{busy} state to handle the incoming message. This
 message processing involves executing the engine's predefined behaviour through
-the \textsc{S\mbox{-}Process} rule, as defined in~\Cref{sec:engine-processing}.
+the \sruleref{Process} rule, as defined in~\Cref{sec:engine-processing}.
 However, we need first to establish how an engine's behaviour evaluates messages
 through its guarded actions, and how the evaluation of those effects changes the
 system state.
@@ -1039,58 +1134,108 @@ This subsection formalises the evaluation mechanism for
 guarded actions that govern engine responses to messages. Specifically, the
 following rules define the process by which an engine $p$ consumes a message $v$
 from its mailbox, formalised via, first the judgment
+
 \begin{equation}\label{eq:judgement}
-p \vdash v \downarrow E,
+\evalstep%
+  {p}%
+  {v}%
+  {E}%
+,%
 \end{equation}
 that is, processing the message $v$ within the context of a busy engine $p$,
 results in an effect $E$, and second, a more fine-grained judgment
 of the former to introduce the guarded action used to produce the effect.
 
 \begin{equation}\label{eq:guarded-action-eval}
-  p , \langle g, a \rangle \vdash v \downarrow E,
+  \guardevalmsgstep%
+    {p}%
+    {g}%
+    {a}%
+    {v}%
+    {E}%
+  ,
 \end{equation}
 %
-states that in the context of engine $p$, the guarded action $\langle g, a
-\rangle$ produces the effect $E$ when processing the message $v$.
+states that in the context of engine $p$, the guarded action%
+$\langle g, a \rangle$ produces the effect $E$ when processing the message $v$.
 
-\begin{definition}[\textsc{B\mbox{-}GuardedActionEval}]\label{rule:b-guarded-action-eval}
+\begin{definition}[\brule{GuardedActionEval}]\label{rule:b-GuardedActionEval}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
-p \in \mathcal{E}%
-\quad p \equiv \langle \cdots, b_p, \mathsf{busy}(v), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
-% \quad S_p: \U%
-% \quad \mathsf{env}_p : \mathsf{Env}_p(S_p)%
+  p \in \SetOfEngines%
+\quad %
+  \equal{%
+    p
+  }{%  
+    \engineval%
+      {\cdots}
+      {b_p}
+      {\busy{v}}
+      {\config{p}}
+      {\localenv{p}}
+  }
 $}
 \noLine
 \UnaryInfC{$%
-\langle g, a \rangle \in b_p
-\quad g(v, \mathsf{cfg}_p, \mathsf{env}_p) = \mathsf{some}(r)
+  \guardedactionval%
+    {g}
+    {a}
+  \in \behaviour{p}
+\quad %
+  \propequal{%
+    g(v, \config{p}, \localenv{p})
+  }{%
+    \some{r}
+  }
 $}
-\UnaryInfC{$p, \langle g, a \rangle \vdash v \downarrow a(r, v, \mathsf{cfg}_p, \mathsf{env}_p)$}
+\UnaryInfC{$
+\guardevalmsgstep%
+  {p}
+  {g}
+  {a}
+  {v}
+  {a(r, v, \config{p}, \localenv{p})}
+$}
 \end{prooftree}
 \end{definition}
 
 
-\begin{definition}[\textsc{B\mbox{-}NoMatchingGuard}]\label{rule:b-no-matching-guard}
+\begin{definition}[\brule{NoMatchingGuard}]\label{rule:b-NoMatchingGuard}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
-p \in \mathcal{E}%
-\quad p \equiv \langle \cdots, b_p, \mathsf{busy}(v), \mathsf{cfg}_p, \mathsf{env}_p \rangle%
+  p \in \SetOfEngines%
+\quad %
+  \equal{%
+    p
+  }{
+    \engineval%
+      {\cdots}
+      {\behaviour{p}}
+      {\cdots}
+      {\config{p}}
+      {\localenv{p}}
+  }
 $}
-% \noLine
-% \UnaryInfC{$
-% S : \U%
-% \quad \mathsf{env}_p : \mathsf{Env}(S)%
-% \quad v : i_p%
-% $}
 \noLine
 \UnaryInfC{$%
-\langle g, a \rangle \in b_p%
-\quad g(v, \mathsf{cfg}_p, \mathsf{env}_p) = \mathsf{none}%
+\guardedactionval{g}{a} \in \behaviour{p}%
+\quad %
+  \propequal{%
+    g(v, \config{p}, \localenv{p})
+   }{%
+    \none%
+   }
 $}
-\UnaryInfC{$p,  \langle g, a \rangle \vdash v \downarrow \mathsf{noop}$}
+\UnaryInfC{$%
+\guardevalmsgstep%
+  {p}
+  {g}
+  {a}
+  {v}
+  {\noop}
+$}
 \end{prooftree}
 \end{definition}
 
@@ -1102,28 +1247,53 @@ runs an action only if it is the only one that matches the message. Again, other
 guard selection strategies may cause unintended behaviour, and the study of which
 strategies are valid, and their semantics is out of scope of this paper.
 
-%with an abuse
-% of notation, where $p, \langle g_i, a_i \rangle \vdash v \downarrow E$ can be
-% treated as a proposition that $E$ is the effect of the selected guarded action.
-
-\begin{definition}[\textsc{B\mbox{-}GuardStrategy}]\label{rule:b-guard-strategy}
+\begin{definition}[\brule{GuardStrategy}]\label{rule:b-GuardStrategy}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
-p \in \mathcal{E}%
-\quad p \equiv \langle \cdots, b_p, \mathsf{busy}(v), \cdots \rangle%
+p \in \SetOfEngines%
+\quad %
+  \equal{%
+    p
+  }{%
+    \engineval%
+      {\ignore}
+      {\behaviour{p}}
+      {\busy{v}}
+      {\ignore}
+      {\ignore}
+  }
 $}
 \noLine
 \UnaryInfC{$%
-\langle g_i, a_i \rangle \in b_p%
-\quad p , \langle g_i, a_i \rangle \vdash v \downarrow E
+  \guardedaction{i} \in \behaviour{p}%
+% \quad p , \langle g_i, a_i \rangle \vdash v \downarrow E
+\quad %
+  \guardevalmsgstep%
+    {p}
+    {\guard{i}}
+    {\action{i}}
+    {v}
+    {E}
 $}
 \noLine
 \UnaryInfC{$%
-\forall_{j\neq i} \langle g_j, a_j \rangle \in b_p.\  
-p , \langle g_j, a_j \rangle \vdash v \downarrow \mathsf{noop}
+\forall_{j\neq i} 
+  \guardedaction{j} \in \behaviour{p} %
+  \,.\
+  \guardevalmsgstep%
+  {p}
+  {\guard{j}}
+  {\action{j}}
+  {v}
+  {\noop}
 $}  
-\UnaryInfC{$p \vdash v \downarrow E$}
+\UnaryInfC{$%
+\evalstep%
+  {p}
+  {v}
+  {E}
+$}
 \end{prooftree}
 \end{definition}
 
@@ -1138,182 +1308,282 @@ unexpected behaviour that a different guard strategy could refine.
 With rules how to get the effect resulting from processing a message, we now
 need to state how the system evolves when an effect is executed.
 
-Given a system state $\kappa$, an effect $E$ and a new system state $\kappa'$,
-we write 
+Given a system state $\SystemState$, an effect $E$ and a new system state
+$\SystemState'$, we write 
 \begin{equation}\label{eq:effect-exec}
-\kappa \vdash E \rightsquigarrow \kappa'
+\effectevalstep%
+  {\SystemState}
+  {E}%
+  {\SystemState'}
 \end{equation}
-to state that when the effect $E$ is executed in the system state $\kappa$, it
-produces the new system state $\kappa'$. As the effect $E$ takes many forms,
-this judgment is defined by case analysis on the effect $E$, as shown in the
-following definitions.
+to state that when the effect $E$ is executed in the system state
+$\SystemState$, it produces the new system state $\SystemState'$. As the effect
+$E$ takes many forms, this judgment is defined by case analysis on the effect
+$E$, as shown in the following definitions.
 
 
-\begin{definition}[\textsc{E\mbox{-}Send}]\label{rule:e-send}
+\begin{definition}[\erule{Send}]\label{rule:e-Send}
 \hspace{-1.5em}
 \begin{prooftree}
-\AxiomC{$p_s,p_t \in \mathcal{E}%
-\quad a_t \equiv \alpha(p_t)%
+\AxiomC{$%
+  \engine{s}, \engine{t} \in \SetOfEngines%
+\quad %
+  \equal%
+    {
+      l_{t} % address
+    }{%
+      \alpha(\engine{t})
+    }
 $}
 \noLine
 \UnaryInfC{$%
-v : \mathsf{Msg}_s%
-\quad m : \mathsf{Msg}_t%
-\quad p_s \vdash v \downarrow \mathsf{send}(a_t, m)%
-\quad \kappa, a_t, m \rightsquigarrow_{\mathsf{send}} \kappa'
+      \typing{v}{\msgtype{s}}
+\quad \typing{m}{\msgtype{t}}
+\quad %
+     \evalstep%
+        {\engine{s}}
+        {v}
+        {\send{l_{t}}{m}}
+\quad %
+      \sendstep%
+        {\SystemState}
+        {l_{t}}
+        {m}
+        {\SystemState'}
 $}
 \UnaryInfC{$
-\kappa \vdash \mathsf{send}(a_t, m) \rightsquigarrow \kappa'
+\effectevalstep%
+  {\SystemState}
+  {\send{l_t}{m}}
+  {\SystemState'}
 $}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\textsc{E\mbox{-}Update}]\label{rule:e-update}
+\begin{definition}[\erule{Update}]\label{rule:e-Update}
 \hspace{-1.5em}
 \begin{prooftree}
-\AxiomC{$
-p \in \mathcal{E}%
-\quad S : \U%
-\quad \mathsf{env}(p) , s : \mathsf{Env}(S)%
+\AxiomC{$%
+      \engine{i} \in \SetOfEngines%
+\quad \typing{S}{\U}%
+\quad \typing%
+        {
+          \mathsf{env}(\engine{i}) , s
+        }{
+          \envtype{i}{S}
+        }%
 $}
 \UnaryInfC{$%
-(\mathcal{N}, \cdots)%
-\vdash \mathsf{update}(s) \rightsquigarrow%
-(\mathcal{N}[
-  \epsilon(p) \mapsto \langle%
-\cdots, s%
- \rangle],%
- \cdots)$}
+\effectevalstep%
+  {(\SetOfNodes, \cdots)}
+  {\update{s}}
+  {(\SetOfNodes[
+    \enginemap(p) \mapsto %
+      \langle%
+        \cdots
+      , s%
+      \rangle
+    ],%
+   \cdots)}
+$}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\textsc{E\mbox{-}Spawn}]\label{rule:e-spawn}
+\begin{definition}[\erule{Spawn}]\label{rule:e-Spawn}
 \hspace{-1.5em}
 \begin{prooftree}
 % parent engine
 \AxiomC{$%
-n_i \in \mathcal{N}%
-\quad p \in \mathcal{E}_i%
-\quad c \equiv \langle \alpha(p), \mathsf{process} \rangle%
+\node{i} \in \SetOfNodes%
+\quad p \in \SetOfEngines_i%
+\quad %
+  \equal%
+    {
+      c
+    }{
+      \configval%
+        {\alpha(p)}
+        {\process}
+    }
 $}
 \noLine
 \UnaryInfC{$%
-S : \U%
-\quad s : \mathsf{Env}(S)%
-\quad \kappa, n_i, c, s\rightsquigarrow_{\mathsf{spawn}} \kappa'%
+      \typing{S}{\U}%
+\quad \typing{s}{\envtype{j}{S}}% %FIXME: ENV? which
+\quad %
+      \spawnstep%
+        {\SystemState}
+        {\node{i}}
+        {c}
+        {s}
+        {\SystemState'}%
 $}
-\UnaryInfC{$\kappa \vdash \mathsf{spawn}(c, s) \rightsquigarrow \kappa'$}
+\UnaryInfC{$%
+  \effectevalstep%
+    {\SystemState}
+    {\spawn{c}{s}}
+    {\SystemState'}
+$}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\textsc{E\mbox{-}Chain}]\label{rule:e-chain}
+\begin{definition}[\erule{Chain}]\label{rule:e-Chain}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
-p \in \mathcal{E}%
-\quad v \in \mu%
-\quad v : \mathsf{Msg}_p%
+      p \in \SetOfEngines%
+\quad v \in \SetOfMessages%
+\quad \typing{v}{\msgtype{p}}%
 $}
 \noLine
 \UnaryInfC{$%
-     p \vdash v \downarrow \mathsf{chain}(\mathit{eff}_1, \mathit{eff}_2)%
-\quad \kappa \vdash \mathit{eff}_1 \rightsquigarrow \kappa'%
-\quad \kappa' \vdash \mathit{eff}_2 \rightsquigarrow \kappa''
+     \evalstep%
+        {p}
+        {v}
+        {\chain{\mathit{eff}_1}{\mathit{eff}_2}}%
+\quad \effectevalstep%
+        {\SystemState}
+        {\mathit{eff}_1}
+        {\SystemState'}
+\quad \effectevalstep%
+        {\SystemState'}
+        {\mathit{eff}_2}
+        {\SystemState''}
 $}
-\UnaryInfC{$\kappa \vdash \mathsf{chain}(\mathit{eff}_1, \mathit{eff}_2) \rightsquigarrow \kappa''$}
+\UnaryInfC{$%
+\effectevalstep%
+  {\SystemState }
+  {\chain{\mathit{eff}_1}{\mathit{eff}_2}}
+  {\SystemState''}
+$}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\textsc{E\mbox{-}Terminate}]\label{rule:e-terminate}
+\begin{definition}[\erule{Terminate}]\label{rule:e-Terminate}
 \hspace{-1.5em}
 \begin{prooftree}
-\AxiomC{$p \in \mathcal{E}%
-\quad v \in \mu%
-\quad v : \mathsf{Msg}_p%
-\quad p \vdash v \downarrow \mathsf{terminate}%
-\quad \kappa \rightsquigarrow_{\mathsf{clean}} \kappa'$}
-\UnaryInfC{$\kappa \vdash \mathsf{terminate} \rightsquigarrow \kappa'$}
+\AxiomC{$%
+      p \in \SetOfEngines%
+\quad v \in \SetOfMessages%
+\quad \typing{v}{\msgtype{p}}%
+\quad \evalstep%
+          {p}
+          {v}
+          {\terminate}%
+\quad \opstep%
+          {\SystemState}
+          {\mathsf{clean}}
+          {\SystemState'}
+$}
+\UnaryInfC{$%
+\effectevalstep
+  {\SystemState}
+  {\terminate}
+  {\SystemState'}
+$}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\textsc{E\mbox{-}Noop}]\label{rule:e-noop}
+\begin{definition}[\erule{Noop}]\label{rule:e-Noop}
   \hspace{-1.5em}
   \begin{prooftree}
   \AxiomC{$%
-  p \in \mathcal{E}%
-  \quad v \in \mu%
-  \quad v : \mathsf{Msg}_p%
-  \quad p \vdash v \downarrow \mathsf{noop}%
+        p \in \SetOfEngines%
+  \quad v \in \SetOfMessages%
+  \quad \typing{v}{\msgtype{p}}%
+  \quad \evalstep%
+          {p}
+          {v}
+          {\noop}
   $}
-  \UnaryInfC{$\kappa \vdash \mathsf{noop} \rightsquigarrow \kappa$}
+  \UnaryInfC{$%
+  \effectevalstep%
+    {\SystemState}
+    {\noop}
+    {\SystemState}
+  $}
   \end{prooftree}
 \end{definition}
 
-% % Finally define effect execution
-% \begin{definition}[\textsc{EffectExec}]\label{rule:effect-exec}
-%   \hspace{-1.5em}
-%   \begin{prooftree}
-%   \AxiomC{$\execEffect(E, \kappa) = \kappa'$} \UnaryInfC{$\kappa \vdash
-%   E \rightsquigarrow \kappa'$}
-%   \end{prooftree}
-% \end{definition}
 \subsection{Engine processing}\label{sec:engine-processing}
 
 This section introduces the core system-level operational rule
-\textsc{S\mbox{-}Process} that governs message processing by engines
-denoted as follows. Given a system state $\kappa$, an engine $p$ and a message
-$m \in \mu$,
+\sruleref{Process} that governs message processing by engines
+denoted as follows. Given a system state $\SystemState$, an engine $p$ and a message
+$m \in \SetOfMessages$,
 the judgment
 \begin{equation}\label{eq:process-judgment}
-\kappa , p, m\rightsquigarrow_{\mathsf{process}} \kappa'
+\processstep%
+  {\SystemState}
+  {p}
+  {m}
+  {\SystemState'}
 \end{equation}
-reads as with system state $\kappa$, when engine $p$ processes the message $m$,
-it produces a new system state $\kappa'$. This rule aims to coordinate three
+reads as with system state $\SystemState$, when engine $p$ processes the message $m$,
+it produces a new system state $\SystemState'$. This rule aims to coordinate three
 critical aspects:
 \begin{enumerate*}[label=(\roman*)]
   \item effect generation from message processing, and
   \item engine state transitions from \textsf{busy} to \textsf{ready} after successful execution.
 \end{enumerate*}
 
-\begin{definition}[\textsc{S\mbox{-}Process}]\label{rule:s-process}
+\begin{definition}[\srule{Process}]\label{rule:s-Process}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
-n_i \in \mathcal{N}%
-\quad p \in \mathcal{E}_i%
-\quad p \equiv \langle%
-i_p,%
-b_p,
- \mathsf{busy}(m),%
- \mathsf{cfg}_p,
- \mathsf{env}_p
- \rangle%
+      \node{i} \in \SetOfNodes%
+\quad p \in \SetOfEngines_i%
+\quad %
+      \equal{
+        p 
+      }{
+        \engineval%
+          {\interface{p}}
+          {\behaviour{p}}
+          {\busy{m}}
+          {\config{p}}
+          {\localenv{p}} 
+      }
 $}
 \noLine
 \UnaryInfC{$%
-% m : i_p \quad%
-p \vdash  m \downarrow E%
-\qquad \kappa \vdash E \rightsquigarrow (\mathcal{N}', \mu', \omega')
+      \evalstep%
+        {p}
+        {m}
+        {E}
+\qquad \effectevalstep%
+          {\SystemState}
+          {E}
+          {(\SetOfNodes', \SetOfNodes', \SetOfPlugins')}
 $}
 \noLine
 \UnaryInfC{$%
-\epsilon' \equiv \epsilon[\alpha(p) \mapsto%
-\langle%
-i_p,%
-b_p,
- \mathsf{ready},%
- \mathsf{cfg}_p,
- \mathsf{env}_p
- \rangle
-]
+\equal{
+  \enginemap'
+}{
+  \enginemap[ %
+    \alpha(p) %
+      \mapsto %
+        \engineval%
+          {\interface{p}}
+          {\behaviour{p}}
+          {\ready{!!!!!}}
+          {\config{p}}
+          {\localenv{p}}
+    ]
+}
 $}
 \UnaryInfC{$%
-\kappa , p, m \rightsquigarrow_{\mathsf{process}}%
-\mathcal{N}'[%
-\epsilon \mapsto \epsilon'
-]%
-, \mu'
-, \omega'
+\processstep%
+  {\SystemState}
+  {p}
+  {m}
+  {( \SetOfNodes'[%
+        \enginemap \mapsto \enginemap'
+        ]%
+    , \SetOfMessages'
+    , \SetOfPlugins'
+  )}
 $}
 \end{prooftree}
 \end{definition}
@@ -1325,64 +1595,65 @@ transitions. We establish the state transition type by showing that system-level
 judgments in \Cref{fig:state-transition-rules} induce state transitions:
 
 \begin{equation}
-\kappa ,\cdots\rightsquigarrow_{\mathsf{op}} \kappa'%
+\opstep%
+  {\SystemState, \cdots}
+  {op}
+  {\SystemState'}%
 \quad \text{implies}%
-\quad \kappa \rightsquigarrow \kappa' 
+\quad \sysstep%
+        {\SystemState}
+        {\SystemState'} 
 \end{equation}
 
 \noindent for any system-level atomic operation $\mathsf{op}$.
-System-level operations are labelled with identifiers like \textsc{S\mbox{-}Name} in \Cref{fig:state-transition-rules}.
+System-level operations are labelled with identifiers like \srule{Name} in \Cref{fig:state-transition-rules}.
 
 \begin{figure}[h]
   \centering
   \begin{tabular}{ll}
     \textbf{Category} & \textbf{Rules} \\ \hline
-    System operations & 
-      \hyperref[rule:s-node]{\textsc{S-Node}},
-      \hyperref[rule:s-engine-spawn]{\textsc{S-EngineSpawn}},
-      \hyperref[rule:s-clean]{\textsc{S-Clean}},
-      \hyperref[rule:s-process]{\textsc{S-Process}} \\
+    System operations &  
+        \sruleref{Node},
+        \sruleref{EngineSpawn},
+        \sruleref{Clean},
+        \sruleref{Process} \\
     Message passing & 
-      \hyperref[rule:m-send]{\textsc{M-Send}},
-      \hyperref[rule:m-enqueue]{\textsc{M-Enqueue}},
-      \hyperref[rule:m-dequeue]{\textsc{M-Dequeue}} \\
+        \mruleref{Send},
+        \mruleref{Enqueue},
+        \mruleref{Dequeue} \\
     Behaviour evaluation & 
-      \hyperref[rule:b-guarded-action-eval]{\textsc{B-GuardedActionEval}},
-      \hyperref[rule:b-no-matching-guard]{\textsc{B-NoMatchingGuard}},
-      \hyperref[rule:b-guard-strategy]{\textsc{B-GuardStrategy}} \\
+        \bruleref{GuardedActionEval},
+        \bruleref{NoMatchingGuard},
+        \bruleref{GuardStrategy} \\
     Effect execution & 
-      \hyperref[rule:e-send]{\textsc{E-Send}},
-      \hyperref[rule:e-update]{\textsc{E-Update}},
-      \hyperref[rule:e-spawn]{\textsc{E-Spawn}},
-      \hyperref[rule:e-chain]{\textsc{E-Chain}},
-      \hyperref[rule:e-terminate]{\textsc{E-Terminate}},
-      \hyperref[rule:e-noop]{\textsc{E-Noop}} \\
+        \eruleref{Send},
+        \eruleref{Update},
+        \eruleref{Spawn},
+        \eruleref{Chain},
+        \eruleref{Terminate},
+        \eruleref{Noop}
   \end{tabular}
   \caption{Rules for the operational semantics categorised by domain.}
   \label{fig:state-transition-rules}
 \end{figure}
 
-% This formal system ensures: (i) reliable message routing via mailbox engines,
-% (ii) atomic per-engine message processing, and (iii) coordinated resource
-% lifecycle management. 
-
 \begin{remark}
-Critical dependencies exist between these rules: \textsc{M\mbox{-}Send} enables
-inter-engine communication but requires \textsc{M\mbox{-}Enqueue} for message
-delivery. The \textsc{S\mbox{-}Process} rule depends on successful message
-consumption via \textsc{M\mbox{-}Dequeue} and the related judgment for behaviour
+Critical dependencies exist between these rules: \mruleref{Send} enables
+inter-engine communication but requires \mruleref{Enqueue} for message
+delivery. The \sruleref{Process} rule depends on successful message
+consumption via \mruleref{Dequeue} and the related judgment for behaviour
 evaluation, as defined in \Cref{sec:behavior-eval-rules}. On the other hand, the
-\textsc{S\mbox{-}Clean} rule prevents resource leakage by removing terminated
+\sruleref{Clean} rule prevents resource leakage by removing terminated
 engines. Omission of these components, that is, system-level or message-passing,
-would raise undefined behaviour, for example, excluding \textsc{M\mbox{-}Enqueue}
-would leave messages undelivered, while removing \textsc{S\mbox{-}Clean} would
+would raise undefined behaviour, for example, excluding \mruleref{Enqueue}
+would leave messages undelivered, while removing \sruleref{Clean} would
 allow infinite accumulation of dormant engines.
 \end{remark}
 
 % This should be provable.
 % \begin{lemma}[Eventual reliable message delivery]\label{ax:message-delivery}%
 %   For any message in transit within
-%   system state $\kappa$, there exists a subsequent state $\kappa'$ where $m$ is
+%   system state $\SystemState$, there exists a subsequent state $\SystemState'$ where $m$ is
 %   eventually delivered to its intended recipient.
 % \end{lemma}
   
@@ -1459,18 +1730,18 @@ implement.
 The system-level rules are given in \Cref{sec:creation-rules}. In this section,
 we described how the system grows from the initial empty state, with the addition
 of nodes, engines, and later on messages in \Cref{sec:message-passing-mechanism}. We
-cover other rules such as \textsc{S-Clean} as a garbage-collector for engines,
+cover other rules such as \srule{Clean} as a garbage-collector for engines,
 however, we did not cover rules for on-demand engine or node
 deletion/disconnection. This can be seen as an extension of the model.
 
 Our message-passing mechanism implements the rules given in
-\Cref{sec:message-passing-mechanism}. The \textsc{M-Send} rule enables asynchronous
+\Cref{sec:message-passing-mechanism}. The \mrule{Send} rule enables asynchronous
 message realisation in the system, allowing concurrent message generation
 without sender blocking. Messages are reliably delivered to mailbox engines
-through the \textsc{M-Enqueue} rule, which implements atomic \say{enqueuing}.
-Message digestion is handled by the \textsc{M-Dequeue} rule.
+through the \mrule{Enqueue} rule, which implements atomic \say{enqueuing}.
+Message digestion is handled by the \mrule{Dequeue} rule.
 
-Finally, and probably one of the most interesting rules, the \textsc{S-Process}
+Finally, and probably one of the most interesting rules, the \srule{Process}
 rule enables atomic state transitions by combining behaviour evaluation, rules
 in \Cref{sec:behavior-eval-rules} with effect handling, and rules in
 \Cref{sec:effect-execution}. Together, the rules in \Cref{sec:semantics} form a

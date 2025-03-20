@@ -117,7 +117,6 @@
 }%
 }
 \newcommand{\procengine}[1]{\ensuremath{p_{#1}}}
-\newcommand{\mboxengine}[1]{\ensuremath{m_{#1}}}
 \newcommand{\interface}[1]{\ensuremath{i_{#1}}}
 \newcommand{\behaviour}[1]{\ensuremath{b_{#1}}}
 
@@ -126,21 +125,26 @@
 \newcommand{\config}[1]{\ensuremath{\mathsf{cfg}_{#1}}}
 \newcommand{\configval}[2]{\ensuremath{\langle #1 , #2 \rangle}}
 
+\newcommand{\localenvproj}[1]{\ensuremath{\mathsf{env}(#1)}}
 \newcommand{\localenv}[1]{\ensuremath{\mathsf{env}_{#1}}}
 \newcommand{\environment}[1]{\localenv{#1}}
 \newcommand{\localenvval}[2]{\ensuremath{\langle #1, #2 \rangle}}
 
 % Message handling
-
+\newcommand{\ignore}{\ensuremath{\cdots}}
 
 \newcommand{\addr}[1]{\ensuremath{\alpha(#1)}}
 \newcommand{\mailboxOfname}{\ensuremath{\mathsf{mbox}}}
 \newcommand{\mailboxOf}[1]{\ensuremath{\mailboxOfname(#1)}}
-\newcommand{\msgpacket}[3]{\ensuremath{\langle%
-#1,% sender
-#2,% target
-#3% payload
-\rangle}}
+\newcommand{\msgpacket}[3]{%
+    \ensuremath{%
+        \langle %
+            #1,% sender
+            #2,% target
+            #3% payload
+        \rangle %
+    }%
+}
 % \newcommand{\msgpacket}[3]{(#1\triangleright #2?#3)}
 \newcommand{\sender}[1]{\ensuremath{\mathsf{sender}(#1)}}
 \newcommand{\target}[1]{\ensuremath{\mathsf{target}(#1)}}
@@ -160,19 +164,24 @@
 % Common functions
 \newcommand{\freshidname}{\ensuremath{\mathsf{freshId}}}
 \newcommand{\freshid}{\ensuremath{\freshidname}()}
-\newcommand{\status}[1]{\mathsf{status}(#1)}
-
+\newcommand{\status}[1]{\ensuremath{\mathsf{status}(#1)}}
 
 % Judgment forms
 \newcommand{\stepsymbol}{\ensuremath{\rightsquigarrow}}
 \newcommand{\sysstep}[2]{#1 \stepsymbol #2}
 \newcommand{\opstep}[3]{#1 \stepsymbol_{\mathsf{#2}} #3}
+
+\newcommand{\spawnstep}[5]{\ensuremath{#1, #2, #3, #4 \stepsymbol_{\mathsf{spawn}} #5}}
+\newcommand{\processstep}[4]{\ensuremath{#1, #2, #3 \stepsymbol_{\process} #4}}
+\newcommand{\sendstep}[4]{\ensuremath{#1, #2, #3 \stepsymbol_{\mathsf{send}} #4}}
+
 \newcommand{\evalstep}[3]{#1 \vdash #2 \downarrow #3}
 
-\newcommand{\guardeval}[4]{#1, \langle #2, #3 \rangle \vdash #4}
+\newcommand{\effectevalstep}[3]{#1 \vdash #2 \stepsymbol #3}
 
-\newcommand{\effstep}[3]{#1 \vdash #2 \rightsquigarrow #3}
-\newcommand{\processstep}[4]{#1, #2, #3 \rightsquigarrow_{\mathsf{process}} #4}
+\newcommand{\guardevalmsgstep}[5]{#1, \langle #2, #3 \rangle \vdash #4 \downarrow #5}
+\newcommand{\guardevalstep}[4]{#1, \langle #2, #3 \rangle \vdash #4}
+
 
 % Rule references
 \newcommand{\srule}[1]{\textsc{s\mbox{-}#1}}
@@ -191,4 +200,18 @@
 \newcommand{\action}[1]{a_{#1}}
 \newcommand{\returntype}{R}
 \newcommand{\guardedaction}[1]{%
-\ensuremath{\langle \guard{#1}, \action{#1} \rangle}}
+\ensuremath{%
+    \langle %
+      \guard{#1} %
+    , \action{#1} %
+    \rangle %
+}}
+
+\newcommand{\guardedactionval}[2]{%
+\ensuremath{%
+    \langle %
+      #1 %
+    , #2 %
+    \rangle %
+}}
+
