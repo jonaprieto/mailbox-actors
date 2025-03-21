@@ -284,10 +284,12 @@ The \textbf{status} of an engine, of type $\EngineStatus$, determines
 the engine's operational mode.
 \begin{equation}\label{eq:engine-status}
 \begin{aligned}
-\EngineStatus%
-:= &\quad \ready{\Option{\Msg \to \Bool}} \\%
-\mid & \quad \busy{\Msg} \\%
-\mid & \quad \terminated  \, .
+\typedef%
+  {\EngineStatus}%
+  {    &\quad \ready{\Option{\Msg \to \Bool}} \\%
+  \mid & \quad \busy{\Msg} \\%
+  \mid & \quad \terminated  \, .
+  }
 \end{aligned}
 \end{equation}
 % tikz
@@ -557,16 +559,18 @@ satisfy:
 \item Parent reference pointing to its paired processing engine $\engine{j}$
 \item Fixed message interface with one message type:
 \begin{equation*}
-  \msgtype{\mailbox{j}} := \append(\msgtype{j})
+  \typedef%
+    {\msgtype{\mailbox{j}}}
+    {\append(\msgtype{j})}
 \end{equation*}
 carrying a payload of type $\msgtype{j}$
 \item State $q$ of type $S$ implementing a queue-like structure with:
   \begin{itemize}
   \item $\emptyset$ denoting empty state.
   \item Message insertion to support $\append\mbox{-}$messages, %
-  $\insertmsgop : S \times \msgtype{j} \to S.$
+  $\typing{\insertmsgop}{S \times \msgtype{j} \to S}.$
   \item Message delation to support internal system delation, %
-  $\deletemsgop : S \times \msgtype{j} \to S.$
+  $\typing{\deletemsgop}{S \times \msgtype{j} \to S}.$
   % for verification, one might want to add proof that the operations
   % actually insert/delete the element from the structure
   \end{itemize}
@@ -588,14 +592,14 @@ constitutes a node.
 
 \begin{definition}[Node]\label{def:node}%
 A \textbf{node} in $\SetOfNodes$ is a tuple 
-$\nodeval{n_i}{\enginemap_i}{\plugins_i}$ where $n_i$ corresponds to the node's
+$\nodeval{n_i}{\enginemap_i}{\plugins_i}$ where $\node{i}$ corresponds to the node's
 unique identifier across the system, $\enginemap_i$ is a mapping from
 identifiers to engine instances on the node, and $\plugins_i$ represents
 node-specific functionality, including, for example, storage and freshness of
 unique engine identifiers.
 \end{definition}
 
-For convenience, given a node with identifier $n_i$, we have the following notation:
+For convenience, given a node with identifier $\nodo{i}$, we have the following notation:
 \begin{itemize}
   \item $\SetOfEngines_i$ is the set of engines on the node, which are precisely
   the values of the mapping $\enginemap_i$, and
@@ -632,8 +636,16 @@ one labelled transition at a time.
 % referencing a "system state". It's confusing.
 
 \begin{definition}[State]\label{def:state} A \textbf{state} of the system
-$\SystemState$ is a tuple $\SystemState^i\equiv \langle \SetOfNodes^i, \SetOfMessages^i, \SetOfPlugins^i
-\rangle$ where,
+$\SystemState$ is a tuple%
+$\equal{%
+    \SystemState^i
+}{%
+\langle
+    \SetOfNodes^i
+  , \SetOfMessages^i
+  , \SetOfPlugins^i
+\rangle
+}$ where,
 \begin{itemize}
 \item $\SetOfNodes^i$ is the set of nodes,
 \item $\SetOfMessages^i$ is the set of in-transit messages representing ongoing communications, and
@@ -670,7 +682,7 @@ where transitions occur when processes react to messages by updating their
 state, generating new messages and engines. The associated system in
 \textsc{DETC} is defined in terms of active processes and a set of messages,
 assuming all messages eventually get delivered. A similar approach is adopted
-here for the state in \cref{def:state}, and we adopt as principle that all
+here for the state in \Cref{def:state}, and we adopt as principle that all
 messages are eventually delivered.%, see \Cref{lem:message-delivery}.
 \end{remark}
 
@@ -682,13 +694,13 @@ entities such as nodes and engines. The system provides the following functions:
 generates a fresh identifier for node creation.
 % \item $\mathsf{freshName}$ is the function that
 % generates a fresh name for an engine.
-\item $\mailboxOfname : \Address \to \Address$ is the function that
+\item $\typing{\mailboxOfname}{\Address \to \Address}$ is the function that
 outputs the address of the dedicated mailbox engine for a given processing
 engine.
 % \begin{equation*}
 % \begin{aligned}
-%   &\mathsf{mbox} : \Address \to \Address\\
-%   &\mathsf{mbox}(\langle n_i, \mathsf{id}_j \rangle) \equiv \langle n_i, \mathsf{id}_j \rangle
+%   &\mailboxOfname : \Address \to \Address\\
+%   &\mailboxOfname(\langle n_i, \mathsf{id}_j \rangle) \equiv \langle n_i, \mathsf{id}_j \rangle
 % \end{aligned}
 % \end{equation*}
 % TODO: check if this is used somewhere else
@@ -816,7 +828,7 @@ $}
 \quad \typing{\eta}{\freshid} %
 \quad %
       \equal{%
-        \mathsf{cfg}_{\mathsf{mbox}}
+        \mathsf{cfg}_{\mailboxOfname}
       }{%
         \configval%
           {\alpha_i(\engine{\mathsf{new}})} %
@@ -829,11 +841,11 @@ $}
   \mailbox{\mathsf{new}}
 }{%
   \engineval%
-    {\interface{\mathsf{mbox}}} %
-    {\behaviour{\mathsf{mbox}}} %
+    {\interface{\mailboxOfname}} %
+    {\behaviour{\mailboxOfname}} %
     {\status{\mathsf{ready}(\none)}} %
-    {\config{\mathsf{mbox}}} %
-    {\environment{\mathsf{mbox}}}%
+    {\config{\mailboxOfname}} %
+    {\environment{\mailboxOfname}}%
   }%
 $}
 \noLine
