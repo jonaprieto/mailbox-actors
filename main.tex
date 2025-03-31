@@ -280,14 +280,14 @@ exists elsewhere, although for simplicity we assume that engines always remain
 on the same node.
 
 \begin{definition}[Engine Lifecycle]\label{def:engine-status}
-The \textbf{status} of an engine, of type $\EngineStatus$, determines
+The \textbf{status} of an engine $\engine{i}$, of type $\EngineStatus$, determines
 the engine's operational mode.
 \begin{equation}\label{eq:engine-status}
 \begin{aligned}
 \typedef%
   {\EngineStatus}%
-  {    &\quad \ready{\Option{\Msg \to \Bool}} \\%
-  \mid & \quad \busy{\Msg} \\%
+  {    &\quad \ready{\Option{\msgtype{i} \to \Bool}} \\%
+  \mid & \quad \busy{\msgtype{i}} \\%
   \mid & \quad \terminated  \, .
   }
 \end{aligned}
@@ -398,6 +398,10 @@ ways an engine can influence the system by reacting to a message.
         \text{(engine state modification)} \\
 \mid & \quad \spawn{\configtype{i}}{\envtype{i}{S_i}} & &%
         \text{(engine creation)} \\
+\mid & \quad \mfilter{%
+                \Option{\msgtype{j} \to \Bool}
+              }& &%
+        \text{(new engine mailbox filter)} \\
 \mid & \quad \chain{\effecttype{j}{S_j}}{\effecttype{j}{S_j}} & &%
         \text{(action sequencing)} \\
 \mid & \quad \terminate & &%
@@ -599,7 +603,7 @@ node-specific functionality, including, for example, storage and freshness of
 unique engine identifiers.
 \end{definition}
 
-For convenience, given a node with identifier $\nodo{i}$, we have the following notation:
+For convenience, given a node with identifier $n_i$, we have the following notation:
 \begin{itemize}
   \item $\SetOfEngines_i$ is the set of engines on the node, which are precisely
   the values of the mapping $\enginemap_i$, and
@@ -707,7 +711,6 @@ engine.
 \item $\execEffect$ is the function that executes effects as in \Cref{def:effects}
 and outputs the new system state after the effect has been executed.
 \end{itemize}
-
 
 We could also extend the node-specific function $\enginemap_i$ to construct a
 global version $\enginemap$ that operates over all engines instances
@@ -1390,7 +1393,7 @@ $}
   {(\SetOfNodes, \cdots)}
   {\update{s}}
   {(\SetOfNodes[
-    \enginemap(p) \mapsto %
+    \enginemap(\engine{i}) \mapsto %
       \langle%
         \cdots
       , s%
@@ -1400,6 +1403,35 @@ $}
 $}
 \end{prooftree}
 \end{definition}
+
+
+\begin{definition}[\erule{MFilter}]\label{rule:e-MFilter}
+  \hspace{-1.5em}
+  \begin{prooftree}
+  \AxiomC{$%
+  \quad \engine{i} \in \SetOfEngines%
+  \quad \typing{f}{\Option{\msgtype{i} \to \Bool}}%
+  \quad \evalstep%
+            {\engine{i}}
+            {v}
+            {\mfilter{f}}%
+  $}
+  \UnaryInfC{$%
+  \effectevalstep%
+  {(\SetOfNodes, \cdots)}
+  {\mfilter{f}}
+  {(\SetOfNodes[
+    \enginemap(\engine{i}) \mapsto %
+      \langle%
+        \cdots
+      , \ready{f}%
+      , \cdots
+      \rangle
+    ],%
+  \cdots)}
+$}
+  \end{prooftree}
+  \end{definition}
 
 \begin{definition}[\erule{Spawn}]\label{rule:e-Spawn}
 \hspace{-1.5em}
@@ -1640,6 +1672,7 @@ System-level operations are labelled with identifiers like \srule{Name} in \Cref
     Effect execution & 
         \eruleref{Send},
         \eruleref{Update},
+        \eruleref{MFilter},
         \eruleref{Spawn},
         \eruleref{Chain},
         \eruleref{Terminate},
