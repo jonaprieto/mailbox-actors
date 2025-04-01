@@ -106,7 +106,7 @@ We use standard type notation where $\N$ denotes the inductive type of natural
 numbers, $\EmptyType$ represents the empty type, $\Unit$ denotes the type with
 exactly one term denoted with $*$, $\Bool$ denotes the type with two terms,
 $\mathsf{tt}$ and $\mathsf{ff}$, and $\List{A}$ represents the type of
-parametric lists. For equality relations, $\defequal{x}{y}$ indicates definitional
+parametric lists. Now, $\defequal{x}{y}$ indicates definitional
 equality where term $x$ is defined as $y$, while $\equal{a}{b}$ signifies
 definitional equality between terms, and $\propequal{a}{b}$ denotes propositional equality.
 $A \times B$ denotes the product of $A$ and $B$, and their terms, tuples, are denoted
@@ -114,9 +114,9 @@ with $\langle a,b \rangle$, where $a : A$ and $b : B$. %
 A \emph{tuple} $\langle a_1, a_2, \dots, a_n \rangle$ is a generalisation of an
 ordered pair to an ordered $n$-tuple, where $n \in \N$, of type $A_1 \times
 \cdots \times A_n$, and $a_i$ is of type $A_i$ for all $i$ from $1$ to $n$.
-Given a type $A$, we can define the optional type $\Option{A}$ as $A \oplus
-$. The terms $\none$ and $\some{a}$ are the
-corresponding terms for the optional type when $\typing{a}{A}$. 
+Given a type $A$, we can define the optional type $\Option{A}$ as $A \oplus \Unit$.
+The terms $\none$ and $\some{a}$ are the
+corresponding terms for the optional type when $\typing{a}{A}$.
 
 Some types are sets, and we equip them with some common set-theoretic notations.
 The membership relation is denoted with $\in$, so $a \in A$ is a proposition
@@ -125,9 +125,9 @@ that $a$ is an element of $A$. Union between sets $A$ and $B$ is denoted with $A
 The disjoint union of $A_1, \dots, A_n$ is denoted with $A_1 \oplus \cdots \oplus A_n$.
 %
 % and $\mathsf{inj_i}(a_i)$ are the corresponding injections into $A_1 \oplus \cdots
-% \oplus A_n$ from $A_i$ for all $i \in \{1, \dots, n\}$. 
+% \oplus A_n$ from $A_i$ for all $i \in \{1, \dots, n\}$.
 
-Finally, a function $f$ that takes an argument $a$ of type $A$ and returns a
+A function $f$ that takes an argument $a$ of type $A$ and returns a
 value of type $B$ is denoted $f : A \to B$ and application is denoted with
 $f(a)$. We also use the notation $f[a \mapsto c]$ to define a new function that
 is similar to $f$ except that the output of $f$ is replaced by $c$ when the
@@ -136,7 +136,10 @@ accordingly. We overload the notation $\mathcal{N}[a \mapsto c]$ to also apply
 to sets, so if $\mathcal{N}$ is a set, then $\mathcal{N}[a \mapsto c]$ is the
 set resulting from $\mathcal{N}$ by replacing the element $a$ with $c$, if $a$
 is a valid element of $\mathcal{N}$. Otherwise, we extend $\mathcal{N}$
-accordingly.
+accordingly. Finally, we use (\ignore) to omit terms that are not important or
+can be inferred from the context. For example, $\langle \ignore, a, b, \ignore
+\rangle$ is a tuple where the first and last elements are irrelevant so the
+second and third elements are the only ones that matter.
 
 \section{Model}\label{sec:model}
 
@@ -146,11 +149,12 @@ preserving their actor-like semantics. Building on this foundation, we formalise
 engines as refined effective communicating Moore machines, that is, stateful
 message-processing units structured around four core components:
 a \emph{configuration}, an \emph{execution environment}, \emph{message interface},
-and a \emph{behaviour}.
+and a \emph{behaviour}. These components, or better their types are used to
+define the types for engines for a system, as in~\Cref{def:engine}.
 
-An engine's configuration (\Cref{def:engine-configuration}) includes, among
-other things, the engine's location within the system and an optional reference
-to its parent engine. The engine's execution environment
+Briefly, the configuration of an engine (\Cref{def:engine-configuration}) conveys  
+persistent information about the engine such as its parent, operational mode, and
+other engine-type-specific configuration. The engine's execution environment
 (\Cref{def:engine-environment}) contains its local state and an \emph{address
 book} of other engines to communicate with, including the engine's own address.
 The engine's \emph{behaviour} defines how it reacts to messages that conform to
@@ -159,78 +163,94 @@ message types that the engine can process. More precisely, the engine's
 behaviour is described through a set of \emph{guarded actions}
 (\Cref{def:guarded-action}) consisting of pre-condition/action pairs. When an
 engine receives a message, it checks which of these guarded actions have their
-pre-conditions satisfied and executes the corresponding actions. 
+pre-conditions satisfied and executes the corresponding actions.
 % the following qualifier may not needed after all.
 % An action is considered
 % \emph{activated} if it belongs to a guarded action whose guard predicate is
-% satisfied. 
-As an avid reader might note, different strategies could exist for selecting
-which action to execute when multiple guards are satisfied or have competing
-priority. While this guard selection problem falls outside our model's scope,
-alternative strategies could be defined drawing from approaches used in
-\textsc{Prolog} implementations and Dijkstra's guarded command
-language~\cite{dijkstra-guarded-commands}. We provide one such strategy (see
-\Cref{rule:b-guard-strategy}), though this is not essential to the model
-presented here, as readers can define alternative strategies according to their
-needs.
+% satisfied.
+
+On guarded action evaluation, there are various strategies for selecting which
+action to execute when multiple guards are satisfied or have competing priorities.
+Although this guard selection problem is beyond the scope of our model, alternative
+strategies can be inspired by approaches used in \textsc{Prolog} implementations
+and Dijkstra's guarded command language~\cite{dijkstra-guarded-commands}. For
+demonstration purposes, we present one such strategy in \Cref{sec:behavior-eval-rules}.
+However, this is not essential to the model presented here, and readers are encouraged
+to define alternative strategies according to their needs.
 
 \begin{remark}
-  The engine behaviour specification described above resembles the correct-by-construction
-  approach used in event-driven systems like Event-B~\cite{dupont:tel-04165215},
-  where system transitions are governed by preconditions on the current state
-  of the machine and corresponding actions that are executed when their
-  preconditions are met. The preconditions are often written in
-  non-deterministic first-order logic, and the actions are defined using a
-  language derived from process calculi, which often includes operations such as
-  parallel composition, a null operation, sequencing, nondeterministic choice,
-  and recursion.
+  The behaviour of engines, as described above, resembles the correct-by-construction
+  approach used in event-driven systems such as Event-B~\cite{dupont:tel-04165215}.
+  In this approach, system transitions are driven by the \emph{events} that trigger
+  them. An event primarily consists of a set of preconditions on the current state
+  of the machine and a set of actions to be executed when these preconditions are
+  all satisfied. The preconditions are typically expressed in non-deterministic
+  first-order logic, and the actions are defined using a language derived from
+  process calculi, which often includes operations such as parallel composition,
+  a null operation, sequencing, nondeterministic choice, and recursion.
   %Here, we have a more restricted set of actions, as will be seen in \Cref{def:effects}.
+  % non-deterministic first-order logic, and the actions are defined using a
+  % language derived from process calculi, which often includes operations such as
+  % parallel composition, a null operation, sequencing, nondeterministic choice,
+  % and recursion.
+  % Here, we have a more restricted set of actions, as will be seen in \Cref{def:effects}.
 \end{remark}
 
-% We need a nice picture here; this is (not) a definition? 
-The model assumes an ambient \emph{system} $\SystemState$ mainly consisting of a
-set of \emph{nodes}~$\SetOfNodes$, a set of \emph{engines}~$\SetOfEngines$,
-following a specific \emph{message-passing mechanism} that will be described
-later, among other components.
+\subsection{Assumptions}\label{sec:assumptions}%
+The model assumes an ambient \emph{system} $\SystemState$ that primarily
+consists of a finite set of \emph{nodes}~$\SetOfNodes$ and a finite set of
+\emph{engines}~$\SetOfEngines$. Each engine is of a unique and specific type as
+defined in~\Cref{def:engine}. The system also includes a specific
+\emph{message-passing mechanism} that enforces policies for message delivery and
+flow control on a set of \emph{messages}, denoted by $\SetOfMessages$. Each
+message contains information about its sender and receiver engines. Engine types
+and related types such as message types are fixed and unchangeable during the
+system's runtime.
 
+\begin{remark}\label{rem:static-typing}%
+  This model is statically typed, in the sense that, for example, the types of
+  all system engines are predetermined. That is, the system offers a fixed collection
+  of engine types, allowing the creation of new engines solely by instantiating
+  these predefined types. Similarly, message payloads are instantiated from
+  predefined message types corresponding to each engine. This approach
+  simplifies the model in contrast to dynamic typing, where message types for a
+  given engine type may vary during runtime. Extending this model to support
+  dynamic typing is out of scope of this work.
+\end{remark}
 
 Engines are distributed across the nodes of the system, with each engine being
 associated with a unique node. Each entity in the system has a unique
-identifier, allowing nodes and engines to be denoted with $\node{i}$ and
-$\engine{j}$ respectively, where $i, j \in \N$.
+identifier, allowing nodes and engines to be referenced. As the set of nodes and
+engines are finite, we can also use natural numbers to index them, for example,
+we often use $\node{i}$ and $\engine{j}$ respectively to denote the $i$-th node and
+the $j$-th engine, where $i, j \in \N$.
 
-Following the message-passing paradigm, the message-passing mechanism enforces
-policies for message delivery and flow control. This mechanism operates on a set
-of \emph{messages} which we denote with $\SetOfMessages$. Each message contains
-information about its sender and receiver.
+\begin{remark}\label{rem:move-engines}%
+  For simplicity, engines in this model are fixed to a specific node. This
+  constraint is not essential to the model and can be addressed in future work.
+\end{remark}
 
 To reason about the system, we use a state machine that evolves in discrete
-steps. So, there is a notion of \say{previous} and \say{next} for each entity
-with respect to the system, including the set of messages $\SetOfMessages$. The
-steps are denoted using superscripts, so $\SystemState^i$ is the $i$-th step of the
-system, and $\SetOfMessages^i$ is the set of messages in the $i$-th step.
-
-% Within the system, each entity has a unique identifier. However, engines can also be
-% referenced by name rather than by address. Engine names provide a more legible way
-% to refer to engines in the system, making them easier to work with. Since names
-% are unique and unambiguous, they can be used interchangeably with addresses when
-% referring to engines.
-
+steps or snapshots. So, there is a notion of \say{previous} and \say{next} for
+each entity with respect to the system, including the set of messages $\SetOfMessages$.
+A step as $\SystemState^{(i)}$ denotes the $i$-th step of the system, and similarly,
+$\SetOfMessages^{(i)}$ is the set of messages in the $i$-th step. 
 
 \subsection{Addresses}\label{sec:addresses-and-names}
 \begin{definition}[Address]%
 \label{def:address}
 
-An \textbf{address} is a pair $\equal{a}{\loc{n}{\iota}}$ of type
+An \textbf{address} is a pair $\loc{n}{\iota}$ of type
 $\Address$ where:
 \begin{itemize}
     \item $n : \mathsf{NodeID}$ is the identifier of the node where the engine
     resides, and
     \item $\iota : \mathsf{UID}$ is the engine's unique identifier within the node.
 \end{itemize}
-We define projection functions $\mathsf{node}{a}$ and $\uid{a}$ to
-extract the respective components of an address.
 \end{definition}
+
+We define projection functions $\mathsf{node}(a)$ and $\uid{a}$ to
+extract the respective components of an address $a$.
 
 \begin{axiom}\label{ax:address}
 Each engine is uniquely identified by an address in the system.
@@ -239,22 +259,25 @@ Each engine is uniquely identified by an address in the system.
 \subsection{Message structure}\label{sec:message-structure}
 
 Engine communication occurs through typed messages.
+Each engine declares the message types it can process, 
+called its \emph{message interface}.  The message interfaces
+are fixed once the type of the engine is fixed.
+
 \begin{definition}[Message]\label{def:messages}
-A message is a triple $\equal{m}{\msgpacket{s}{t}{v}}$ where:
+A \textbf{message} is represented as a triple $\msgpacket{s}{t}{v}$ where:
 \begin{itemize}
-    \item $s$ is the sender address,
-    \item $t$ is the target address, and
-    \item $v$ is a payload of type $\msgtype{j}$ which is the message type
-    the target engine $\engine{j}$ can process.
+    \item $s$: the address of the sender engine,
+    \item $t$: the address of the target engine, and
+    \item $v$: the payload which has the message type the target engine can process.
 \end{itemize}
-We define projection functions $\sender{m}$, $\target{m}$, and
-$\mathsf{msg}(m)$ to extract the respective components of a message.
+% We define projection functions $\sender{m}$, $\target{m}$, and
+% $\mathsf{msg}(m)$ to extract the respective components of a message.
 \end{definition}
 
 \begin{definition}[Message Interface]\label{def:message-interface}%
-The \textbf{message interface} of an engine $\engine{j}$ is the sum type
-$\msgtype{j}$ where the type constructors address the different message types
-that the engine can process.
+The \textbf{message interface} is a sum type where the type constructors represent
+the different message types that the engine can process. Message interfaces are denoted
+with $\msgtype{j}$ for engine $\engine{j}$.
 \end{definition}
 
 To refer to an arbitrary message type \emph{within the system}, we use the type
@@ -343,15 +366,16 @@ As we will see later, the operational mode of an engine determines how the
 system routes messages to appropriate engines. Those configured as mailboxes
 receive special treatment within the message-passing mechanism. Since the
 operational mode becomes immutable once an engine is created, this critical
-attribute goes into the engine's configuration.
+attribute goes into the engine's configuration, defined below.
 
 \begin{definition}\label{def:engine-configuration}%
-The \textbf{configuration} of an engine $\engine{j}$, often denoted by
-$\config{j}$, is a tuple $\configval{p}{\mode}$ where %
+The \textbf{configuration} of an engine $\engine{j}$, denoted by
+$\config{j}$, is a tuple $\configval{p}{\mode}{c}$ where %
 $p$ is an optional reference (address) of the engine's parent, and %
-$\mode$ is the engine's operational mode as in \Cref{def:engine-mode}. %
+$\mode$ is the engine's operational mode as in \Cref{def:engine-mode}, and %
+$c$ is a term engine-specific configuration of type $\configtype{j}$.
 The inferred type of the configuration is denoted with $\configtype{j}$, indicating
-the configuration of engine $\engine{j}$.
+the configuration of engine $\engine{j}$. %TODOO
 \end{definition}
 
 \begin{remark}
@@ -388,11 +412,13 @@ Given a type $S_j$ representing the local state of an engine~$\engine{j}$, an
 ways an engine can influence the system by reacting to a message.
 
 \begin{equation}\label{eq:effects}
-\begin{aligned} %TODO: review this grammar
+\begin{aligned}
 \typedef{%
    \effecttype{j}{S_j}
 }{%
-      &\quad \send{\Address}{\Msg} & &%
+      &\quad \noop & &%
+        \text{(null operation)} \\
+\mid & \quad \send{\Address}{\Msg} & &%
         \text{(message dispatch)} \\
 \mid & \quad \update{\envtype{j}{S_j}} & &%
         \text{(engine state modification)} \\
@@ -402,12 +428,10 @@ ways an engine can influence the system by reacting to a message.
                 \Option{\msgtype{j} \to \Bool}
               }& &%
         \text{(new engine mailbox filter)} \\
-\mid & \quad \chain{\effecttype{j}{S_j}}{\effecttype{j}{S_j}} & &%
-        \text{(action sequencing)} \\
 \mid & \quad \terminate & &%
         \text{(engine shutdown)} \\
-\mid & \quad \noop & &%
-        \text{(null operation)\, .}
+\mid & \quad \chain{\effecttype{j}{S_j}}{\effecttype{j}{S_j}} & &%
+        \text{(action sequencing)\, .}
 }
 \end{aligned}
 \end{equation}
@@ -463,7 +487,14 @@ satisfied, and $S_i$ is the type of the engine's local state.
 \begin{definition}\label{def:action}%
 Given an engine $\engine{j}$, an \textbf{action} acting on data of type
 $\returntype$ is a mapping of type %
-$R \times \msgtype{j} \times \configtype{j} \times \envtype{j}{S_j} \to \effecttype{j}{S_j}$.
+\begin{equation}
+\returntype \times 
+\msgtype{j} \times 
+\configtype{j} \times 
+\envtype{j}{S_j} 
+  \to 
+\effecttype{j}{S_j}.
+\end{equation}
 \end{definition}
 
 Then, we compose a guard and an action to form a \emph{guarded action}, which is
@@ -487,7 +518,11 @@ where the action is not applicable.
 Together, both the guard and action induce a mapping of type
 
 \begin{equation*}\label{eq:guarded-action}%
-\msgtype{j} \times \configtype{j} \times \envtype{j}{S_j} \to \effecttype{j}{S_j}\,.
+\msgtype{j} \times 
+\configtype{j} \times 
+\envtype{j}{S_j} 
+  \to 
+\effecttype{j}{S_j}.
 \end{equation*}
 
 %FIXME: The guard can fail, so shouldn't this be Option{\mathsf{Effect}(S_j)}?
@@ -526,7 +561,7 @@ Having defined the components that make up an engine's behaviour, we can now
 formally specify engines themselves. As the fundamental computational units of
 our system, engines encapsulate both the processing logic and state management
 capabilities. We have established the types of their constituent parts, that is,
-guards, actions, configurations and environments. 
+guards, actions, configurations and environments.
 
 \begin{definition}[Engine]\label{def:engine}%
 An \textbf{engine} is the computational unit of the system, formally specified
@@ -595,9 +630,9 @@ mechanism defined by the system's requirements, we now formally define what
 constitutes a node.
 
 \begin{definition}[Node]\label{def:node}%
-A \textbf{node} in $\SetOfNodes$ is a tuple 
-$\nodeval{n_i}{\enginemap_i}{\plugins_i}$ where $\node{i}$ corresponds to the node's
-unique identifier across the system, $\enginemap_i$ is a mapping from
+A \textbf{node} in $\SetOfNodes$ is a tuple
+$\nodeval{n_i}{\enginemap_i}{\plugins_i}$ where $\node{i}$ corresponds to the
+node's unique identifier across the system, $\enginemap_i$ is a mapping from
 identifiers to engine instances on the node, and $\plugins_i$ represents
 node-specific functionality, including, for example, storage and freshness of
 unique engine identifiers.
@@ -614,7 +649,7 @@ For convenience, given a node with identifier $n_i$, we have the following notat
 \begin{remark}[Modification of nodes and engines]\label{rem:node-operations}
 %By design, nodes cannot create, destroy, or modify engines directly.
 The creation, destruction, and modification of engines will be \todo{describe in
-a phrase} covered in \todo{ref}. 
+a phrase} covered in \todo{ref}.
 % J:to consider, if an engine is destroyed, is its mailbox engine also destroyed?
 % also, what does it implies if an engine is modified? What can be modified any
 % way?
@@ -640,7 +675,7 @@ one labelled transition at a time.
 % referencing a "system state". It's confusing.
 
 \begin{definition}[State]\label{def:state} A \textbf{state} of the system
-$\SystemState$ is a tuple%
+$\SystemState$ is a tuple
 $\equal{%
     \SystemState^i
 }{%
@@ -741,8 +776,6 @@ $\sysstep{\SystemState^i}{\SystemState^{i+1}}$ signifies that the system state
 $\SystemState^i$ evolves to $\SystemState^{i+1}$. The notation $\SystemState^i$
 is mentioned in \Cref{rem:system-time-notation}.
 
-% Jonathan: I'm here.
-
 \subsection{System-level initialisation}\label{sec:creation-rules}
 
 In the following rules, we assume that $\SystemState$ is of the form %
@@ -779,11 +812,31 @@ $}
 
 \subsection{Engine creation}\label{sec:engine-creation-rules}
 
-To create an engine in the system on node $\node{i}$, we require a
-configuration $\mathsf{cfg}$ and an environment $\mathsf{env}$, at least.
-Additionally, the new engine must have a registered message interface and an
-associated behaviour $b$ that defines how it processes messages, and to be in
-ready state, the filter function $f$ must be the identity function.
+The system has a registry of all possible engine types, this is the type 
+To create an engine in the system on node $\node{i}$, we require a configuration
+$c$ and an environment $s$, as well as a message interface and an associated
+behaviour $b$ that defines how it processes messages, and to be in ready state
+with a valid filter function $f$.
+
+\begin{equation}
+\opstep%
+  { \SystemState
+  , \node{i}
+  , c % the configuration of the engine
+  , s % the local environment of the engine
+  }
+  {spawn}%
+  {%
+    ( \SetOfNodes[\enginemap_i \mapsto \enginemap']%
+    , \SetOfMessages%
+    , \SetOfPlugins%
+    )
+  }%
+\end{equation}
+
+However, the rule above involves the creation of a new engine, which requires
+the creation of a new mailbox engine on the same node. That is translated into
+the following two rules.
 
 \begin{definition}[\srule{EngineSpawn}]\label{rule:s-EngineSpawn}
 \hspace{-1.5em}
@@ -798,40 +851,48 @@ ready state, the filter function $f$ must be the identity function.
     {\enginemap_i}
     {\plugins_i}
 }
-\in \SetOfNodes%
-% \quad m : \mathsf{ \mathsf{EngineMode}} %
-\quad \typing{p}{\mathsf{Option}(\Address)} %
+\in \SetOfNodes
+$}
+\noLine
+\UnaryInfC{$%
+\quad \typing{\pi}{\mathsf{Option}(\Address)} %
 \quad %
       \equal{%
-        \mathsf{cfg}%
+        \config{\new}%
       }{%
-        \configval{p}{\process}
+        \configval{\pi}{\process}
       }%
 $}
 \noLine
 \UnaryInfC{$%
-      \typing{S}{\U} %
-\quad \typing{\mathsf{env}}{\Env(S)}
-\quad \typing{in}{\Msg} %
+\quad \typing{S}{\U} %
+\quad \typing{\environment{\new}}{\Env(S)}
+$}
+\noLine
+\UnaryInfC{$%
+\quad \typing{\texttt{prot}}{\Msg} %
+$}
+\noLine
+\UnaryInfC{$%
 \quad %
       \equal{%
-        \engine{\mathsf{new}}
+        \engine{\new}
       }{
         \engineval%
-          {in} %
+          {\texttt{prot}} %
           {b} %
-          {\ready{\cdots}} %
-          {\mathsf{cfg}} %
-          {\mathsf{env}}
+          {\ready{\ignore}} %
+          {\config{\new}} %
+          {\environment{\new}}
       }
 $}
 \noLine
 \UnaryInfC{$%
-      \typing{\iota}{\freshid}%
-\quad \typing{\eta}{\freshid} %
+      \defequal{\iota}{\freshid}%
+\quad \defequal{\eta}{\freshid} %
 \quad %
       \equal{%
-        \mathsf{cfg}_{\mailboxOfname}
+        \config{\mailboxOfname}
       }{%
         \configval%
           {\alpha_i(\engine{\mathsf{new}})} %
@@ -858,8 +919,8 @@ $}
 }{
   \enginemap_i%
     [\iota \mapsto \engine{\mathsf{new}} ]%
-    [\eta  \mapsto \mailbox{\mathsf{new}}] 
-}% 
+    [\eta  \mapsto \mailbox{\mathsf{new}}]
+}%
 $}
 \UnaryInfC{$%
 \opstep%
@@ -878,24 +939,22 @@ $}
 $}
 \end{prooftree}
 
-The terms%
-$\interface{\mailboxOfname}$, %
-$\behaviour{\mailboxOfname}$, and %
-$\environment{\mailboxOfname}$
-are the message interface, the behaviour, and the environment of the mailbox engine,
-respectively, which follow the specification as in \Cref{def:mailbox-engine}
-and when no provided, default values are used.
+The terms $\interface{\mailboxOfname}$, $\behaviour{\mailboxOfname}$, and
+$\environment{\mailboxOfname}$ are the message interface, the behaviour, and the
+environment of the mailbox engine, respectively, which follow the specification
+as in \Cref{def:mailbox-engine} and when no provided, default values are used.
 % TODO: it may seems the function to get mailbox address needs to be defined
 % in the node-specific operations.
 \end{definition}
 
 \begin{remark}
-The rule \sruleref{EngineSpawn} takes place in the context of a node $\node{i}$. When defining a
-processing engine $\engine{\mathsf{new}}$, the system also creates a mailbox engine on the same
-node, $\mailbox{\mathsf{new}}$. While the only parameters required by this rule are the
-processing engine parameters (configuration and environment) for $\engine{\mathsf{new}}$,
-one could customize the mailbox parameters, such as its behaviour $\behaviourtype{\mathsf{new}}$,
-to enable specialised message routing or priority-based message organisation.
+The rule \sruleref{EngineSpawn} takes place in the context of a node $\node{i}$.
+When defining a processing engine $\engine{\mathsf{new}}$, the system also
+creates a mailbox engine on the same node, $\mailbox{\mathsf{new}}$. While the
+only parameters required by this rule are the processing engine parameters
+(configuration and environment) for $\engine{\mathsf{new}}$, one could customize
+the mailbox parameters, such as its behaviour $\behaviourtype{\mathsf{new}}$, to
+enable specialised message routing or priority-based message organisation.
 However, for simplicity, we use a uniform mailbox behaviour across all mailbox
 engines.
 \end{remark}
@@ -908,20 +967,20 @@ engines that are removed?
 
 \subsection{Engine garbage collector}\label{sec:engine-termination}
 
-To prevent \emph{zombie} engine instances that could  violate liveness and
-safety guarantees, we need to remove terminated engines from the system. This is
-done via the \sruleref{Clean} rule.
+To prevent \emph{zombie} engine instances---engines in the $\terminated$ state
+that could violate liveness and safety guarantees---we need to remove them from
+the system. This is accomplished using the \sruleref{Clean} rule.
 
 \begin{definition}[\srule{Clean}]\label{rule:s-Clean}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
-  e \in \SetOfEngines%
+  p \in \SetOfEngines%
 \quad %
   \propequal{%
     \terminated
   }{%
-    \status{e}
+    \status{p}
   }
 $}
 \UnaryInfC{$%
@@ -929,7 +988,7 @@ $}
   {\SystemState}%
   {clean}%
   {%
-    ( \SetOfNodes \setminus \{e\}%
+    ( \SetOfNodes \setminus \{p\}%
     , \SetOfMessages% TODO: Do we NEED to remove references to e???
     , \SetOfPlugins%
     )
@@ -977,7 +1036,7 @@ $}
   {%
     ( \SetOfNodes
     , \SetOfMessages \cup%
-      \{ 
+      \{
         \msgpacket%
           {\alpha(\engine{s})}
           {\mailboxOf{\enginemap(\engine{t})}}
@@ -990,7 +1049,7 @@ $}
 \end{prooftree}
 \end{definition}
 
-The \mrule{Send} rule above supports the sending of messages between engines in
+The \mruleref{Send} rule above supports the sending of messages between engines in
 the context of a system state $\SystemState$. When engine $\engine{s}$ sends a message to
 engine $\engine{t}$, the rule handles the registration of the message in $\engine{t}$'s
 dedicated mailbox. This message must be well-typed according to $\engine{t}$'s message
@@ -1011,8 +1070,8 @@ mailbox. This is done via the \mruleref{Enqueue} rule.
   m
 }{%
   \msgpacket%
-    {\cdots}
-    {\mailbox{t}} 
+    {\ignore}
+    {\mailbox{t}}
     {\append(v)}
 } \in \SetOfMessages
 \quad %
@@ -1037,10 +1096,12 @@ $}
     \enginemap[%
       \mailbox{t}
         \mapsto%
-          \langle%
-            \cdots,%
-            q \cup \{v\} %
-          \rangle%
+      \engineval%
+        {\ignore}
+        {\ignore}
+        {\ignore}
+        {\ignore}
+        {q \cup \{v\}}
     ]%
   }
 $}
@@ -1062,16 +1123,17 @@ $}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$
-  \engine{p} \in \SetOfMessages%
+  p \in \SetOfMessages%
 \quad %
   \equal{
-    \engine{p}
+    p
   }{%
-      \langle%
-      \cdots,
-      \ready{\cdots}, %
-      \cdots%
-      \rangle
+    \engineval%
+      {\ignore}
+      {\ignore}
+      {\ready{\ignore}}
+      {\ignore}
+      {\ignore}
   }
 $}
 \noLine
@@ -1081,7 +1143,7 @@ $}
   \equal{
     \mailbox{p}
   }{%
-    \mailboxOf{\engine{p}}
+    \mailboxOf{p}
   }
 \quad %
   \propequal{%
@@ -1096,20 +1158,23 @@ $}
   \SetOfNodes'
 }{%
   \SetOfNodes[%
-    \enginemap(\engine{p})%
+    \enginemap({p})%
       \mapsto%
-        \langle %
-          \cdots, %
-          \busy{v}, %
-          \cdots %
-        \rangle
+        \engineval%
+          {\ignore}
+          {\ignore}
+          {\busy{v}}
+          {\ignore}
+          {\ignore}
     ]%
     [\mailbox{p}
-        \mapsto 
-          \langle %
-            \cdots %
-            , q %
-          \rangle %
+        \mapsto
+          \engineval%
+          {\ignore}
+          {\ignore}
+          {\ignore}
+          {\ignore}
+          {q}
     ]%
 }
 $}
@@ -1143,7 +1208,7 @@ whose behaviour is guaranteed to terminate,
 \end{comment}
 
 While the system's operational semantics primarily govern inter-engine
-communication, individual engines retain full autonomy over the computations 
+communication, individual engines retain full autonomy over the computations
 that they perform locally to process messages.
 This subsection formalises the evaluation mechanism for
 guarded actions that govern engine responses to messages. Specifically, the
@@ -1163,11 +1228,11 @@ of the former to introduce the guarded action used to produce the effect.
 
 \begin{equation}\label{eq:guarded-action-eval}
   \guardevalmsgstep%
-    {p}%
-    {g}%
-    {a}%
-    {v}%
-    {E}%
+    {p}
+    {g}
+    {a}
+    {v}
+    {E}
   ,
 \end{equation}
 %
@@ -1180,12 +1245,14 @@ $\langle g, a \rangle$ produces the effect $E$ when processing the message $v$.
 \AxiomC{$%
   p \in \SetOfEngines%
 \quad %
+  \typing{v}{\msgtype{p}}%
+\quad %
   \equal{%
     p
-  }{%  
+  }{%
     \engineval%
-      {\cdots}
-      {b_p}
+      {\ignore}
+      {\behaviour{p}}
       {\busy{v}}
       {\config{p}}
       {\localenv{p}}
@@ -1215,7 +1282,6 @@ $}
 \end{prooftree}
 \end{definition}
 
-
 \begin{definition}[\brule{NoMatchingGuard}]\label{rule:b-NoMatchingGuard}
 \hspace{-1.5em}
 \begin{prooftree}
@@ -1226,9 +1292,9 @@ $}
     p
   }{
     \engineval%
-      {\cdots}
+      {\ignore}
       {\behaviour{p}}
-      {\cdots}
+      {\busy{\ignore}}
       {\config{p}}
       {\localenv{p}}
   }
@@ -1293,7 +1359,7 @@ $}
 $}
 \noLine
 \UnaryInfC{$%
-\forall_{j\neq i} 
+\forall_{j\neq i}
   \guardedaction{j} \in \behaviour{p} %
   \,.\
   \guardevalmsgstep%
@@ -1302,7 +1368,7 @@ $}
   {\action{j}}
   {v}
   {\noop}
-$}  
+$}
 \UnaryInfC{$%
 \evalstep%
   {p}
@@ -1324,13 +1390,15 @@ With rules how to get the effect resulting from processing a message, we now
 need to state how the system evolves when an effect is executed.
 
 Given a system state $\SystemState$, an effect $E$ and a new system state
-$\SystemState'$, we write 
+$\SystemState'$, we write
+
 \begin{equation}\label{eq:effect-exec}
 \effectevalstep%
   {\SystemState}
   {E}%
   {\SystemState'}
 \end{equation}
+
 to state that when the effect $E$ is executed in the system state
 $\SystemState$, it produces the new system state $\SystemState'$. As the effect
 $E$ takes many forms, this judgment is defined by case analysis on the effect
@@ -1369,7 +1437,7 @@ $}
 \UnaryInfC{$
 \effectevalstep%
   {\SystemState}
-  {\send{l_t}{m}}
+  {\send{l_{t}}{m}}
   {\SystemState'}
 $}
 \end{prooftree}
@@ -1379,27 +1447,31 @@ $}
 \hspace{-1.5em}
 \begin{prooftree}
 \AxiomC{$%
-      \engine{i} \in \SetOfEngines%
+      p \in \SetOfEngines%
 \quad \typing{S}{\U}%
 \quad \typing%
         {
-          \mathsf{env}(\engine{i}) , s
+          \environment{p} , s
         }{
-          \envtype{i}{S}
+          \envtype{p}{S}
         }%
 $}
 \UnaryInfC{$%
 \effectevalstep%
-  {(\SetOfNodes, \cdots)}
+  {(\SetOfNodes, \SetOfMessages, \SetOfPlugins)}
   {\update{s}}
   {(\SetOfNodes[
-    \enginemap(\engine{i}) \mapsto %
-      \langle%
-        \cdots
-      , s%
-      \rangle
-    ],%
-   \cdots)}
+    \enginemap(\engine{p}) \mapsto %
+      \engineval%
+        {\ignore}
+        {\ignore}
+        {\ignore}
+        {\ignore}
+        {s}
+    ]%
+   , \SetOfMessages
+   , \SetOfPlugins
+   )}
 $}
 \end{prooftree}
 \end{definition}
@@ -1409,26 +1481,30 @@ $}
   \hspace{-1.5em}
   \begin{prooftree}
   \AxiomC{$%
-  \quad \engine{i} \in \SetOfEngines%
-  \quad \typing{f}{\Option{\msgtype{i} \to \Bool}}%
+  \quad p \in \SetOfEngines%
+  \quad \typing{f}{\Option{\msgtype{p} \to \Bool}}%
   \quad \evalstep%
-            {\engine{i}}
+            {p}
             {v}
             {\mfilter{f}}%
   $}
   \UnaryInfC{$%
   \effectevalstep%
-  {(\SetOfNodes, \cdots)}
+  {(\SetOfNodes, \SetOfMessages, \SetOfPlugins)}
   {\mfilter{f}}
   {(\SetOfNodes[
-    \enginemap(\engine{i}) \mapsto %
-      \langle%
-        \cdots
-      , \ready{f}%
-      , \cdots
-      \rangle
-    ],%
-  \cdots)}
+    \enginemap(p) 
+      \mapsto %
+      \engineval%
+        {\ignore}
+        {\ignore}
+        {\ready{f}}
+        {\ignore}
+        {\ignore}
+    ]
+    , \SetOfMessages
+    , \SetOfPlugins
+  )}
 $}
   \end{prooftree}
   \end{definition}
@@ -1552,8 +1628,8 @@ $}
 \subsection{Engine processing}\label{sec:engine-processing}
 
 This section introduces the core system-level operational rule
-\sruleref{Process} that governs message processing by engines
-denoted as follows. Given a system state $\SystemState$, an engine $p$ and a message
+\sruleref{Process} that governs how engines process messages.
+Given a system state $\SystemState$, an engine $p$, and a message
 $m \in \SetOfMessages$,
 the judgment
 \begin{equation}\label{eq:process-judgment}
@@ -1579,14 +1655,14 @@ critical aspects:
 \quad p \in \SetOfEngines_i%
 \quad %
       \equal{
-        p 
+        p
       }{
         \engineval%
           {\interface{p}}
           {\behaviour{p}}
           {\busy{m}}
           {\config{p}}
-          {\localenv{p}} 
+          {\localenv{p}}
       }
 $}
 \noLine
@@ -1598,7 +1674,7 @@ $}
 \qquad \effectevalstep%
           {\SystemState}
           {E}
-          {(\SetOfNodes', \SetOfNodes', \SetOfPlugins')}
+          {(\SetOfNodes', \SetOfMessages', \SetOfPlugins')}
 $}
 \noLine
 \UnaryInfC{$%
@@ -1611,7 +1687,7 @@ $}
         \engineval%
           {\interface{p}}
           {\behaviour{p}}
-          {\ready{!!!!!}}
+          {\ready{m}}
           {\config{p}}
           {\localenv{p}}
     ]
@@ -1646,7 +1722,7 @@ judgments in \Cref{fig:state-transition-rules} induce state transitions:
 \quad \text{implies}%
 \quad \sysstep%
         {\SystemState}
-        {\SystemState'} 
+        {\SystemState'}
 \end{equation}
 
 \noindent for any system-level atomic operation $\mathsf{op}$.
@@ -1656,20 +1732,20 @@ System-level operations are labelled with identifiers like \srule{Name} in \Cref
   \centering
   \begin{tabular}{ll}
     \textbf{Category} & \textbf{Rules} \\ \hline
-    System operations &  
+    System operations &
         \sruleref{Node},
         \sruleref{EngineSpawn},
         \sruleref{Clean},
         \sruleref{Process} \\
-    Message passing & 
+    Message passing &
         \mruleref{Send},
         \mruleref{Enqueue},
         \mruleref{Dequeue} \\
-    Behaviour evaluation & 
+    Behaviour evaluation &
         \bruleref{GuardedActionEval},
         \bruleref{NoMatchingGuard},
         \bruleref{GuardStrategy} \\
-    Effect execution & 
+    Effect execution &
         \eruleref{Send},
         \eruleref{Update},
         \eruleref{MFilter},
@@ -1701,7 +1777,7 @@ allow infinite accumulation of dormant engines.
 %   system state $\SystemState$, there exists a subsequent state $\SystemState'$ where $m$ is
 %   eventually delivered to its intended recipient.
 % \end{lemma}
-  
+
 \section{Concluding remarks}\label{sec:related}
 
 The Engine Model~\cite{art-engines}, which serves as our focus within the Actor
@@ -1714,12 +1790,12 @@ Fundamentally, engines represent processes augmented with additional structural
 components but not particularly crucial to the main design proposed here. In this
 paper, we proposed a mailboxes-as-actor approach that naturally extends to any
 Actor-like model that shares a process-oriented
-paradigm~\cite{taxonomy-of-actor-models}. 
+paradigm~\cite{taxonomy-of-actor-models}.
 
 \paragraph{Related work}
-Kilim's framework~\cite{kilim-framework} aligns to the mailbox decoupling, goal
-of this paper. Kilim achieves the mailbox separation through specialised queues.
-However, Kilim's implementation treats mailboxes as passive data structures
+The Kilim framework~\cite{kilim-framework} aligns with the mailbox decoupling goal
+of this paper. It achieves this separation through specialised queues.
+However, this implementation treats mailboxes as passive data structures
 rather than first-class actors. This limitation persists across most Actor model
 implementations like Agha's Classic Actor Model~\cite{foundation97agha}, and
 SALSA~\cite{taxonomy-of-actor-models}, where mailboxes typically function as
@@ -1775,18 +1851,19 @@ implement.
 The system-level rules are given in \Cref{sec:creation-rules}. In this section,
 we described how the system grows from the initial empty state, with the addition
 of nodes, engines, and later on messages in \Cref{sec:message-passing-mechanism}. We
-cover other rules such as \srule{Clean} as a garbage-collector for engines,
+cover other rules such as \sruleref{Clean} as a garbage-collector for engines,
 however, we did not cover rules for on-demand engine or node
 deletion/disconnection. This can be seen as an extension of the model.
 
 Our message-passing mechanism implements the rules given in
-\Cref{sec:message-passing-mechanism}. The \mrule{Send} rule enables asynchronous
-message realisation in the system, allowing concurrent message generation
-without sender blocking. Messages are reliably delivered to mailbox engines
-through the \mrule{Enqueue} rule, which implements atomic \say{enqueuing}.
-Message digestion is handled by the \mrule{Dequeue} rule.
+\Cref{sec:message-passing-mechanism}. The \mruleref{Send} rule enables
+asynchronous message realisation in the system, allowing concurrent message
+generation without sender blocking. Messages are reliably delivered to
+mailbox engines through the \mruleref{Enqueue} rule, which implements atomic
+\say{enqueuing} operations. The \mruleref{Dequeue} rule manages message
+consumption from mailboxes.
 
-Finally, and probably one of the most interesting rules, the \srule{Process}
+Finally, and probably one of the most interesting rules, the \sruleref{Process}
 rule enables atomic state transitions by combining behaviour evaluation, rules
 in \Cref{sec:behavior-eval-rules} with effect handling, and rules in
 \Cref{sec:effect-execution}. Together, the rules in \Cref{sec:semantics} form a
