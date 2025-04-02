@@ -7,7 +7,7 @@
 \newcommand{\equal}[2]{\ensuremath{#1 \equiv #2}}
 \newcommand{\propequal}[2]{\ensuremath{#1 = #2}}
 \newcommand{\defequal}[2]{\ensuremath{#1 :\equiv #2}}
-\newcommand{\typing}[2]{\ensuremath{#1 : #2}}
+\newcommand{\typing}[2]{\ensuremath{#1\colon#2}}
 \newcommand{\typedef}[2]{\ensuremath{#1 := #2}}
 
 \newcommand{\U}{\mathfrak{U}}
@@ -44,15 +44,18 @@
 
 \newcommand{\behaviourtype}[1]{\ensuremath{\mathsf{B}_{#1}}}
 
-\newcommand{\EngineStatus}{\ensuremath{\mathsf{EngineStatus}}}
+\newcommand{\EngineStatus}[1]{\ensuremath{\mathsf{EStatus}(#1)}}
 \newcommand{\ready}[1]{\ensuremath{\mathsf{ready}(#1)}}
-\newcommand{\busy}[1]{\ensuremath{\mathsf{busy}(#1)}}
-\newcommand{\terminated}{\ensuremath{\mathsf{terminated}}}
 
-\newcommand{\EngineMode}{\ensuremath{\mathsf{EngineMode}}}
+\usepackage{xspace}
+
+\newcommand{\busy}[1]{\ensuremath{\mathsf{busy}(#1)}}
+\newcommand{\terminated}[0]{\ensuremath{\mathsf{terminated}}\xspace}
+
+\newcommand{\EngineMode}{\ensuremath{\mathsf{EMode}}}
 \newcommand{\mode}{\ensuremath{\mathsf{mode}}}
-\newcommand{\process}{\ensuremath{\mathsf{process}}}
-\newcommand{\mail}{\ensuremath{\mathsf{mail}}}
+\newcommand{\process}{\ensuremath{\mathsf{process}}\xspace}
+\newcommand{\mail}{\ensuremath{\mathsf{mail}}\xspace}
 
 \newcommand{\mailbox}[1]{\ensuremath{m_{#1}}}
 \newcommand{\insertmsgop}{\ensuremath{\cup}}
@@ -123,7 +126,7 @@
 \newcommand{\Cfg}{\ensuremath{\mathsf{Cfg}}}
 \newcommand{\configtype}[1]{\ensuremath{\Cfg{}_{#1}}}
 \newcommand{\config}[1]{\ensuremath{\mathsf{cfg}_{#1}}}
-\newcommand{\configval}[2]{\ensuremath{\langle #1 , #2 \rangle}}
+\newcommand{\configval}[3]{\ensuremath{\langle #1 , #2 , #3 \rangle}}
 
 \newcommand{\localenvproj}[1]{\ensuremath{\mathsf{env}(#1)}}
 \newcommand{\localenv}[1]{\ensuremath{\mathsf{env}_{#1}}}
@@ -140,13 +143,11 @@
 \newcommand{\addr}[1]{\ensuremath{\alpha(#1)}}
 \newcommand{\mailboxOfname}{\ensuremath{\mathsf{mbox}}}
 \newcommand{\mailboxOf}[1]{\ensuremath{\mailboxOfname(#1)}}
+
+\newcommand{\msg}[1]{\text{\texttt{\color{violet}#1}}}
 \newcommand{\msgpacket}[3]{%
     \ensuremath{%
-        \langle %
-            #1,% sender
-            #2,% target
-            #3% payload
-        \rangle %
+       ({\color{teal}{#1}} \triangleright_{\color{purple}{#3}} {\color{violet}{#2}})
     }%
 }
 % \newcommand{\msgpacket}[3]{(#1\triangleright #2?#3)}
