@@ -3,6 +3,13 @@
 \definecolor{darkred}{RGB}{139,0,0}
 \definecolor{darkgreen}{RGB}{0,100,0}
 \definecolor{darkorange}{RGB}{200,80,0}
+\definecolor{darkmagenta}{RGB}{139,0,139}
+
+
+\newcommand{\ctype}[1]{\textcolor{teal}{#1}}
+\newcommand{\ccon}[1]{\textcolor{black}{#1}}
+\newcommand{\stype}[1]{\textcolor{blue}{#1}}
+\newcommand{\scon}[1]{\textcolor{darkgreen}{#1}}
 
 \newcommand{\equal}[2]{\ensuremath{#1 \equiv #2}}
 \newcommand{\propequal}[2]{\ensuremath{#1 = #2}}
@@ -32,19 +39,20 @@
 \newcommand{\append}{\ensuremath{\mathsf{append}}}
 
 % Common mathematical operators and symbols
-\newcommand{\Msg}{\ensuremath{\mathsf{Msg}}}
-\newcommand{\msgtype}[1]{\mathsf{Msg}_{#1}}
+\newcommand{\Msg}{\hyperref[eq:message-type-sum]{\ctype{\ensuremath{\mathsf{Msg}}}}}
+\newcommand{\msgtype}[1]{\Msg_{#1}}
 \newcommand{\payload}[1]{\ensuremath{v_{#1}}}
 
-\newcommand{\Address}{\ensuremath{\mathsf{Addr}}}
+\newcommand{\Address}{\hyperref[def:address]{\ctype{\ensuremath{\mathsf{Addr}}}}}
 \newcommand{\AddressType}[1]{\ensuremath{\Address_{#1}}}
 
-\newcommand{\Env}{\ensuremath{\mathsf{Env}}}
-\newcommand{\envtype}[2]{\ensuremath{\Env_{#1}(#2)}}
+\newcommand{\Env}{\hyperref[def:engine-environment]{\ctype{\ensuremath{\mathsf{Env}}}}}
+\newcommand{\envtype}[2]{{\ensuremath{\Env_{#1}(#2)}}}
 
 \newcommand{\behaviourtype}[1]{\ensuremath{\mathsf{B}_{#1}}}
 
-\newcommand{\EngineStatus}[1]{\ensuremath{\mathsf{EStatus}(#1)}}
+\newcommand{\EngineStatusref}{\hyperref[def:engine-status]{\ctype{\ensuremath{\mathsf{EStatus}}}}}
+\newcommand{\EngineStatus}[1]{\ensuremath{\EngineStatusref(#1)}}
 \newcommand{\ready}[1]{\ensuremath{\mathsf{ready}(#1)}}
 
 \usepackage{xspace}
@@ -52,7 +60,7 @@
 \newcommand{\busy}[1]{\ensuremath{\mathsf{busy}(#1)}}
 \newcommand{\terminated}[0]{\ensuremath{\mathsf{terminated}}\xspace}
 
-\newcommand{\EngineMode}{\ensuremath{\mathsf{EMode}}}
+\newcommand{\EngineMode}{\hyperref[def:engine-mode]{\ctype{\ensuremath{\mathsf{EMode}}}}}
 \newcommand{\mode}{\ensuremath{\mathsf{mode}}}
 \newcommand{\process}{\ensuremath{\mathsf{process}}\xspace}
 \newcommand{\mail}{\ensuremath{\mathsf{mail}}\xspace}
@@ -62,12 +70,10 @@
 \newcommand{\insertmsg}[2]{%
 #1 \cup #2
 }
-\newcommand{\deletemsgop}{\ensuremath{\cup}}
+\newcommand{\deletemsgop}{\ensuremath{\backslash}}
 \newcommand{\deletemsg}[2]{%
 #1 \backslash #2
 }
-
-
 
 %% For operational semantics
 
@@ -123,7 +129,7 @@
 \newcommand{\interface}[1]{\ensuremath{i_{#1}}}
 \newcommand{\behaviour}[1]{\ensuremath{b_{#1}}}
 
-\newcommand{\Cfg}{\ensuremath{\mathsf{Cfg}}}
+\newcommand{\Cfg}{\hyperref[def:engine-configuration]{\ctype{\ensuremath{\mathsf{Cfg}}}}}
 \newcommand{\configtype}[1]{\ensuremath{\Cfg{}_{#1}}}
 \newcommand{\config}[1]{\ensuremath{\mathsf{cfg}_{#1}}}
 \newcommand{\configval}[3]{\ensuremath{\langle #1 , #2 , #3 \rangle}}
@@ -133,7 +139,8 @@
 \newcommand{\environment}[1]{\localenv{#1}}
 \newcommand{\localenvval}[2]{\ensuremath{\langle #1, #2 \rangle}}
 
-\newcommand{\enginetype}[1]{\ensuremath{\mathsf{Eng}_{#1}}}
+\newcommand{\Eng}{\ensuremath{\ctype{\mathsf{Eng}}}}
+\newcommand{\enginetype}[1]{\ensuremath{\Eng_{#1}}}
 \newcommand{\self}{\ensuremath{\textsc{self}}\xspace}
 \newcommand{\new}{\ensuremath{\mathsf{new}}}
 
@@ -156,16 +163,18 @@
 
 % Effects
 \newcommand{\effectsym}{E}
-\newcommand{\effecttype}[2]{\ensuremath{\mathsf{Effect}(#1, #2)}}
+\newcommand{\effect}{\hyperref[def:effects]{\ctype{\ensuremath{\mathsf{Effect}}}}}
+\newcommand{\effecttype}[2]{\ensuremath{\effect(#1, #2)}}
 
-\newcommand{\send}[2]{\ensuremath{\mathsf{send}(#1, #2)}}
+\newcommand{\refeffect}[1]{\hyperref[eq:effects]{\ccon{#1}}}
+\newcommand{\send}[2]{\refeffect{\ensuremath{\mathsf{send}(#1, #2)}}}
 
-\newcommand{\update}[1]{\ensuremath{\mathsf{update}(#1)}}
-\newcommand{\spawn}[2]{\ensuremath{\mathsf{spawn}(#1, #2)}}
-\newcommand{\mfilter}[1]{\ensuremath{\mathsf{mfilter}(#1)}}
-\newcommand{\chain}[2]{\ensuremath{\mathsf{chain}(#1, #2)}}
-\newcommand{\terminate}{\ensuremath{\mathsf{terminate}}}
-\newcommand{\noop}{\ensuremath{\mathsf{noop}}}
+\newcommand{\update}[1]{\refeffect{\ensuremath{\mathsf{update}(#1)} }}
+\newcommand{\spawn}[2]{\refeffect{\ensuremath{\mathsf{spawn}(#1, #2)}}}
+\newcommand{\mfilter}[1]{\refeffect{\ensuremath{\mathsf{mfilter}(#1)}}}
+\newcommand{\chain}[2]{\refeffect{\ensuremath{\mathsf{chain}(#1, #2)}}}
+\newcommand{\terminate}{\refeffect{\ensuremath{\mathsf{terminate}}}}
+\newcommand{\noop}{\refeffect{\ensuremath{\mathsf{noop}}}}
 
 % Common functions
 \newcommand{\freshidname}{\ensuremath{\mathsf{freshId}}}
