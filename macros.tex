@@ -7,7 +7,7 @@
 
 
 \newcommand{\ctype}[1]{\textcolor{teal}{#1}}
-\newcommand{\ccon}[1]{\textcolor{black}{#1}}
+\newcommand{\ccon}[1]{\textcolor{darkmagenta}{#1}}
 \newcommand{\stype}[1]{\textcolor{blue}{#1}}
 \newcommand{\scon}[1]{\textcolor{darkgreen}{#1}}
 
@@ -48,7 +48,6 @@
 
 \newcommand{\Env}{\hyperref[def:engine-environment]{\ctype{\ensuremath{\mathsf{Env}}}}}
 \newcommand{\envtype}[2]{{\ensuremath{\Env_{#1}(#2)}}}
-
 \newcommand{\behaviourtype}[1]{\ensuremath{\mathsf{B}_{#1}}}
 
 \newcommand{\EngineStatusref}{\hyperref[def:engine-status]{\ctype{\ensuremath{\mathsf{EStatus}}}}}
@@ -164,17 +163,16 @@
 % Effects
 \newcommand{\effectsym}{E}
 \newcommand{\effect}{\hyperref[def:effects]{\ctype{\ensuremath{\mathsf{Effect}}}}}
-\newcommand{\effecttype}[2]{\ensuremath{\effect(#1, #2)}}
+\newcommand{\effecttype}[2]{\ensuremath{\effect{}(#1, #2)}}
 
-\newcommand{\refeffect}[1]{\hyperref[eq:effects]{\ccon{#1}}}
-\newcommand{\send}[2]{\refeffect{\ensuremath{\mathsf{send}(#1, #2)}}}
-
-\newcommand{\update}[1]{\refeffect{\ensuremath{\mathsf{update}(#1)} }}
-\newcommand{\spawn}[2]{\refeffect{\ensuremath{\mathsf{spawn}(#1, #2)}}}
-\newcommand{\mfilter}[1]{\refeffect{\ensuremath{\mathsf{mfilter}(#1)}}}
-\newcommand{\chain}[2]{\refeffect{\ensuremath{\mathsf{chain}(#1, #2)}}}
-\newcommand{\terminate}{\refeffect{\ensuremath{\mathsf{terminate}}}}
-\newcommand{\noop}{\refeffect{\ensuremath{\mathsf{noop}}}}
+\newcommand{\refeffect}[1]{\hyperref[eq:effects]{\ccon{\ensuremath{\mathsf{#1}}}}}
+\newcommand{\send}[2]{\refeffect{send}(#1, #2)}
+\newcommand{\update}[1]{\refeffect{update}(#1)}
+\newcommand{\spawn}[2]{\refeffect{spawn}(#1, #2)}
+\newcommand{\mfilter}[1]{\refeffect{mfilter}(#1)}
+\newcommand{\chain}[2]{\refeffect{chain}(#1, #2)}
+\newcommand{\terminate}{\refeffect{terminate}}
+\newcommand{\noop}{\refeffect{noop}}
 
 % Common functions
 \newcommand{\freshidname}{\ensuremath{\mathsf{freshId}}}

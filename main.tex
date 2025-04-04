@@ -881,6 +881,8 @@ is mentioned in \Cref{rem:system-time-notation}.
 
 \subsection{System-level initialisation}\label{sec:creation-rules}
 
+%TODO: add a rule for genesis the system state
+
 In the following rules, we assume that $\SystemState$ is of the form %
 $(\SetOfNodes, \SetOfMessages, \SetOfPlugins)$, unless otherwise specified.
 
@@ -913,33 +915,14 @@ $}
 \end{prooftree}
 \end{definition}
 
+% Rules to introduce engine types and related types.
+
 \subsection{Engine creation}\label{sec:engine-creation-rules}
 
-% The system has a registry of all possible engine types, this is the type 
-% To create an engine in the system on node $\node{i}$, we require a configuration
-% $c$ and an environment $s$, as well as a message interface and an associated
-% behaviour $b$ that defines how it processes messages, and to be in ready state
-% with a valid filter function $f$.
-
-% \begin{equation}
-% \opstep%
-%   { \SystemState
-%   , \node{i}
-%   , c % the configuration of the engine
-%   , s % the local environment of the engine
-%   }
-%   {spawn}%
-%   {%
-%     ( \SetOfNodes[\enginemap_i \mapsto \enginemap']%
-%     , \SetOfMessages%
-%     , \SetOfPlugins%
-%     )
-%   }%
-% \end{equation}
-
-% However, the rule above involves the creation of a new engine, which requires
-% the creation of a new mailbox engine on the same node. That is translated into
-% the following two rules.
+This section outlines the rules for creating and initializing engines within the
+system. The process involves setting up both the processing engine and its
+associated mailbox engine, ensuring that each engine is properly configured and
+ready to operate.
 
 \begin{definition}[\srule{EngineSpawn}]\label{rule:s-EngineSpawn}
 \hspace{-1.5em}
@@ -984,7 +967,7 @@ $}
         \engineval%
           {\texttt{prot}} %
           {b} %
-          {\ready{\ignore}} %
+          {\ready{\none}} %
           {\config{\new}} %
           {\environment{\new}}
       }
@@ -998,7 +981,7 @@ $}
         \config{\mailboxOfname}
       }{%
         \configval%
-          {\alpha_i(\engine{\new})} %
+          {\iota} %
           {\mail}
           {\ignore}
       }%
@@ -1044,10 +1027,8 @@ $}
 \end{prooftree}
 
 The terms $\interface{\mailboxOfname}$, $\behaviour{\mailboxOfname}$, and
-$\environment{\mailboxOfname}$ are the message interface, the behaviour, and the
-environment of the mailbox engine, respectively, which follow the specification
-as in \Cref{def:mailbox-engine} and when no provided, default values are used.
-% TODO: it may seems the function to get mailbox address needs to be defined
+$\environment{\mailboxOfname}$ refer to the message interface, behaviour, and environment of the mailbox engine, respectively. These follow the specifications outlined in \Cref{def:mailbox-engine}, and default values are used when specific values are not provided.
+% TODO: it may seem the function to get mailbox address needs to be defined
 % in the node-specific operations.
 \end{definition}
 
