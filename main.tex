@@ -226,7 +226,7 @@ fixed once the system is defined.
   system, and new engine instances must conform to these types. The sum type
   of these engine types is denoted with $\mathsf{Eng}$. Similarly, message
   payloads adhere to predefined types specific to the target engine.
-  The sum type of these message types is denoted with $\mathsf{Msg}$.
+  The sum type of these message types is denoted with $\Msg$.
   Extending this model to support dynamic typing is future work.
 \end{remark}
 
@@ -290,9 +290,10 @@ can process messages of type in \eqref{eq:message-interface-example}. The engine
 type $\mathsf{calc}$ would be defined later, once all required constructs are
 presented.
 
-% The folowing is our running example of an engine.
+% The following is our running example of an engine.
 \begin{example}[Calculator Engine]\label{ex:calculator-engine}%
-  An engine of the type $\enginetype{\mathsf{calc}}$ might have a message interface
+  Let us assume the system defines the engine type $\enginetype{\mathsf{calc}}$
+  and that an engine of this type has the following message interface:
   \begin{equation}\label{eq:message-interface-example}
   \typedef%
   {\msgtype{\mathsf{calc}}}%
@@ -300,7 +301,6 @@ presented.
   \mid \msg{Subtract}(\mathsf{Pair}) 
   \mid \msg{Multiply}(\mathsf{Pair})
   \mid \msg{Result}(\mathsf{Nat})
-  \mid \msg{Reset}
   },
 \end{equation}
 
@@ -310,7 +310,10 @@ that wrap the message type $\mathsf{Pair}$ of two natural numbers.
 
 To refer to an arbitrary type of a message \emph{within the system}, we use the type
 $\Msg$, the sum type of all message interfaces, and therefore the type of all
-valid message payloads. That is, $\defequal{\Msg}{\bigoplus_{i} \msgtype{i}}$
+valid message payloads,
+\begin{equation}\label{eq:message-type-sum}
+\defequal{\Msg}{\bigoplus_{i} \msgtype{i}},
+\end{equation}
 where $\msgtype{i}$ is the message interface of engine type $i$. To simplify the
 notation, we assume message type subtyping, that is, $\typing{\msgtype{i}}{\Msg}$
 for all $i \in \SetOfEngines$. When no confusion arises, using $p$ to refer to an
@@ -339,11 +342,13 @@ where:
 
 % Ill-formed message example
 \begin{example}[Ill-formed Message]\label{ex:ill-formed-message}%
-  A message for a calculator engine $\msgpacket{s}{t}{\msg{Add}(1, 2, 3)}$ is
-  ill-formed because the payload $\msg{Add}(1, 2, 3)$ does not conform to the
-  message interface $\msgtype{\mathsf{calc}}$. Another example of an ill-formed
-  message is $\msgpacket{s}{t}{\msg{Multiply}(\mathsf{tt}, 2)}$ as it expects
-  a pair of natural numbers as payload, but receives a boolean value instead.
+  The message $\msgpacket{s}{t}{\msg{Add}(1, 2, 3)}$ sent to the calculator
+  engine is ill-formed because the payload $\msg{Add}(1, 2, 3)$ does not conform
+  to the message interface $\msgtype{\mathsf{calc}}$, which expects exactly two
+  natural numbers as arguments. Another example of an ill-formed message is
+  $\msgpacket{s}{t}{\msg{Multiply}(\mathsf{tt}, 2)}$ as it expects a pair of
+  natural numbers as payload, but receives a boolean value $\mathsf{tt}$ as the
+  first argument instead.
 \end{example}
 
 % An alternative approach defines message interfaces through untagged unions, permitting
@@ -360,7 +365,9 @@ execution such as the engine's local state.
 
 \begin{definition}[Engine Lifecycle]\label{def:engine-status}%
 The \textbf{status} of an engine $p$ of type $\EngineStatus{p}$
-determines the engine's operational state within its lifecycle.
+determines the engine's operational state within its lifecycle as shown in
+\Cref{fig:engine-status}.
+
 \begin{equation}\label{eq:engine-status}
 \begin{aligned}
 \typedef%
@@ -371,6 +378,7 @@ determines the engine's operational state within its lifecycle.
   }
 \end{aligned}
 \end{equation}
+
 % tikz
 \begin{figure}%[!hbp]
 \centering
@@ -393,16 +401,16 @@ any more messages.}
 \end{figure}
 \end{definition}
 
-As shown in \Cref{fig:engine-status}, an engine in the \ready{f} state can
+As illustrated in \Cref{fig:engine-status}, an engine in the \ready{f} state can
 process messages. The optional predicate $f$ specifies which message types the
 engine wants to receive. When no predicate is provided (\none), all messages
 pass through by default. This is equivalent to having a predicate that always
-returns true. Engines start in the \ready{\none} state at the creation time if
-not otherwise specified.
+returns $\mathsf{tt}$. At the creation time, unless otherwise specified, an engine
+is in the \ready{\none} state, meaning it accepts all messages by default.
 
-The remaining states are \busy{m} and \terminated{}. An engine in \busy{m} is
-actively processing message $m$. When in \terminated{} state, the engine stops
-processing messages and is removed from the system.
+After creation, the engine may transition to the \busy{m} state, where it is
+actively processing message $m$, or to the \terminated{} state, where it stops
+processing messages and is removed from the system in the next step.
 
 \begin{example}\label{ex:engine-status-example}%
   A calculator engine may start in the \ready{\none} state, accepting any
@@ -412,87 +420,98 @@ processing messages and is removed from the system.
   only accept result messages before taking new operations.
 
   \begin{equation}\label{eq:engine-status-example}
-    \mathsf{f} := \lambda m.\mathsf{case}\ m\ \mathsf{of}\ \{\msg{Result}(x) \Rightarrow \mathsf{tt};\ignore \Rightarrow \mathsf{ff}\ \}.
+    \mathsf{f} := \lambda m.%
+\mathsf{case}\ m\ \mathsf{of}\ \{%
+  \msg{Result}(x) \Rightarrow \mathsf{tt};%
+  \ignore \Rightarrow \mathsf{ff}%
+  \}.
   \end{equation}
 \end{example}
 
-\begin{remark}[Engine Removal]\label{rem:engine-removal}%
-  A terminated engine's address may still be referenced in messages. When an
-  engine enters the \terminated{} state and is removed, messages sent to its
-  address simply will not be delivered. Senders should not expect responses from
-  terminated engines.
-  
-  % Since the system does not maintain a registry of terminated engines, nor
-  % does it notify senders when they attempt to communicate with non-existent
-  % engines. One might want to extend the system so that it can notify senders
-  % when they attempt to communicate with non-existent engines.
-\end{remark}
+% \begin{remark}[Engine Removal]\label{rem:engine-removal}%
+%   Even with an engine in the \terminated{} state, its address may still be
+%   referenced in messages. There is no way to prevent this effectively.
+%   % Since the system does not maintain a registry of terminated engines, nor
+%   % does it notify senders when they attempt to communicate with non-existent
+%   % engines. One might want to extend the system so that it can notify senders
+%   % when they attempt to communicate with non-existent engines.
+% \end{remark}
 
-We distinguish between two types of engines: processing engines and mailbox
+We distinguish between two types of engines, processing engines and mailbox
 engines. This distinction is based on the engine's operational mode, which
 defines its purpose and how messages are routed to it.
 
 \begin{definition}\label{def:engine-mode}
-The \textbf{operational mode} of an engine is of type $\EngineMode$
+The \textbf{operational mode} of an engine is of type $\EngineMode$,
 \begin{equation}\label{eq:engine-mode}
 \typedef{\EngineMode}
   {    \process 
   \mid \mail
-  }.
+  }\,.
 \end{equation}
 \end{definition}
 
 An engine's operational mode cannot change after creation. In fact, this mode is
-opaque to the engine itself and handled by the system. The system treats engines
-differently based on their mode: \process engines only process messages, while
-\mail engines function as mailboxes. The operational mode is stored in the
-engine's configuration (defined below) and guides the message routing system.
+opaque to the engine itself and is handled by the system. The system's
+message-passing mechanism treats engines differently based on their mode. In
+short, \process engines do not receive messages directly. Messages sent to them
+are internally routed to \mail engines, which can accept all messages and route
+them back to their \process engine. The operational mode is stored in the engine's
+configuration.
 
 \begin{definition}\label{def:engine-configuration}%
-The \textbf{configuration} of an engine $p$ which is data that persists across
-the engine's lifecycle is a tuple $\configval{p}{\mode}{c}$ where:
+Given a type $S_p$, the \textbf{configuration} of an engine $p$ parameterised by $S_p$ is
+a tuple $\configval{p}{\mode}{c}$ where:
 \begin{itemize}
     \item $\typing{p}{\Option{\Address}}$ is an optional reference (address) of the engine's parent,
-    \item $\typing{\mode}{\EngineMode}$ is the engine's operational mode, and
-    \item $\typing{c}{S_p}$ is data of the engine-type specific configuration $S_p$.
+    \item $\typing{\mode}{\EngineMode}$ is the engine's \hyperref[def:engine-mode]{operational mode}, and
+    \item $\typing{c}{S_p}$ is configuration data specific to the engine type of $p$.
 \end{itemize}
-Again, the engine type defines the type for its possible
-configurations. As an abuse of notation, we use $\configtype{p}$ to refer to the
-type of the configuration of engine $p$, the same defined by the engine type.
+The type of engine configurations for engine type $\enginetype{p}$ is denoted
+with $\configtype{p}$. The type $S_p$ comes from the engine's type.
 \end{definition}
 
-Recall that engines are isolated from each other and process messages
-independently. However, an engine's configuration alone is insufficient for
-proper operation, some form of state is required. Consequently, each engine
-encapsulates its own state as part of its execution context, which as a whole
-we refer to as the engine's \emph{environment}.
+\begin{remark}\label{rem:configuration-purpose}%
+The engine configuration serves a role in separating persistent engine metadata
+from transient execution state. By isolating configuration data, which remains
+constant throughout the engine's lifecycle, from the execution environment,
+which can change during message processing, we achieve a cleaner separation of
+concerns in the system design. The persistent metadata may include other
+information, such as relevant timestamps, epoch numbers, etc.
+\end{remark}
+
+While engines operate in isolation and process messages independently, their
+configuration alone cannot support their full functionality. Each engine
+requires additional state management capabilities to operate effectively. To
+address this need, every engine maintains its own state within an execution
+context, collectively referred to as the engine's \emph{environment}. 
 
 \begin{definition}\label{def:engine-environment}%
-Given a type $S$ for the local state of an engine $p$ as defined by its engine
-type, an execution \textbf{environment} of $p$ is a tuple $\localenvval{s}{m}$ where:
+Given a type $L_p$ for the local state of an engine $p$ as defined by its engine
+type, an execution \textbf{environment} of $p$ is a tuple $\localenvval{s}{m}$, of
+type $\envtype{p}{L_p}$, where:
 \begin{itemize}
-    \item $\typing{s}{S}$ is the local state of the engine, and
+    \item $\typing{s}{L_p}$ is the local state of the engine, and
     \item $\typing{m}{\List{\Address}}$ is the engine's address book.
 \end{itemize}
-Given an engine $p$, we use $\localenv{p}$ to refer to its environment, of type
-$\envtype{p}{S}$.
+Given an engine $p$, we use $\localenv{p}$ to refer to its environment.
 \end{definition}
 
 \begin{remark}\label{rem:engine-environment}%
-As part of the creation of an engine, the system adds the engine's own address to
-the address book as the first element. Thus, the address book is always non-empty. For
-convenience, the system defines an alias \self{} that refers to the engine's own address,
-which is always the first element of the address book.
+As part of the creation of an engine, the system adds the engine's own address
+to the address book as the first element. Thus, the address book is always
+non-empty. For convenience, the system defines an alias \self{} that refers to
+the engine's own address.
 \end{remark}
 
 \subsection{Execution directives}\label{sec:execution-directives}
 
+The behaviour of an engine states what it does when it reacts to a message. How
+the engine reacts to a message is determined by a set of guarded actions that
+return commands, which the system executes at runtime. This can be described via
+an effect system presented below. 
 
-The behaviour of an engine describes what it does when it reacts to a message.
-This description of computation is via an effect system consisting of commands to
-the system to be executed at runtime.
-
-\begin{definition}[Effect]\label{def:effects}%
+\begin{definition}[Effect System]\label{def:effects}%
 Given a type $S_p$ representing the local state of an engine~$p$, an
 \textbf{effect} is of type $\effecttype{p}{S_p}$, which considers all the
 possible ways an engine can influence the system by reacting to a message.
@@ -542,7 +561,7 @@ possible ways an engine can influence the system by reacting to a message.
 \end{tikzcd}\]%
 \caption{For an engine $p$, its behaviour acts on a message $m$ of type
 $\msgtype{p}$ and an engine's configuration $\config{p}$
-and environment $\localenvval{p}(S_p)$. The pre-conditions, denoted as $g_i$, are
+and environment $\localenv{p}$. The pre-conditions, denoted as $g_i$, are
 guards that determine which action is executed. The symbols $r_i$ represent
 output that feeds into the actions $c_i$. The actions, denoted as $c_i$ return
 one of the effects as in \Cref{def:effects}. These effects are executed if their
@@ -551,20 +570,19 @@ null operation, $\noop$.}
 \label{fig:effect}
 \end{figure}
 
-Given an engine $p$, the following definition specifies the guard and action
-components of an engine's behaviour.
-
 \begin{definition}[Guard]\label{def:guards}%
-A \textbf{guard} is a function that returns a value of a given type $\returntype$ if the
-guard is satisfied, and $\none$ otherwise; the \emph{guard predicate} is the
-corresponding function that maps to false if and only if the guard maps to $\none$.
-The guard is a mapping of type %
+A \textbf{guard} is a mapping of type
 \begin{equation}
 \msgtype{p} \times \configtype{p} \times \envtype{p}{S_p} \to \Option{\returntype}.
 \end{equation}
-Recall that $\returntype$ is the specific type of data returned when the guard is
+It returns a value of a given type $\returntype$ if the guard is satisfied, and
+$\none$ otherwise. The type $\returntype$ is the specific type of data returned when the guard is
 satisfied, and $S_p$ is the type of the engine's local state.
 \end{definition}
+
+There is a corresponding predicate of a guard, which maps to false if and only if
+the guard maps to $\none$. Given a guard, we want to run an action if and only
+if the guard is satisfied.
 
 % On the computational aspects of an engine, the behaviour evaluating the
 % different guards, and for each guard, the action to be executed, whenever the
@@ -583,12 +601,11 @@ $\returntype$ is a mapping of type %
 \end{equation}
 \end{definition}
 
-Then, we compose a guard and an action to form a \emph{guarded action}, which is
-the building block of which an engine's behaviour consists of. The separation of
-guard and action allows for a more modular design. Consider that one may want to
-reuse the guard of an engine in different engines or decouple the logic of the
-guard against the action, allowing the pre-conditions to be reused in scenarios
-where the action is not applicable.
+Combining a guard and an action results in a \emph{guarded action}, which is the
+building block of an engine's behaviour. Separating guards and actions allows
+for a modular design. This way, a guard can be reused in different engines or
+the logic of the guard can be separated from the action, making pre-conditions
+reusable even when the action is not applicable.
 
 \begin{definition}[Guarded action]\label{def:guarded-action}%
   Given an engine $\engine{j}$, a \textbf{guarded action} of the engine's
@@ -694,7 +711,7 @@ carrying a payload of type $\msgtype{j}$
   \item $\emptyset$ denoting empty state.
   \item Message insertion to support $\append\mbox{-}$messages, %
   $\typing{\insertmsgop}{S \times \msgtype{j} \to S}.$
-  \item Message delation to support internal system delation, %
+  \item Message deletion, %
   $\typing{\deletemsgop}{S \times \msgtype{j} \to S}.$
   % for verification, one might want to add proof that the operations
   % actually insert/delete the element from the structure
