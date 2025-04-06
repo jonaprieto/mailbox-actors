@@ -95,9 +95,9 @@ and lowercase letters or lowercase words are used for terms. There is a universe
 of types $\U$, so if $A$ is a type, then $\typing{A}{\U}$. We also work with inductive
 types presented in the following form:
 %
-\begin{align*}
+\begin{align}\label{eq:inductive-type-definition}
   \defequal{\ctype{A}}{\cdots \mid \mathsf{\ccon{C}}(A_1, \dots, A_n) \, ,}
-\end{align*}
+\end{align}
 %
 where $\ccon{C}$ is a constructor of the type $\ctype{A}$, and $A_1, \dots, A_n$ are
 the types of the constructor arguments.
@@ -110,7 +110,9 @@ We use standard type notation where $\N$ denotes the inductive type of natural
 numbers, $\EmptyType$ represents the empty type, $\Unit$ denotes the type with
 exactly one term denoted with $*$, $\Bool$ denotes the type with two terms,
 $\mathsf{tt}$ and $\mathsf{ff}$, and $\List{A}$ represents the type of
-parametric lists. Now, $\defequal{x}{y}$ indicates definitional
+parametric lists. The notation $[a_1, \dots, a_n]$ is used to denote a list
+with elements $a_1, \dots, a_n$. The empty list is denoted with $[]$.
+Now, $\defequal{x}{y}$ indicates definitional
 equality where term $x$ is defined as $y$, while $\equal{a}{b}$ signifies
 definitional equality between terms, and $\propequal{a}{b}$ denotes propositional equality.
 $A \times B$ denotes the product of $A$ and $B$, and their terms, tuples, are denoted
@@ -655,12 +657,12 @@ It returns a value of type $\returntype$ if the guard is satisfied, and
 $\none$ otherwise. Recall that $L_p$ is the type of the engine's local state.
 \end{definition}
 
-As illustrated in Figure~\ref{fig:effect}, guards act as pre-conditions that
-determine which actions should be executed. We can define a corresponding
-predicate for any guard $g$, where the predicate $\hat{g}$ maps to $\mathsf{ff}$
-if and only if $g$ maps to $\none$, otherwise it maps to $\mathsf{tt}$. When a
-guard is satisfied, its associated action is triggered, leading to the execution
-of specific effects by the system's runtime.
+As illustrated in \Cref{fig:effect}, guards act as pre-conditions that determine
+which actions should be executed. We can define a corresponding predicate for
+any guard $g$, where the predicate $\hat{g}$ maps to $\mathsf{ff}$ if and only
+if $g$ maps to $\none$, otherwise it maps to $\mathsf{tt}$. When a guard is
+satisfied, its associated action is triggered, leading to the execution of
+specific effects by the system's runtime.
 
 % On the computational aspects of an engine, the behaviour evaluating the
 % different guards, and for each guard, the action to be executed, whenever the
@@ -680,18 +682,52 @@ $\returntype$ is a mapping of type %
 
 \begin{definition}[Guarded action]\label{def:guarded-action}%
   Under the same assumptions as in \Cref{def:guards,def:action}, given an engine
-  $p$, a \textbf{guarded action} for engine $p$ is a tuple
-  $\guardedaction{i}$ where:
+  $p$, a \textbf{guarded action} for engine $p$ is a tuple $\guardedaction{i}$
+  where:
   \begin{itemize}
-    \item $\typing{\guard{i}}{\In{p} \to \Option{\returntype}}$ is a guard that determines when the
-    action $\action{i}$ should execute, and
-    \item $\typing{\action{i}}{\returntype \times \In{p} \to \Out{p}}$ is an action that specifies
-    an effect.
+    \item $\typing{\guard{i}}{\In{p} \to \Option{\returntype}}$ is a guard that
+    determines when the action $\action{i}$ should execute, and
+    \item $\typing{\action{i}}{\returntype \times \In{p} \to \Out{p}}$ is an
+    action that specifies an effect.
   \end{itemize}
   Together, both, the guard and action induce a mapping of type $\In{p} \to
   \Out{p}$ that takes in a message, engine configuration, and environment, and
   outputs the effect to execute when the guard is satisfied.
 \end{definition}
+
+\begin{definition}[Composite Guard and Action]\label{def:composite-guard-action}%
+  Under the same assumptions as in \Cref{def:guarded-action}, we define the
+  composite guard and action as the operation $\odot$ on a guard and action, of
+  type $\In{p} \to \Out{p}$, and defined as follows.
+  \begin{equation}\label{eq:composite-guard-action-operation}
+    \defequal{
+      (\guard{i} \odot \action{i})
+    }{
+    \lambda m.\ \mathsf{case}\ \guard{i}(m)\ \mathsf{of}\ \{
+       \some{r} \Rightarrow \action{i}(r, m);
+      \none \Rightarrow \noop
+    \}
+  }
+  \,.
+  \end{equation}
+\end{definition}
+
+\begin{definition}[Engine Behaviour]\label{def:engine-behaviour}%
+Under the same assumptions as in \Cref{def:guarded-action}, given an engine $p$,
+the type of its behaviour is denoted with $\behaviourtype{p}$, 
+
+\begin{equation}
+\defequal{
+  \behaviourtype{p}
+}{
+  \List{
+    \In{p} \to \Out{p}
+  }
+}
+\,.
+\end{equation}
+\end{definition}
+    
 
 \begin{example}\label{ex:keyvalue-engine}%
 For the key-value store engine, we define guarded actions for each message type.
@@ -742,7 +778,13 @@ so we can write back the result directly.
     \,.
   } \\
   &\defequal{
-    a_{\mathsf{get}}(k, \langle m, \ignore, \langle \mathsf{st}, \mathsf{cnt} \rangle \rangle)
+    a_{\mathsf{get}}(
+      k, 
+      \langle 
+        m, 
+        \ignore, 
+        \langle \mathsf{st}, \mathsf{cnt} \rangle
+      \rangle)
   }{ \chain{\\
   &\quad  \update{%
         \langle
@@ -859,7 +901,13 @@ We define the guard and action for delete operations as follows:
     \,.
   } \\
   &\defequal{
-    a_{\mathsf{delete}}(k, \langle m, \ignore, \langle \mathsf{st}, \mathsf{cnt} \rangle \rangle)
+    a_{\mathsf{delete}}
+      (k, 
+        \langle 
+          m, 
+          \ignore, 
+          \langle \mathsf{st}, \mathsf{cnt} \rangle 
+        \rangle)
   }{ \\
   &\quad \chain{\\
   &\quad \quad      \update{%
@@ -886,17 +934,18 @@ by the following set of guarded actions.
   \defequal{
       \behaviourtype{\mathsf{kv}}
     }{
-    \{ \langle g_{\mathsf{get}}, a_{\mathsf{get}} \rangle
-     , \langle g_{\mathsf{put}}, a_{\mathsf{put}} \rangle
-     , \langle g_{\mathsf{delete}}, a_{\mathsf{delete}} \rangle 
-    \}
+    [  (g_{\mathsf{get}} \odot a_{\mathsf{get}})
+     , (g_{\mathsf{put}} \odot a_{\mathsf{put}})
+     , (g_{\mathsf{delete}} \odot a_{\mathsf{delete}}) 
+    ]
   }
   \,.
   \end{aligned}
 \end{equation}
 \end{example}
 
-%TODO: comment on the given guard action evaluation strategy in the corresponding op. rule
+%TODO: comment on the given guard action evaluation strategy in the
+%corresponding op. rule
 
 \begin{remark}\label{rem:turing-completeness}%
 A question at this point is whether engines can enable unbounded computation.
@@ -912,11 +961,6 @@ guarded actions acting as conditional statements with open-ended message passing
 enables computational universality.
 \end{remark}
 
-\begin{definition}[Engine behaviour]\label{def:engine-behaviour}
-Given an engine $p$, the type of its behaviour is denoted with
-$\behaviourtype{p}$, and it is the set of its guarded actions.
-\end{definition}
-
 \subsection{Engines}\label{sec:processing-engines}
 
 Having defined the components that make up an engine's behaviour, we can now
@@ -926,16 +970,37 @@ capabilities. We have established the types of their constituent parts, that is,
 guards, actions, configurations and environments.
 
 \begin{definition}[Engine]\label{def:engine}%
-An \textbf{engine} is the computational unit of the system, formally specified
-by a tuple $\engineval{i}{b}{s}{\mathsf{cfg}}{\mathsf{env}}$ where:
+Given $C_p$ the type of the engine's configuration, $L_p$ the type of the
+engine's local state, an \textbf{engine} is the computational unit of the
+system, formally specified by a tuple
+$\engineval{i}{b}{s}{\mathsf{cfg}}{\mathsf{env}}$ where:
 \begin{itemize}
-\item $i$ is the engine's message interface, a type as described in \Cref{def:message-interface},
-\item $b$ is the engine's behaviour ---a set of guarded actions as defined in \Cref{def:guarded-action},
-\item $s$ is the engine's status flag as specified in \Cref{def:engine-status},
-\item $\mathsf{cfg}$ is the engine's configuration as described in
-\Cref{def:engine-configuration}, and
-\item $\mathsf{env}$ is the engine's execution environment as outlined in \Cref{def:engine-environment}.
+\item $\typing{i}{\msgtype{p}}$ is the engine's message interface,
+\item $\typing{b}{\behaviourtype{p}}$ is the engine's behaviour,
+\item $\typing{s}{\EngineStatus{p}}$ is the engine's status,
+\item $\typing{\mathsf{cfg}}{\configtype{p}{C_p}}$ is the engine's configuration, and
+\item $\typing{\mathsf{env}}{\envtype{p}{L_p}}$ is the engine's execution environment.
 \end{itemize}
+Therefore, the type of an engine, $\enginetype{p}$, is defined as:
+
+\begin{equation}
+  \begin{aligned}
+  \defequal{
+    \enginetype{p}
+  }{
+    \msgtype{p} 
+      \times 
+    \behaviourtype{p} 
+      \times 
+    \EngineStatus{p} 
+      \times 
+    \configtype{p}{C_p} 
+      \times 
+    \envtype{p}{L_p}
+  }
+  \,.
+  \end{aligned}
+\end{equation}
 \end{definition}
 
 % \begin{remark}\label{rem:engine-init}
