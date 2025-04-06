@@ -62,8 +62,8 @@
 
 \newcommand{\EngineMode}{\hyperref[def:engine-mode]{\ctype{\ensuremath{\mathsf{EMode}}}}}
 \newcommand{\mode}{\ensuremath{\mathsf{mode}}}
-\newcommand{\process}{\ccon{Process}}
-\newcommand{\mail}{\ccon{Mail}}
+\newcommand{\process}{\ccon{Process}\xspace}
+\newcommand{\mail}{\ccon{Mail}\xspace}
 
 \newcommand{\mailbox}[1]{\ensuremath{m_{#1}}}
 \newcommand{\insertmsgop}{\ensuremath{\cup}}
@@ -107,6 +107,9 @@
 
 \newcommand{\uid}[1]{\ensuremath{\mathsf{uid}(#1)}}
 \newcommand{\loc}[2]{\ensuremath{ \langle #1, #2 \rangle}}
+
+\newcommand{\In}[1]{\ensuremath{\mathsf{In}_{#1}}}
+% \newcommand{\Out}[1]{\ensuremath{\mathsf{Out}_{#1}}}
 
 % Rules
 
@@ -169,13 +172,13 @@
 \newcommand{\effecttype}[2]{\ensuremath{\effect{}(#1, #2)}}
 
 \newcommand{\refeffect}[1]{\hyperref[eq:effects]{\ccon{#1}}}
-\newcommand{\send}[2]{\refeffect{send}(#1, #2)}
-\newcommand{\update}[1]{\refeffect{update}(#1)}
-\newcommand{\spawn}[2]{\refeffect{spawn}(#1, #2)}
-\newcommand{\mfilter}[1]{\refeffect{mfilter}(#1)}
-\newcommand{\chain}[2]{\refeffect{chain}(#1, #2)}
-\newcommand{\terminate}{\refeffect{terminate}}
-\newcommand{\noop}{\refeffect{noop}}
+\newcommand{\send}[2]{\refeffect{Send}(#1, #2)}
+\newcommand{\update}[1]{\refeffect{Update}(#1)}
+\newcommand{\spawn}[2]{\refeffect{Spawn}(#1, #2)}
+\newcommand{\mfilter}[1]{\refeffect{MFilter}(#1)}
+\newcommand{\chain}[2]{\refeffect{Chain}(#1, #2)}
+\newcommand{\terminate}{\refeffect{Terminate}}
+\newcommand{\noop}{\refeffect{Noop}}
 
 % Common functions
 \newcommand{\freshidname}{\ensuremath{\mathsf{freshId}}}
