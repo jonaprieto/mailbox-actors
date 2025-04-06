@@ -109,7 +109,7 @@
 \newcommand{\loc}[2]{\ensuremath{ \langle #1, #2 \rangle}}
 
 \newcommand{\In}[1]{\ensuremath{\mathsf{In}_{#1}}}
-% \newcommand{\Out}[1]{\ensuremath{\mathsf{Out}_{#1}}}
+\newcommand{\Out}[1]{\ensuremath{\mathsf{Out}_{#1}}}
 
 % Rules
 
@@ -133,7 +133,7 @@
 \newcommand{\behaviour}[1]{\ensuremath{b_{#1}}}
 
 \newcommand{\Cfg}{\hyperref[def:engine-configuration]{\ctype{\ensuremath{\mathsf{Cfg}}}}}
-\newcommand{\configtype}[1]{\ensuremath{\Cfg{}_{#1}}}
+\newcommand{\configtype}[2]{\ensuremath{\Cfg{}_{#1}(#2)}}
 \newcommand{\config}[1]{\ensuremath{\mathsf{cfg}_{#1}}}
 \newcommand{\configval}[3]{\ensuremath{\langle #1 , #2 , #3 \rangle}}
 
@@ -169,7 +169,11 @@
 % Effects
 \newcommand{\effectsym}{E}
 \newcommand{\effect}{\hyperref[def:effects]{\ctype{\ensuremath{\mathsf{Effect}}}}}
-\newcommand{\effecttype}[2]{\ensuremath{\effect{}(#1, #2)}}
+\newcommand{\effecttype}[3]{\ensuremath{\effect{}(%
+  #1 % engine
+, #2 % configuration specific to the engine
+, #3 % local state of the engine
+)}}
 
 \newcommand{\refeffect}[1]{\hyperref[eq:effects]{\ccon{#1}}}
 \newcommand{\send}[2]{\refeffect{Send}(#1, #2)}
@@ -233,4 +237,35 @@
     , #2 %
     \rangle %
 }}
+
+%%% macros for key-value store engine
+\newcommand{\kv}{\ensuremath{\mathsf{kv}}}
+\newcommand{\kvtype}[1]{\enginetype{\kv_{#1}}}
+\newcommand{\kvconfig}[2]{\configtype{\kv_{#1}}{#2}}
+\newcommand{\kvenv}[1]{\envtype{\kv_{#1}}}
+
+%% methods for key-value store engine
+\newcommand{\kvget}{\ensuremath{\mathsf{get}}}
+\newcommand{\kvput}{\ensuremath{\mathsf{put}}}
+\newcommand{\kvdelete}{\ensuremath{\mathsf{delete}}}
+\newcommand{\kvstats}{\ensuremath{\mathsf{stats}}}
+\newcommand{\kvstore}[1]{\ensuremath{\mathsf{store}(#1)}}
+\newcommand{\kvaccessCount}[1]{\ensuremath{\mathsf{accessCount}(#1)}}
+\newcommand{\kvgetOrDefault}[2]{\ensuremath{\mathsf{getOrDefault}(#1, #2)}}
+\newcommand{\kvremove}[1]{\ensuremath{\mathsf{remove}(#1)}}
+\newcommand{\kvcontainsKey}[1]{\ensuremath{\mathsf{containsKey}(#1)}}
+
+%% message tags for key-value store engine
+\newcommand{\kvmsgGet}{\msg{Get}}
+\newcommand{\kvmsgPut}{\msg{Put}}
+\newcommand{\kvmsgDelete}{\msg{Delete}}
+\newcommand{\kvmsgResult}{\msg{Result}}
+
+%% dsl for functional programming
+\newcommand{\letin}[2]{\ensuremath{\mathsf{let}\ \defequal{#1}{#2}}}
+\newcommand{\case}[2]{\ensuremath{\mathsf{case}\ #1\ \mathsf{of}\ \{#2\}}}
+
+
+
+
 

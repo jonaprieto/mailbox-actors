@@ -482,38 +482,39 @@ and route them back to their \process engine when appropriate. The operational
 mode is stored in the engine's configuration.
 
 \begin{definition}\label{def:engine-configuration}%
-Given a type $S_p$, the \textbf{configuration} of an engine $p$ parameterised by $S_p$ is
+Given a type $C_p$, the \textbf{configuration} of an engine $p$ parameterised by $C_p$ is
 a tuple $\configval{p}{\mode}{c}$ where:
 \begin{itemize}
     \item $\typing{p}{\Option{\Address}}$ is an optional reference (address) of the engine's parent,
     \item $\typing{\mode}{\EngineMode}$ is the engine's \hyperref[def:engine-mode]{operational mode}, and
-    \item $\typing{c}{S_p}$ is configuration data specific to the engine type of $p$.
+    \item $\typing{c}{C_p}$ is configuration data specific to the engine type of $p$.
 \end{itemize}
 The type of engine configurations for engine type $\enginetype{p}$ is denoted
-with $\configtype{p}$. 
+with $\configtype{p}{C_p}$. 
 % The type $S_p$ comes from the engine's type.
 Given an engine $p$, we use $\config{p}$ to refer to its configuration.
 \end{definition}
 
 \begin{example}\label{ex:keyvalue-store-configuration}%
-Let us define the configuration type $C_{\mathsf{kv}}$ for the key-value store engine
-from \Cref{ex:keyvalue-engine}. One could define the configuration to establish the
-operational constraints of the key-value store, similar to how database systems
-often have different access modes.
+Let us define the engine-specific configuration type $C_p$ as $\ctype{C}_{\mathsf{kv}}$
+for the key-value store engine from \Cref{ex:keyvalue-engine}. This type
+establishes the operational constraints of the key-value store, similar to how
+database systems often have different access/update modes.
 \begin{equation}\label{eq:keyvalue-store-configuration}
 \begin{aligned}
 \typedef{%
   \ctype{C}_{\mathsf{kv}}
-}{      &\quad \ccon{AppendOnly} & \text{(only allows adding new entries)} \\
-   \mid & \quad \ccon{NoDeletion} & \text{(allows reads/updates but not deletions)} \\
+}{      &\quad \ccon{ReadOnly} & \text{(only allows reading existing entries)} \\
+   \mid & \quad \ccon{ReadAppend} & \text{(allows reading and adding new entries)} \\
+   \mid & \quad \ccon{ReadModify} & \text{(allows reading, adding, and updating entries)} \\
    \mid & \quad \ccon{ReadWrite} & \text{(full CRUD capabilities)}
 }.
 \end{aligned}
 \end{equation}
 For convenience, given a key-value store engine $p$, and its configuration
 $\config{p}$, we define predicates that check if the configuration is of a
-certain mode, $\mathsf{isAppendOnly}$, $\mathsf{isNoDeletion}$, and
-$\mathsf{isReadWrite}$. 
+certain mode, $\mathsf{isReadOnly}$, $\mathsf{isReadAppend}$,
+$\mathsf{isReadModify}$, and $\mathsf{isReadWrite}$. 
 \end{example}
 
 While engines operate in isolation and process messages independently, their
@@ -539,12 +540,12 @@ automatically added during engine spawning.
 % For convenience, the system also provides a function \self{} that
 % refers to the engine's own address.
 \end{remark}
-\begin{example}\label{ex:keyvalue-store-engine}%
-For the key-value store engine, we define the type $S_{\mathsf{kv}}$ for the
+\begin{example}\label{ex:keyvalue-store-engine-local-state}%
+For the key-value store engine, we define the type $L_{\mathsf{kv}}$ for the
 local state to include both the store and access statistics:
 
 \begin{equation}\label{eq:keyvalue-store-engine-local-state}
-\defequal{S_{\mathsf{kv}}}{
+\defequal{L_{\mathsf{kv}}}{
           ({\mathsf{Key}}\to {\Option{\mathsf{Val}}})
    \times ({\mathsf{Key}}\to {\N})
    \,.
@@ -554,10 +555,14 @@ Therefore, we can use as initial local state of a key-value store engine
 the pair,
 \begin{equation}\label{eq:keyvalue-store-engine-initial-local-state}
 \defequal{
-  s_{\mathsf{kv}}
-}{
-  (\lambda k.\ \none, \lambda k.\ 0)
-}
+  \typing{
+    l_{\mathsf{kv}}
+  }{ 
+    L_{\mathsf{kv}}
+  }
+  }{
+    (\lambda k.\ \none, \lambda k.\ 0)
+  }
 \,,
 \end{equation}
 so, it represents an empty store, returning $\none$ for any key, and an access
@@ -577,31 +582,33 @@ configuration. If a guard is satisfied, its associated action produces an
 \emph{effect} that the system executes, as illustrated in \Cref{fig:effect}.
 
 \begin{definition}[Effect System]\label{def:effects}%
-Let $S_p$ be the type representing the local state of an engine~$p$. An
-\textbf{effect} of type $\effecttype{p}{S_p}$ represents a primitive operation
-that an engine can perform to influence the system state when processing a
-message.
+Let $C_p$ be the type representing the engine-specific configuration of an
+engine~$p$ as in \Cref{def:engine-configuration}, and $L_p$ be the type representing
+the local state of an engine~$p$ as in \Cref{def:engine-environment}. An
+\textbf{effect} of type $\effecttype{p}{C_p}{L_p}$ represents a primitive
+operation that an engine can perform to influence the system state when
+processing a message.
 
 \begin{equation}\label{eq:effects}
 \begin{aligned}
 \typedef{%
-   \effecttype{p}{S_p}
-}{%
+   \effecttype{&p}{C_p}{L_p}
+}{\\
       &\quad \noop & &%
         \text{(null operation)} \\
 \mid & \quad \send{\Address}{\Msg} & &%
         \text{(message dispatch)} \\
-\mid & \quad \update{\envtype{p}{S_p}} & &%
-        \text{(engine state modification)} \\
-\mid & \quad \spawn{\configtype{p}}{\envtype{p}{S_p}} & &%
+\mid & \quad \update{\envtype{p}{L_p}} & &%
+        \text{(env. modification)} \\
+\mid & \quad \spawn{\configtype{p}{C_p}}{\envtype{p}{L_p}} & &%
         \text{(engine creation)} \\
 \mid & \quad \mfilter{%
                 \Option{\msgtype{p} \to \Bool}
               }& &%
-        \text{(new engine mailbox filter)} \\
+        \text{(new mailbox filter)} \\
 \mid & \quad \terminate & &%
         \text{(engine shutdown)} \\
-\mid & \quad \chain{\effecttype{p}{S_p}}{\effecttype{p}{S_p}} & &%
+\mid & \quad \chain{\effecttype{p}{C_p}{L_p}}{\effecttype{p}{C_p}{L_p}} & &%
         \text{(action sequencing)\, .}
 }
 \end{aligned}
@@ -616,7 +623,7 @@ message.
 	{} & {(m, \config{p},\localenv{p})} & {} \\
 	\\
 	{r_1} & \cdots & {r_k} \\
-	{e_1:\effecttype{p}{S_p}} & \cdots & {e_k:\effecttype{p}{S_p}}
+	{e_1:\effecttype{p}{C_p}{L_p}} & \cdots & {e_k:\effecttype{p}{C_p}{L_p}}
 	\arrow[curve={height=24pt}, shorten <=24pt, shorten >=24pt, dashed, no head, from=1-1, to=1-3]
 	\arrow["{g_1}"', maps to, from=1-2, to=3-1]
 	\arrow["{g_i}"', maps to, from=1-2, to=3-2]
@@ -636,20 +643,24 @@ null operation, $\noop$.}
 \label{fig:effect}
 \end{figure}
 
+
 \begin{definition}[Guard]\label{def:guards}%
-Given an engine $p$, and a type $\returntype$, a \textbf{guard} is a mapping of type
+Under the same assumptions as in \Cref{def:effects}, given an engine $p$, and a
+type $\returntype$, a \textbf{guard} is a mapping of type
 \begin{equation}
-\msgtype{p} \times \configtype{p} \times \envtype{p}{S_p} \to \Option{\returntype}.
+\In{p} \to \Option{\returntype} \text{ where }
+\defequal{\In{p}}{\msgtype{p} \times \configtype{p}{C_p} \times \envtype{p}{L_p}}\,.
 \end{equation}
 It returns a value of type $\returntype$ if the guard is satisfied, and
-$\none$ otherwise. Recall that $S_p$ is the type of the engine's local state.
+$\none$ otherwise. Recall that $L_p$ is the type of the engine's local state.
 \end{definition}
 
-We can define a corresponding predicate of a guard. Given a guard $g$, the
-predicate $\hat{g}$ is defined as the function that maps to $\mathsf{ff}$ if and only if
-$g$ maps to $\none$, otherwise it maps to $\mathsf{tt}$. If a guard is satisfied,
-we want to run an action.
-
+As illustrated in Figure~\ref{fig:effect}, guards act as pre-conditions that
+determine which actions should be executed. We can define a corresponding
+predicate for any guard $g$, where the predicate $\hat{g}$ maps to $\mathsf{ff}$
+if and only if $g$ maps to $\none$, otherwise it maps to $\mathsf{tt}$. When a
+guard is satisfied, its associated action is triggered, leading to the execution
+of specific effects by the system's runtime.
 
 % On the computational aspects of an engine, the behaviour evaluating the
 % different guards, and for each guard, the action to be executed, whenever the
@@ -660,125 +671,154 @@ Similarly, as in the case of guards, an \textbf{action} acting on data of type
 $\returntype$ is a mapping of type %
 \begin{equation}
 \returntype \times 
-\msgtype{p} \times 
-\configtype{p} \times 
-\envtype{p}{S_p} 
+\In{p}
   \to 
-\effecttype{p}{S_p}.
+\Out{p} \text{ where }
+\defequal{\Out{p}}{\effecttype{p}{C_p}{L_p}}.
 \end{equation}
 \end{definition}
 
 \begin{definition}[Guarded action]\label{def:guarded-action}%
-  Given an engine $p$, a \textbf{guarded action} of the engine's behaviour is a
-  tuple $\guardedaction{i}$, where:
+  Under the same assumptions as in \Cref{def:guards,def:action}, given an engine
+  $p$, a \textbf{guarded action} for engine $p$ is a tuple
+  $\guardedaction{i}$ where:
   \begin{itemize}
-    \item $\guard{i}$ is a guard that determines when the
+    \item $\typing{\guard{i}}{\In{p} \to \Option{\returntype}}$ is a guard that determines when the
     action $\action{i}$ should execute, and
-    \item $\action{i}$ is an action of type $\effecttype{p}{S_p}$ that specifies what to execute,
+    \item $\typing{\action{i}}{\returntype \times \In{p} \to \Out{p}}$ is an action that specifies
+    an effect.
   \end{itemize}
+  Together, both, the guard and action induce a mapping of type $\In{p} \to
+  \Out{p}$ that takes in a message, engine configuration, and environment, and
+  outputs the effect to execute when the guard is satisfied.
 \end{definition}
 
-Together, both, the guard and action induce a mapping that takes in a message,
-engine configuration, and environment, and outputs the effect to execute when the
-guard is satisfied. This mapping is defined as follows:
+\begin{example}\label{ex:keyvalue-engine}%
+For the key-value store engine, we define guarded actions for each message type.
+The environment and configuration types are
+$\envtype{\mathsf{kv}}{L_{\mathsf{kv}}}$ and
+$\configtype{\mathsf{kv}}{\ctype{C}_{\mathsf{kv}}}$ as in
+\Cref{ex:keyvalue-store-engine-local-state,ex:keyvalue-store-configuration}. As
+shown in \eqref{eq:keyvalue-engine-get-guard}, we can define the guard
+$g_{\mathsf{get}}$ to check for the $\msg{Get}$ tag and return the key if found,
+otherwise $\none$. The action $a_{\mathsf{get}}$ retrieves the value, updates
+the access count, and sends the result back. We assume that the sender engine,
+the consumer of the key-value store engine's result, also has
+$\msg{Result}(\mathsf{Val})$ and $\msg{Ack}$ as part of its message interface,
+so we can write back the result directly. 
 
-\begin{equation*}\label{eq:guarded-action}%
-\In{p} \to \effecttype{p}{S_p},
-\text{ where }
-\defequal{\In{p}}{\msgtype{p} \times \configtype{p} \times \envtype{p}{S_p}}\,.
-\end{equation*}
+\begin{equation}\label{eq:keyvalue-engine-get-guard}
+  \begin{minipage}{0.45\textwidth}
+  \begin{align*}
+  &\typing{
+    g_{\mathsf{get}}
+  }{
+    \In{\mathsf{kv}} 
+      \to 
+    \Option{\mathsf{Key}}
+    \,.
+  } \\
+  &\defequal{
+    g_{\mathsf{get}}(\langle m, \ignore, \ignore \rangle)
+  }{
+    \mathsf{case}\ m\ \mathsf{of}\ \{\\
+      &\hspace{3mm} \msg{Get}(k) \Rightarrow \some{k};\\
+      &\hspace{3mm} \ignore \Rightarrow \none
+    \}
+    \,.
+  }
+  \end{align*}
+  \vfill
+  \end{minipage}
+  \hfill\vrule width 1pt\quad\hfill
+  \begin{minipage}{0.48\textwidth}
+  \begin{align*}
+  &\typing{
+    a_{\mathsf{get}}
+  }{
+    \mathsf{Key} \times \In{\mathsf{kv}} 
+      \to 
+     \Out{\mathsf{kv}}
+    \,.
+  } \\
+  &\defequal{
+    a_{\mathsf{get}}(k, \langle m, c, \langle \mathsf{st}, \mathsf{cnt} \rangle \rangle)
+  }{ \chain{\\
+  &\quad  \update{%
+        \langle
+          \mathsf{st},
+          \mathsf{cnt}[k \mapsto \mathsf{cnt}[k] + 1]
+        \rangle
+      }
+      }{ \\
+  &\quad \send{\sender{m}}{\msg{Result}(\mathsf{st}[k])}
+      }
+  }\,.
+  \end{align*}
+  \vfill
+  \end{minipage}
+\end{equation}
 
-\begin{example}[Key-Value Store Engine]\label{ex:keyvalue-engine}%
-Let us revisit our key-value store engine from \Cref{ex:keyvalue-store-engine}. We define guarded actions that demonstrate the engine's capabilities.
+Similarly, for $\msg{Put}$ messages, we define a guard that checks if the engine
+is not in read-only mode, and an action that updates the store and acknowledges
+the sender.
 
-First, guards for different message types:
-\begin{align*}
-&g_{\mathsf{get}} : \In{\mathsf{kv}} \to \Option{\mathsf{Key}} \\
-&\defequal{g_{\mathsf{get}}(m, \ignore, \ignore)}{
-  \mathsf{case}\ m\ \mathsf{of}\ \{
-    \msg{Get}(k) \Rightarrow \some{k};
-    \ignore \Rightarrow \none
-  \}
-}\\
-&g_{\mathsf{put}} : \In{\mathsf{kv}} \to \Option{\mathsf{Key} \times \mathsf{Val}} \\
-&\defequal{g_{\mathsf{put}}(m, c, \ignore)}{
-  \mathsf{case}\ m\ \mathsf{of}\ \{
-    \msg{Put}(k, v) \Rightarrow \mathsf{if}\ \neg \mathsf{readOnly}(c)\ \mathsf{then}\ \some{\langle k, v \rangle}\ \mathsf{else}\ \none;
-    \ignore \Rightarrow \none
-  \}
-}\\
-&g_{\mathsf{delete}} : \In{\mathsf{kv}} \to \Option{\mathsf{Key}} \\
-&\defequal{g_{\mathsf{delete}}(m, c, \ignore)}{
-  \mathsf{case}\ m\ \mathsf{of}\ \{
-    \msg{Delete}(k) \Rightarrow \mathsf{if}\ \neg \mathsf{readOnly}(c)\ \mathsf{then}\ \some{k}\ \mathsf{else}\ \none;
-    \ignore \Rightarrow \none
-  \}
-}
-\end{align*}
-
-The corresponding actions:
-\begin{align*}
-&a_{\mathsf{get}} : \mathsf{Key} \times \In{\mathsf{kv}} \times \configtype{\mathsf{kv}} \times \envtype{\mathsf{kv}}{S_{\mathsf{kv}}} \to \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}} \\
-&\defequal{a_{\mathsf{get}}(k, m, c, e)}{
-  \begin{array}{l}
-    \mathsf{let}\ v = \mathsf{store}(e).get(k)\ \mathsf{in} \\
-    \mathsf{let}\ newCount = \mathsf{accessCount}(e).getOrDefault(k, 0) + 1\ \mathsf{in} \\
-    \chain{
-      \update{e[\mathsf{accessCount} \mapsto \mathsf{accessCount}(e).put(k, newCount)]}
-    }{
-      \send{m.\mathsf{sender}}{\msg{Result}(v)}
-    }
-  \end{array}
-}\\
-&a_{\mathsf{put}} : (\mathsf{Key} \times \mathsf{Val}) \times \In{\mathsf{kv}} \times \configtype{\mathsf{kv}} \times \envtype{\mathsf{kv}}{S_{\mathsf{kv}}} \to \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}} \\
-&\defequal{a_{\mathsf{put}}((k, v), m, c, e)}{
-  \begin{array}{l}
-    \mathsf{let}\ newStore = \mathsf{store}(e).put(k, v)\ \mathsf{in} \\
-    \chain{
-      \update{e[\mathsf{store} \mapsto newStore]}
-    }{
-      \send{m.\mathsf{sender}}{\msg{Result}(\some{v})}
-    }
-  \end{array}
-}\\
-&a_{\mathsf{delete}} : \mathsf{Key} \times \In{\mathsf{kv}} \times \configtype{\mathsf{kv}} \times \envtype{\mathsf{kv}}{S_{\mathsf{kv}}} \to \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}} \\
-&\defequal{a_{\mathsf{delete}}(k, m, c, e)}{
-  \begin{array}{l}
-    \mathsf{let}\ v = \mathsf{store}(e).get(k)\ \mathsf{in} \\
-    \mathsf{let}\ newStore = \mathsf{store}(e).remove(k)\ \mathsf{in} \\
-    \chain{
-      \update{e[\mathsf{store} \mapsto newStore]}
-    }{
-      \send{m.\mathsf{sender}}{\msg{Result}(v)}
-    }
-  \end{array}
-}
-\end{align*}
-
-Additional functionality for retrieving statistics:
-\begin{align*}
-&g_{\mathsf{stats}} : \In{\mathsf{kv}} \to \Option{\mathsf{Key}} \\
-&\defequal{g_{\mathsf{stats}}(m, \ignore, \ignore)}{
-  \mathsf{case}\ m\ \mathsf{of}\ \{
-    \msg{GetStats}(k) \Rightarrow \some{k};
-    \ignore \Rightarrow \none
-  \}
-}\\
-&a_{\mathsf{stats}} : \mathsf{Key} \times \In{\mathsf{kv}} \times \configtype{\mathsf{kv}} \times \envtype{\mathsf{kv}}{S_{\mathsf{kv}}} \to \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}} \\
-&\defequal{a_{\mathsf{stats}}(k, m, c, e)}{
-  \begin{array}{l}
-    \mathsf{let}\ count = \mathsf{accessCount}(e).getOrDefault(k, 0)\ \mathsf{in} \\
-    \mathsf{let}\ exists = \mathsf{store}(e).containsKey(k)\ \mathsf{in} \\
-    \send{m.\mathsf{sender}}{\msg{StatsResult}(k, count, exists)}
-  \end{array}
-}
-\end{align*}
-
-The key-value store's behaviour consists of guarded actions 
-$\langle g_{\mathsf{get}}, a_{\mathsf{get}} \rangle$, 
-$\langle g_{\mathsf{put}}, a_{\mathsf{put}} \rangle$, 
-$\langle g_{\mathsf{delete}}, a_{\mathsf{delete}} \rangle$, and
-$\langle g_{\mathsf{stats}}, a_{\mathsf{stats}} \rangle$.
+\begin{equation}\label{eq:keyvalue-engine-put-guard}
+  \begin{minipage}{0.38\textwidth}
+  \begin{align*}
+  &\typing{
+    g_{\mathsf{put}}
+  }{
+    \In{\mathsf{kv}} 
+      \to 
+    \Option{\mathsf{Key} \times \mathsf{Val}}
+    \,.
+  } \\
+  &\defequal{
+    g_{\mathsf{put}}(\langle m, c, \ignore \rangle)
+  }{\\
+    &\quad \mathsf{if}\,(\neg\,\mathsf{isReadOnly}(c))\\\
+    &\quad \mathsf{then} \{ \mathsf{case}\ m\ \mathsf{of}\ \\
+    &\quad \quad \big \{ 
+    \begin{array}{l}
+    \msg{Put}(\langle k, v \rangle) \Rightarrow \some{\langle k, v \rangle};\\
+    \ignore \Rightarrow \none\\
+    \end{array}
+    \big \}\\
+    &\quad \} \mathsf{else}\ \none
+    \,.
+  }
+  \end{align*}
+  \vfill
+  \end{minipage}
+  \hfill\quad \vrule width 1pt\quad\hfill
+  \begin{minipage}{0.40\textwidth}
+  \begin{align*}
+  &\typing{
+    a_{\mathsf{put}}
+  }{
+    (\mathsf{Key} \times \mathsf{Val}) \times \In{\mathsf{kv}} 
+      \to \Out{\mathsf{kv}}
+    \,.
+  } \\
+  &\defequal{
+    a_{\mathsf{put}}(\langle k, v \rangle, \langle m, c, \langle \mathsf{st}, \mathsf{cnt} \rangle \rangle)
+  }{ \\
+  &\quad \chain{\\
+  &\quad \quad      \update{%
+        \langle
+          \mathsf{st}[k \mapsto v],
+          \mathsf{cnt}
+        \rangle
+      }
+      }{ \\
+  &\quad \quad  \send{\sender{m}}{\msg{Ack}}
+      }
+  }\,.
+  \end{align*}
+  \vfill
+  \end{minipage}
+\end{equation}
 \end{example}
 
 %TODO: comment on the given guard action evaluation strategy in the corresponding op. rule
@@ -2114,9 +2154,117 @@ Troyer.
 \bibliography{art.bib,ref.bib}
 \appendix
 
-% \section{Some extra stuff}
-% The lean formalization of this work is available at
-% \url{https://github.com/anoma/ART-mailboxes-actors}.
+% \section{Key-value guarded actions}
+
+% \Cref{fig:keyvalue-engine-get} shows the guarded actions for the key-value store engine.
+
+% The guard $g_{\mathsf{get}}$ checks if the message is a $\msg{Get}$ request and extracts the key.
+% The action $a_{\mathsf{get}}$ retrieves the value for the key, increments the access count,
+% and sends the result back to the sender.
+% \begin{align*}
+% &\typing{
+%   g_{\mathsf{put}}
+% }{
+%   \In{\mathsf{kv}} \to \Option{\mathsf{Key} \times \mathsf{Val}}
+%   \,.
+% } \\
+% &\defequal{g_{\mathsf{put}}((m, c, \ignore))}{
+%   \mathsf{case}\ m\ \mathsf{of}\ \{\\
+%   &\hspace{3mm}  \msg{Put}(k, v) \Rightarrow 
+%         \mathsf{if}\ \neg\, \mathsf{readOnly}(c)\ 
+%         \mathsf{then}\ \some{\langle k, v \rangle}\ 
+%         \mathsf{else}\ \none;\\
+%   &\hspace{3mm} \ignore \Rightarrow \none
+%   \}
+%   \,.
+% }\\[2mm]
+% &\typing{a_{\mathsf{put}}}{
+%   (\mathsf{Key} \times \mathsf{Val}) \times \In{\mathsf{kv}} \to 
+%   \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}}
+% } \\
+% &\defequal{a_{\mathsf{put}}((k, v), (m, c, (\mathsf{st}, \mathsf{cnt})))}{
+%   \chain{
+%     \update{(
+%       \mathsf{st}[k \mapsto v],
+%       \mathsf{cnt}
+%     )}
+%   }{
+%     \send{\sender{m}}{\msg{Result}(\some{v})}
+%   }
+% }
+% \end{align*}
+
+% The guard $g_{\mathsf{put}}$ checks if the message is a $\msg{Put}$ request and verifies the store
+% is not in read-only mode. The action $a_{\mathsf{put}}$ updates the store with the new key-value pair
+% and confirms the operation to the sender.
+
+% \begin{align*}
+% &\typing{
+%   g_{\mathsf{delete}}
+% }{
+%   \In{\mathsf{kv}} \to \Option{\mathsf{Key}} \,.
+% } \\
+% &\defequal{g_{\mathsf{delete}}(m, c, \ignore)}{
+%   \mathsf{case}\ m\ \mathsf{of}\ \{\\
+%     &\msg{Delete}(k) \Rightarrow\\
+%     &\quad\mathsf{if}\ \neg \mathsf{readOnly}(c)\ \mathsf{then}\ \some{k}\ \mathsf{else}\ \none;\\
+%     &\ignore \Rightarrow \none\\
+%   \}
+% }\\[2mm]
+% &\typing{a_{\mathsf{delete}}}{
+%   \mathsf{Key} \times \In{\mathsf{kv}} \to 
+%   \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}}
+% } \\
+% &\defequal{a_{\mathsf{delete}}(k, m, c, e)}{
+%   \begin{array}{l}
+%     \mathsf{let}\ v = \mathsf{store}(e).get(k)\ \mathsf{in} \\
+%     \mathsf{let}\ newStore = \mathsf{store}(e).remove(k)\ \mathsf{in} \\
+%     \chain{
+%       \update{e[\mathsf{store} \mapsto newStore]}
+%     }{
+%       \send{m.\mathsf{sender}}{\msg{Result}(v)}
+%     }
+%   \end{array}
+% }
+% \end{align*}
+
+% The guard $g_{\mathsf{delete}}$ checks if the message is a $\msg{Delete}$ request and ensures
+% the store is not in read-only mode. The action $a_{\mathsf{delete}}$ retrieves the current value,
+% removes the key from the store, and returns the previous value to the sender.
+
+% \begin{align*}
+% &\typing{g_{\mathsf{stats}}}{\In{\mathsf{kv}} \to \Option{\mathsf{Key}}} \\
+% &\defequal{g_{\mathsf{stats}}(m, \ignore, \ignore)}{
+%   \mathsf{case}\ m\ \mathsf{of}\ \{\\
+%     &\msg{GetStats}(k) \Rightarrow \some{k};\\
+%     &\ignore \Rightarrow \none\\
+%   \}
+% }\\[2mm]
+% &\typing{a_{\mathsf{stats}}}{
+%   \mathsf{Key} \times \In{\mathsf{kv}} \to 
+%   \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}}
+% } \\
+% &\defequal{a_{\mathsf{stats}}(k, m, c, e)}{
+%   \begin{array}{l}
+%     \mathsf{let}\ cnt = \mathsf{accessCount}(e).getOrDefault(k, 0)\ \mathsf{in} \\
+%     \mathsf{let}\ exists = \mathsf{store}(e).containsKey(k)\ \mathsf{in} \\
+%     \send{m.\mathsf{sender}}{\msg{StatsResult}(k, cnt, exists)}
+%   \end{array}
+% }
+% \end{align*}
+
+% The guard $g_{\mathsf{stats}}$ checks if the message is a $\msg{GetStats}$ request and extracts the key.
+% The action $a_{\mathsf{stats}}$ retrieves the access count and checks if the key exists in the store,
+% then sends these statistics back to the sender.
+
+% The key-value store's behaviour consists of guarded actions 
+% $\langle g_{\mathsf{get}}, a_{\mathsf{get}} \rangle$, 
+% $\langle g_{\mathsf{put}}, a_{\mathsf{put}} \rangle$, 
+% $\langle g_{\mathsf{delete}}, a_{\mathsf{delete}} \rangle$, and
+% $\langle g_{\mathsf{stats}}, a_{\mathsf{stats}} \rangle$.
+
+% Why not just one guarded action? Using multiple guarded actions provides clearer separation of concerns, better maintainability, and more efficient message handling than combining all logic into a single complex guard-action pair.
+
 
 
 \end{document}
