@@ -1,0 +1,27 @@
+
+As our running example, we will consider the engine type $\mathsf{calc}$ that
+can process messages of type in \eqref{eq:message-interface-example}. The engine
+type $\mathsf{calc}$ would be defined later, once all required constructs are
+presented.
+
+% The following is our running example of an engine.
+\begin{example}[Calculator Engine]\label{ex:calculator-engine}%
+  Let us assume the system defines the engine type $\enginetype{\mathsf{calc}}$
+  and that an engine of this type works as normal calculator with some internal
+  memory. The engine has the following message interface:
+  \begin{equation}\label{eq:message-interface-example}
+  \typedef%
+  {\msgtype{\mathsf{calc}}}%
+  {    \msg{Add}(\mathsf{Pair}) 
+  \mid \msg{Subtract}(\mathsf{Pair}) 
+  \mid \msg{Multiply}(\mathsf{Pair})
+  \mid \msg{Result}(\mathsf{Nat})
+  },
+\end{equation}
+
+where $\msg{Add}$, $\msg{Subtract}$, and $\msg{Multiply}$ are message tags, representing
+the operations that the calculator engine can perform to modify its memory. The
+message type $\mathsf{Pair}$ these message tags wrap encodes two natural numbers,
+representing the two operands of the operation. The message tag $\msg{Result}$ wraps
+a natural number, representing the result stored in the engine's memory.
+\end{example}
