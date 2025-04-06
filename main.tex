@@ -703,7 +703,7 @@ shown in \eqref{eq:keyvalue-engine-get-guard}, we can define the guard
 $g_{\mathsf{get}}$ to check for the $\msg{Get}$ tag and return the key if found,
 otherwise $\none$. The action $a_{\mathsf{get}}$ retrieves the value, updates
 the access count, and sends the result back. We assume that the sender engine,
-the consumer of the key-value store engine's result, also has
+the consumer of the key-value store engine's result, has
 $\msg{Result}(\mathsf{Val})$ and $\msg{Ack}$ as part of its message interface,
 so we can write back the result directly. 
 
@@ -742,7 +742,7 @@ so we can write back the result directly.
     \,.
   } \\
   &\defequal{
-    a_{\mathsf{get}}(k, \langle m, c, \langle \mathsf{st}, \mathsf{cnt} \rangle \rangle)
+    a_{\mathsf{get}}(k, \langle m, \ignore, \langle \mathsf{st}, \mathsf{cnt} \rangle \rangle)
   }{ \chain{\\
   &\quad  \update{%
         \langle
@@ -778,13 +778,13 @@ the sender.
     g_{\mathsf{put}}(\langle m, c, \ignore \rangle)
   }{\\
     &\quad \mathsf{if}\,(\neg\,\mathsf{isReadOnly}(c))\\\
-    &\quad \mathsf{then} \{ \mathsf{case}\ m\ \mathsf{of}\ \\
-    &\quad \quad \big \{ 
+    &\quad \mathsf{then} \{ \mathsf{case}\ m\ \mathsf{of}\ \{ \\
+    &\quad \quad
     \begin{array}{l}
     \msg{Put}(\langle k, v \rangle) \Rightarrow \some{\langle k, v \rangle};\\
     \ignore \Rightarrow \none\\
     \end{array}
-    \big \}\\
+    \} \\
     &\quad \} \mathsf{else}\ \none
     \,.
   }
@@ -802,7 +802,7 @@ the sender.
     \,.
   } \\
   &\defequal{
-    a_{\mathsf{put}}(\langle k, v \rangle, \langle m, c, \langle \mathsf{st}, \mathsf{cnt} \rangle \rangle)
+    a_{\mathsf{put}}(\langle k, v \rangle, \langle m, \ignore, \langle \mathsf{st}, \mathsf{cnt} \rangle \rangle)
   }{ \\
   &\quad \chain{\\
   &\quad \quad      \update{%
@@ -818,6 +818,81 @@ the sender.
   \end{align*}
   \vfill
   \end{minipage}
+\end{equation}
+We define the guard and action for delete operations as follows:
+\begin{equation}\label{eq:keyvalue-engine-delete-guard}
+  \begin{minipage}{0.38\textwidth}
+  \begin{align*}
+  &\typing{
+    g_{\mathsf{delete}}
+  }{
+    \In{\mathsf{kv}} 
+      \to 
+    \Option{\mathsf{Key}}
+    \,.
+  } \\
+  &\defequal{
+    g_{\mathsf{delete}}(\langle m, c, \ignore \rangle)
+  }{\\
+    &\quad \mathsf{if}\,(\neg\,\mathsf{isReadOnly}(c))\\\
+    &\quad \mathsf{then} \{ \mathsf{case}\ m\ \mathsf{of}\ \{ \\
+    &\quad \quad
+    \begin{array}{l}
+    \msg{Delete}(k) \Rightarrow \some{k};\\
+    \ignore \Rightarrow \none\\
+    \end{array}
+    \} \\
+    &\quad \} \mathsf{else}\ \none
+    \,.
+  }
+  \end{align*}
+  \vfill
+  \end{minipage}
+  \hfill\quad \vrule width 1pt\quad\hfill
+  \begin{minipage}{0.40\textwidth}
+  \begin{align*}
+  &\typing{
+    a_{\mathsf{delete}}
+  }{
+    \mathsf{Key} \times \In{\mathsf{kv}} 
+      \to \Out{\mathsf{kv}}
+    \,.
+  } \\
+  &\defequal{
+    a_{\mathsf{delete}}(k, \langle m, \ignore, \langle \mathsf{st}, \mathsf{cnt} \rangle \rangle)
+  }{ \\
+  &\quad \chain{\\
+  &\quad \quad      \update{%
+        \langle
+          \mathsf{st}[k \mapsto \none],
+          \mathsf{cnt}
+        \rangle
+      }
+      }{ \\
+  &\quad \quad  \send{\sender{m}}{\msg{Ack}}
+      }
+  }\,.
+  \end{align*}
+  \vfill
+  \end{minipage}
+\end{equation}
+
+The separation of concerns between guards and actions simplifies the definition
+of an engine's behaviour. For the key-value store engine, the behaviour is defined
+by the following set of guarded actions.
+
+\begin{equation}\label{eq:keyvalue-engine-behaviour}
+  \begin{aligned}
+  \defequal{
+      \behaviourtype{\mathsf{kv}}
+    }{
+    \{ \langle g_{\mathsf{get}}, a_{\mathsf{get}} \rangle
+     , \langle g_{\mathsf{put}}, a_{\mathsf{put}} \rangle
+     , \langle g_{\mathsf{delete}}, a_{\mathsf{delete}} \rangle 
+    \}
+  }
+  \,.
+  \end{aligned}
 \end{equation}
 \end{example}
 
