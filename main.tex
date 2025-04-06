@@ -33,12 +33,12 @@ order while remaining separate from the actor's core logic.
 
 % Challenges in actor system message flow management
 One challenge in actor systems is managing message flow under high volumes.
-Although some techniques such as rate limiting and%
-\emph{backpressure routing}~\cite{backpressure} help regulate message rates,
-these control mechanisms may also fail under heavily loaded systems. Message
-delivery is often assumed to be reliable, but practical implementations
-must consider the possibility of message loss and delays from processing
-bottlenecks or crashing actors.
+Although some techniques such as rate limiting and \emph{backpressure
+routing}~\cite{backpressure} help regulate message rates, these control
+mechanisms may also fail under heavily loaded systems. Message delivery is often
+assumed to be reliable, but practical implementations must consider the
+possibility of message loss and delays from processing bottlenecks or crashing
+actors.
 
 % Proposes a solution by decoupling mailboxes from processing actors.
 To address some of these challenges, in particular the need to handle message
@@ -96,11 +96,15 @@ of types $\U$, so if $A$ is a type, then $\typing{A}{\U}$. We also work with ind
 types presented in the following form:
 %
 \begin{align*}
-  \defequal{A}{\cdots \mid \mathsf{C}(A_1, \dots, A_n) \, ,}
+  \defequal{\ctype{A}}{\cdots \mid \mathsf{\ccon{C}}(A_1, \dots, A_n) \, ,}
 \end{align*}
 %
-where $\mathsf{C}$ is a constructor of the type $A$, and $A_1, \dots, A_n$ are
+where $\ccon{C}$ is a constructor of the type $\ctype{A}$, and $A_1, \dots, A_n$ are
 the types of the constructor arguments.
+% If, in the context, there is no ambiguity about the type constructor, we may refer
+% to it directly as $\ccon{C}$. Otherwise we use the notation $A.\ccon{C}$ to
+% specify the type constructor. This means, type constructor names are not unique,
+% and we need to specify the type constructor when we use it.
 
 We use standard type notation where $\N$ denotes the inductive type of natural
 numbers, $\EmptyType$ represents the empty type, $\Unit$ denotes the type with
@@ -196,30 +200,35 @@ to define alternative strategies according to their needs.
   % Here, we have a more restricted set of actions, as will be seen in \Cref{def:effects}.
 \end{remark}
 
+% Object model for distributed systems (investigate)
+
 \subsection{Preliminaries}\label{sec:preliminaries}%
 
-The model operates on a system state $\SystemState$, consisting of finite sets of
-uniquely identified nodes $\SetOfNodes$, engines $\SetOfEngines$, and in-transit
-messages $\SetOfMessages$. The system evolves in discrete time steps, where the
-state at step $i$ is denoted with $\SystemState^{(i)}$. The sets $\SetOfNodes^{(i)}$,
-$\SetOfEngines^{(i)}$, and $\SetOfMessages^{(i)}$ may also change between steps. When
-no confusion arises, we omit the step index for any of these entities, including
-the system state. Each engine resides on a unique node and its type is as defined
-in \Cref{def:engine}.
+The model operates on a system state $\SystemState$, consisting of finite sets
+of uniquely identified nodes $\SetOfNodes$, engines $\SetOfEngines$, and
+in-transit messages $\SetOfMessages$. The subsequent sections detail these
+concepts in a bottom-up manner.
+
+As a state machine, the system evolves in discrete time steps, where the state
+at step $i$ is denoted with $\SystemState^{(i)}$. The sets $\SetOfNodes^{(i)}$,
+$\SetOfEngines^{(i)}$, and $\SetOfMessages^{(i)}$ may also change between steps.
+When no confusion arises, we omit the step index for any of these entities,
+including the system state. Each engine resides on a unique node and its type is
+as defined in \Cref{def:engine,def:node}, respectively.
 
 \begin{remark}[Static Engine Allocation]\label{rem:move-engines}%
-  A system might relocate an engine to a different node when computational
-  costs in its current node become prohibitive and more favourable resource
-  availability exists elsewhere. For simplicity, here the model assumes that
-  engines always remain on the same node where they were initially created.
+  A system might relocate an engine to a different node when computational costs
+  in its current node become prohibitive and more favourable resource
+  availability exists elsewhere. This, is however, not considered in this model.
+  Here, the model assumes that engines always remain on the same node where they
+  were initially created.
 \end{remark}
 
 The communication between engines is done via messages, which are typed and
-carried by the system. A message-passing mechanism
-(\Cref{sec:message-passing-mechanism}) governs the delivery of in-transit
-messages $\SetOfMessages$. Each message contains sender and recipient
-identifiers along with a payload. Similarly, as engine types, message types are
-fixed once the system is defined.
+carried by the system. A message-passing mechanism governs the delivery of
+in-transit messages $\SetOfMessages$, see \Cref{sec:message-structure}. Each
+message contains sender and recipient identifiers along with a payload.
+Similarly, as engine types, message types are fixed once the system is defined.
 
 \begin{remark}[Static Typing]\label{rem:static-typing}%
   This model employs static typing. Engine types are predetermined with the
@@ -229,9 +238,6 @@ fixed once the system is defined.
   The sum type of these message types is denoted with $\Msg$.
   Extending this model to support dynamic typing is future work.
 \end{remark}
-
-The subsequent sections detail the system's fundamental concepts in a
-bottom-up manner.
 
 % \begin{itemize}
 %   \item Addresses and names in \Cref{sec:addresses-and-names}
@@ -281,44 +287,43 @@ For example, $\Bool$, $\N$, or $\List{\N}$ could be message types.
 
 \begin{definition}[Message Interface]\label{def:message-interface}%
 The \textbf{message interface} of an engine $p$ is a sum type where its type
-constructors wrap a message type with a given semantic meaning that the engine
-can process. 
+constructors, called them \textbf{message tags}, wrap a message type with a given
+semantic meaning that the engine can process.
 \end{definition}
 
-As our running example, we will consider the engine type $\mathsf{calc}$ that
-can process messages of type in \eqref{eq:message-interface-example}. The engine
-type $\mathsf{calc}$ would be defined later, once all required constructs are
+As our running example, we will consider the engine type $\mathsf{kv}$ that
+can process messages of type in \eqref{eq:message-interface-example}. The complete
+engine type $\mathsf{kv}$ would be defined later, once all required constructs are
 presented.
 
 % The following is our running example of an engine.
-\begin{example}[Calculator Engine]\label{ex:calculator-engine}%
-  Let us assume the system defines the engine type $\enginetype{\mathsf{calc}}$
-  and that an engine of this type has the following message interface:
+
+\begin{example}[Key-Value Store Engine]\label{ex:keyvalue-engine}%
+  Let us assume the system defines the engine type $\enginetype{\mathsf{kv}}$
+  and that an engine of this type works as a simple key-value store. An engine
+  of this type has the following message interface:
   \begin{equation}\label{eq:message-interface-example}
   \typedef%
-  {\msgtype{\mathsf{calc}}}%
-  {    \msg{Add}(\mathsf{Pair}) 
-  \mid \msg{Subtract}(\mathsf{Pair}) 
-  \mid \msg{Multiply}(\mathsf{Pair})
-  \mid \msg{Result}(\mathsf{Nat})
+  {\msgtype{\mathsf{kv}}}%
+  {    \msg{Put}(\mathsf{Key}\times\mathsf{Val}) 
+  \mid \msg{Get}(\mathsf{Key}) 
+  \mid \msg{Delete}(\mathsf{Key})
+  \mid \msg{Result}(\Option{\mathsf{Val}})
   },
 \end{equation}
 
-where $\msg{Add}$, $\msg{Subtract}$, and $\msg{Multiply}$ are type constructors
-that wrap the message type $\mathsf{Pair}$ of two natural numbers.
+where $\msg{Put}$, $\msg{Get}$, and $\msg{Delete}$ are message tags
+representing the operations that the key-value store engine can perform to
+modify or query its memory. The message type $\mathsf{Key}\times\mathsf{Val}$
+that $\msg{Put}$ wraps encodes a key-value pair, representing the data to be
+stored. The message type $\mathsf{Key}$ that $\msg{Get}$ and $\msg{Delete}$ wrap
+represents the key to retrieve or remove. The message tag $\msg{Result}$ wraps
+an optional value, representing the result of a query operation which may or may
+not find a value for the requested key.
 \end{example}
 
-To refer to an arbitrary type of a message \emph{within the system}, we use the type
-$\Msg$, the sum type of all message interfaces, and therefore the type of all
-valid message payloads,
-\begin{equation}\label{eq:message-type-sum}
-\defequal{\Msg}{\bigoplus_{i} \msgtype{i}},
-\end{equation}
-where $\msgtype{i}$ is the message interface of engine type $i$. To simplify the
-notation, we assume message type subtyping, that is, $\typing{\msgtype{i}}{\Msg}$
-for all $i \in \SetOfEngines$. When no confusion arises, using $p$ to refer to an
-engine, we use $\msgtype{p}$ to refer to its message interface. 
-% Also, we may use $\enginetype{p}$ to refer to the engine type of $p$.
+We model the system in such a way that it enjoys type-safe communication. This
+is possible because of how we define a message.
 
 \begin{definition}[Message]\label{def:messages}
 A \textbf{message} is a triple $\langle s, t, v \rangle$ 
@@ -333,28 +338,45 @@ where:
 % We define projection functions $\sender{m}$, $\target{m}$, and
 % $\mathsf{msg}(m)$ to extract the respective components of a message.
 \end{definition}
+
 \begin{example}[Message Example]\label{ex:message-example}%
-  A message sent to the calculator engine might be 
-  $\msgpacket{s}{t}{\msg{Add}(1, 2)}$, where $s$ is the address of the sender engine,
-  $t$ is the address of the target calculator engine, and $\msg{Add}(1, 2)$ is the payload
-  conforming to the message interface $\msgtype{\mathsf{calc}}$.
+  A message sent to the key-value store engine might be 
+  $\msgpacket{\loc{1}{2}}{\loc{3}{4}}{\msg{Put}(\text{cd2edf}, \text{Alice})}$
+  where the sender resides on node $1$ with engine identifier $2$, and the target
+  resides on node $3$ with engine identifier $4$. The payload is a key-value pair,
+  conforming to the message interface $\msgtype{\mathsf{kv}}$.
 \end{example}
+
+To refer to an arbitrary type of a message \emph{within the system} at any step, we use the type
+$\Msg$, the sum type of all message interfaces, and therefore the type of all
+valid messages, defined as,
+\begin{equation}\label{eq:message-type-sum}
+\defequal{\Msg}{\bigoplus_{i} \msgtype{i}},
+\end{equation}
+where $\msgtype{i}$ is the message interface of engine type $i$. To simplify the
+notation, we assume message type subtyping, that is, $\typing{\msgtype{i}}{\Msg}$
+for all $i \in \SetOfEngines$. When no confusion arises, using $p$ to refer to an
+engine, we use $\msgtype{p}$ to refer to its message interface. 
+% Also, we may use $\enginetype{p}$ to refer to the engine type of $p$.
 
 % Ill-formed message example
-\begin{example}[Ill-formed Message]\label{ex:ill-formed-message}%
-  The message $\msgpacket{s}{t}{\msg{Add}(1, 2, 3)}$ sent to the calculator
-  engine is ill-formed because the payload $\msg{Add}(1, 2, 3)$ does not conform
-  to the message interface $\msgtype{\mathsf{calc}}$, which expects exactly two
-  natural numbers as arguments. Another example of an ill-formed message is
-  $\msgpacket{s}{t}{\msg{Multiply}(\mathsf{tt}, 2)}$ as it expects a pair of
-  natural numbers as payload, but receives a boolean value $\mathsf{tt}$ as the
-  first argument instead.
-\end{example}
+% \begin{example}[Ill-formed Message]\label{ex:ill-formed-message}%
+%   The message $\msgpacket{s}{t}{\msg{Add}(1, 2, 3)}$ sent to the calculator
+%   engine is ill-formed because the payload $\msg{Add}(1, 2, 3)$ does not conform
+%   to the message interface $\msgtype{\mathsf{calc}}$, which expects exactly two
+%   natural numbers as arguments. Another example of an ill-formed message is
+%   $\msgpacket{s}{t}{\msg{Multiply}(\mathsf{tt}, 2)}$ as it expects a pair of
+%   natural numbers as payload, but receives a boolean value $\mathsf{tt}$ as the
+%   first argument instead.
+% \end{example}
 
+% \begin{remark}[Untagged Unions]\label{rem:untagged-unions}%
 % An alternative approach defines message interfaces through untagged unions, permitting
 % overlapping message types across engines. This is consistent with our approach,
 % enabling shared message constructors between engines capable of processing them,
 % though it diverges from our system's concrete implementation in Juvix.
+% \end{remark}
+
 \subsection{Engine components}\label{sec:engine-components}
 
 In the system, an engine is a term of type $\enginetype{i}$ where $i$ is one of
@@ -413,18 +435,18 @@ actively processing message $m$, or to the \terminated{} state, where it stops
 processing messages and is removed from the system in the next step.
 
 \begin{example}\label{ex:engine-status-example}%
-  A calculator engine may start in the \ready{\none} state, accepting any
-  message. Upon receiving $\msg{Add}(1, 2)$, it transitions to \busy{\msg{Add}(1, 2)}
-  while processing. After computation, it may return to \ready{\some{\mathsf{f}}}
-  where $f$ as in \eqref{eq:engine-status-example}, indicating it will
-  only accept result messages before taking new operations.
-
+  A key-value store engine as in \Cref{ex:keyvalue-engine} may start in the
+  \ready{\some{\mathsf{f}}} state, where $\mathsf{f}$ is the filter that rejects
+  \msg{Delete} messages, as in \eqref{eq:engine-status-example}. This allows the
+  store to be safely populated before any deletion operations are permitted. Once
+  the store is populated, the filter can be updated, for example, to \none{} so
+  that all messages are accepted.
   \begin{equation}\label{eq:engine-status-example}
     \mathsf{f} := \lambda m.%
-\mathsf{case}\ m\ \mathsf{of}\ \{%
-  \msg{Result}(x) \Rightarrow \mathsf{tt};%
-  \ignore \Rightarrow \mathsf{ff}%
-  \}.
+  \mathsf{case}\ m\ \mathsf{of}\ \{%
+    \msg{Delete}(x) \Rightarrow \mathsf{ff};%
+    \ignore \Rightarrow \mathsf{tt}%
+    \},
   \end{equation}
 \end{example}
 
@@ -437,9 +459,9 @@ processing messages and is removed from the system in the next step.
 %   % when they attempt to communicate with non-existent engines.
 % \end{remark}
 
-We distinguish between two types of engines, processing engines and mailbox
-engines. This distinction is based on the engine's operational mode, which
-defines its purpose and how messages are routed to it.
+We now introduce the notion of \emph{operational mode} to distinguish between
+two types of engines, processing engines and mailbox engines. This distinction is
+based on the engine's purpose and how messages are routed to it.
 
 \begin{definition}\label{def:engine-mode}
 The \textbf{operational mode} of an engine is of type $\EngineMode$,
@@ -451,13 +473,13 @@ The \textbf{operational mode} of an engine is of type $\EngineMode$,
 \end{equation}
 \end{definition}
 
-An engine's operational mode cannot change after creation. In fact, this mode is
-opaque to the engine itself and is handled by the system. The system's
-message-passing mechanism treats engines differently based on their mode. In
-short, \process engines do not receive messages directly. Messages sent to them
-are internally routed to \mail engines, which can accept all messages and route
-them back to their \process engine. The operational mode is stored in the engine's
-configuration.
+The operational mode of an engine cannot change after engine creation. In fact,
+this mode is opaque to the engine itself and is defined by the system. The
+system's message-passing mechanism treats engines differently based on their
+mode. In short, \process engines do not receive messages directly. Messages sent
+to them are internally routed to \mail engines, which can accept all messages
+and route them back to their \process engine when appropriate. The operational
+mode is stored in the engine's configuration.
 
 \begin{definition}\label{def:engine-configuration}%
 Given a type $S_p$, the \textbf{configuration} of an engine $p$ parameterised by $S_p$ is
@@ -468,28 +490,21 @@ a tuple $\configval{p}{\mode}{c}$ where:
     \item $\typing{c}{S_p}$ is configuration data specific to the engine type of $p$.
 \end{itemize}
 The type of engine configurations for engine type $\enginetype{p}$ is denoted
-with $\configtype{p}$. The type $S_p$ comes from the engine's type.
+with $\configtype{p}$. 
+% The type $S_p$ comes from the engine's type.
+Given an engine $p$, we use $\config{p}$ to refer to its configuration.
 \end{definition}
-
-\begin{remark}\label{rem:configuration-purpose}%
-The engine configuration serves a role in separating persistent engine metadata
-from transient execution state. By isolating configuration data, which remains
-constant throughout the engine's lifecycle, from the execution environment,
-which can change during message processing, we achieve a cleaner separation of
-concerns in the system design. The persistent metadata may include other
-information, such as relevant timestamps, epoch numbers, etc.
-\end{remark}
 
 While engines operate in isolation and process messages independently, their
 configuration alone cannot support their full functionality. Each engine
-requires additional state management capabilities to operate effectively. To
-address this need, every engine maintains its own state within an execution
+requires additional state management capabilities to operate effectively.
+To address this need, every engine maintains its own state within an execution
 context, collectively referred to as the engine's \emph{environment}. 
 
 \begin{definition}\label{def:engine-environment}%
 Given a type $L_p$ for the local state of an engine $p$ as defined by its engine
-type, an execution \textbf{environment} of $p$ is a tuple $\localenvval{s}{m}$, of
-type $\envtype{p}{L_p}$, where:
+type, the execution \textbf{environment} of an engine $p$ is a tuple
+$\localenvval{s}{m}$, of type $\envtype{p}{L_p}$, where:
 \begin{itemize}
     \item $\typing{s}{L_p}$ is the local state of the engine, and
     \item $\typing{m}{\List{\Address}}$ is the engine's address book.
@@ -498,23 +513,43 @@ Given an engine $p$, we use $\localenv{p}$ to refer to its environment.
 \end{definition}
 
 \begin{remark}\label{rem:engine-environment}%
-As part of the creation of an engine, the system adds the engine's own address
-to the address book as the first element. Thus, the address book is always
-non-empty. For convenience, the system defines an alias \self{} that refers to
-the engine's own address.
+The address book of an engine is always non-empty. As part of any engine's
+creation, the system initialises the engine's address book with the engine's own
+address.
+% For convenience, the system also provides a function \self{} that
+% refers to the engine's own address.
 \end{remark}
+
+\begin{example}[Key-Value Store Engine]\label{ex:keyvalue-store-engine}%
+Let us define the local state $S_{\mathsf{kv}}$ to include the store and access
+statistics.
+\begin{align*}
+\defequal{S_{\mathsf{kv}}}{
+   \Map{\mathsf{Key}}{\mathsf{Val}} \times \Map{\mathsf{Key}}{\N} \times \Bool
+}
+\end{align*}
+where $\Map{\mathsf{Key}}{\mathsf{Val}}$ is the type of hash maps from keys to
+values. For convenience, given a tuple $s$ of type $S_{\mathsf{kv}}$, we define
+the projections $\mathsf{store}(s)$, $\mathsf{accessCount}(s)$, and
+$\mathsf{readOnly}(s)$, as expected.
+
+\end{example}
 
 \subsection{Execution directives}\label{sec:execution-directives}
 
-The behaviour of an engine states what it does when it reacts to a message. How
-the engine reacts to a message is determined by a set of guarded actions that
-return commands, which the system executes at runtime. This can be described via
-an effect system presented below. 
+The behaviour of an engine specifies what it can perform when reacting to a
+message. How the engine reacts to a message is determined by a set of guarded
+actions ---pairs of pre-conditions called \emph{guards} and their corresponding
+\emph{actions}. When a message is being processed, the system evaluates it
+against the engine's guards, considering both the engine's environment and
+configuration. If a guard is satisfied, its associated action produces an
+\emph{effect} that the system executes, as illustrated in \Cref{fig:effect}.
 
 \begin{definition}[Effect System]\label{def:effects}%
-Given a type $S_p$ representing the local state of an engine~$p$, an
-\textbf{effect} is of type $\effecttype{p}{S_p}$, which considers all the
-possible ways an engine can influence the system by reacting to a message.
+Let $S_p$ be the type representing the local state of an engine~$p$. An
+\textbf{effect} of type $\effecttype{p}{S_p}$ represents a primitive operation
+that an engine can perform to influence the system state when processing a
+message.
 
 \begin{equation}\label{eq:effects}
 \begin{aligned}
@@ -571,25 +606,26 @@ null operation, $\noop$.}
 \end{figure}
 
 \begin{definition}[Guard]\label{def:guards}%
-A \textbf{guard} is a mapping of type
+Given an engine $p$, and a type $\returntype$, a \textbf{guard} is a mapping of type
 \begin{equation}
 \msgtype{p} \times \configtype{p} \times \envtype{p}{S_p} \to \Option{\returntype}.
 \end{equation}
-It returns a value of a given type $\returntype$ if the guard is satisfied, and
-$\none$ otherwise. The type $\returntype$ is the specific type of data returned when the guard is
-satisfied, and $S_p$ is the type of the engine's local state.
+It returns a value of type $\returntype$ if the guard is satisfied, and
+$\none$ otherwise. Recall that $S_p$ is the type of the engine's local state.
 \end{definition}
 
-There is a corresponding predicate of a guard, which maps to false if and only if
-the guard maps to $\none$. Given a guard, we want to run an action if and only
-if the guard is satisfied.
+We can define a corresponding predicate of a guard. Given a guard $g$, the
+predicate $\hat{g}$ is defined as the function that maps to $\mathsf{ff}$ if and only if
+$g$ maps to $\none$, otherwise it maps to $\mathsf{tt}$. If a guard is satisfied,
+we want to run an action.
+
 
 % On the computational aspects of an engine, the behaviour evaluating the
 % different guards, and for each guard, the action to be executed, whenever the
 % guard is satisfied, is as follows:
 
 \begin{definition}\label{def:action}%
-Given an engine $p$, an \textbf{action} acting on data of type
+Similarly, as in the case of guards, an \textbf{action} acting on data of type
 $\returntype$ is a mapping of type %
 \begin{equation}
 \returntype \times 
@@ -601,41 +637,147 @@ $\returntype$ is a mapping of type %
 \end{equation}
 \end{definition}
 
-Combining a guard and an action results in a \emph{guarded action}, which is the
-building block of an engine's behaviour. Separating guards and actions allows
-for a modular design. This way, a guard can be reused in different engines or
-the logic of the guard can be separated from the action, making pre-conditions
-reusable even when the action is not applicable.
-
 \begin{definition}[Guarded action]\label{def:guarded-action}%
-  Given an engine $\engine{j}$, a \textbf{guarded action} of the engine's
-  behaviour is a tuple $\guardedaction{j}$, where:
+  Given an engine $p$, a \textbf{guarded action} of the engine's behaviour is a
+  tuple $\guardedaction{i}$, where:
   \begin{itemize}
-    \item $\guard{j}$ is a guard as in \Cref{def:guards} that determines when the
-    action $\action{j}$ should execute, and
-    \item $\action{j}$ is an action of type $\effecttype{j}{S_j}$ as in
-    \Cref{def:effects} that specifies what to execute,
+    \item $\guard{i}$ is a guard that determines when the
+    action $\action{i}$ should execute, and
+    \item $\action{i}$ is an action of type $\effecttype{p}{S_p}$ that specifies what to execute,
   \end{itemize}
 \end{definition}
 
-Together, both the guard and action induce a mapping of type
+Together, both, the guard and action induce a mapping that takes in a message,
+engine configuration, and environment, and outputs the effect to execute when the
+guard is satisfied.
 
 \begin{equation*}\label{eq:guarded-action}%
-\msgtype{j} \times 
-\configtype{j} \times 
-\envtype{j}{S_j} 
+\msgtype{p} \times 
+\configtype{p} \times 
+\envtype{p}{S_p} 
   \to 
-\effecttype{j}{S_j}.
+\effecttype{p}{S_p}.
 \end{equation*}
 
-%FIXME: The guard can fail, so shouldn't this be Option{\mathsf{Effect}(S_j)}?
+\begin{example}[Key-Value Store Engine]\label{ex:keyvalue-store-guarded-actions}
+Let us revisit our key-value store engine from \Cref{ex:keyvalue-engine}. We
+will define a more sophisticated set of guarded actions that demonstrate the
+engine's capabilities.
 
-This mapping takes in a message, engine configuration, and environment, and
-outputs the effect to execute when the guard is satisfied.
+Now, let's define guards for different message types:
 
-So, upon receiving a message, an engine $\engine{j}$ checks which of its guards is
-satisfied, and if so, the engine executes the corresponding action, as
-illustrated in \Cref{fig:effect}.
+\begin{align*}
+&g_{\mathsf{get}} : \msgtype{\mathsf{kv}} \times \configtype{\mathsf{kv}} \times \envtype{\mathsf{kv}}{S_{\mathsf{kv}}} \to \Option{\mathsf{Key}} \\
+&\defequal{g_{\mathsf{get}}(m, \ignore, \ignore)}{
+  \mathsf{case}\ m\ \mathsf{of}\ \{
+    \msg{Get}(k) \Rightarrow \some{k};
+    \ignore \Rightarrow \none
+  \}
+}\\
+&g_{\mathsf{put}} : \msgtype{\mathsf{kv}} \times \configtype{\mathsf{kv}} \times \envtype{\mathsf{kv}}{S_{\mathsf{kv}}} \to \Option{\mathsf{Key} \times \mathsf{Val}} \\
+&\defequal{g_{\mathsf{put}}(m, \ignore, e)}{
+  \mathsf{case}\ m\ \mathsf{of}\ \{
+    \msg{Put}(k, v) \Rightarrow \mathsf{if}\ \neg e.\mathsf{readOnly}\ \mathsf{then}\ \some{\langle k, v \rangle}\ \mathsf{else}\ \none;
+    \ignore \Rightarrow \none
+  \}
+}\\
+&g_{\mathsf{delete}} : \msgtype{\mathsf{kv}} \times \configtype{\mathsf{kv}} \times \envtype{\mathsf{kv}}{S_{\mathsf{kv}}} \to \Option{\mathsf{Key}} \\
+&\defequal{g_{\mathsf{delete}}(m, \ignore, e)}{
+  \mathsf{case}\ m\ \mathsf{of}\ \{
+    \msg{Delete}(k) \Rightarrow \mathsf{if}\ \neg e.\mathsf{readOnly}\ \mathsf{then}\ \some{k}\ \mathsf{else}\ \none;
+    \ignore \Rightarrow \none
+  \}
+}
+\end{align*}
+
+Now for the corresponding actions:
+
+\begin{align*}
+&a_{\mathsf{get}} : \Option{\mathsf{Key}} \times \msgtype{\mathsf{kv}} \times \configtype{\mathsf{kv}} \times \envtype{\mathsf{kv}}{S_{\mathsf{kv}}} \to \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}} \\
+&\defequal{a_{\mathsf{get}}(k, m, c, e)}{
+  \begin{array}{l}
+    \mathsf{let}\ v = e.\mathsf{store}.get(k)\ \mathsf{in} \\
+    \mathsf{let}\ newCount = e.\mathsf{accessCount}.get(k) + 1\ \mathsf{in} \\
+    \chain{
+      \update{e[\mathsf{accessCount} \mapsto e.\mathsf{accessCount}.put(k, newCount)]}
+    }{
+      \send{m.\mathsf{sender}}{\msg{Result}(v)}
+    }
+  \end{array}
+}\\
+&a_{\mathsf{put}} : \Option{\mathsf{Key} \times \mathsf{Val}} \times \msgtype{\mathsf{kv}} \times \configtype{\mathsf{kv}} \times \envtype{\mathsf{kv}}{S_{\mathsf{kv}}} \to \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}} \\
+&\defequal{a_{\mathsf{put}}((k, v), m, c, e)}{
+  \begin{array}{l}
+    \mathsf{let}\ newStore = e.\mathsf{store}.put(k, v)\ \mathsf{in} \\
+    \mathsf{let}\ newCount = e.\mathsf{accessCount}.getOrDefault(k, 0)\ \mathsf{in} \\
+    \chain{
+      \update{e[\mathsf{store} \mapsto newStore][\mathsf{accessCount} \mapsto e.\mathsf{accessCount}.put(k, newCount)]}
+    }{
+      \send{m.\mathsf{sender}}{\msg{Result}(\some{v})}
+    }
+  \end{array}
+}\\
+&a_{\mathsf{delete}} : \Option{\mathsf{Key}} \times \msgtype{\mathsf{kv}} \times \configtype{\mathsf{kv}} \times \envtype{\mathsf{kv}}{S_{\mathsf{kv}}} \to \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}} \\
+&\defequal{a_{\mathsf{delete}}(k, m, c, e)}{
+  \begin{array}{l}
+    \mathsf{let}\ v = e.\mathsf{store}.get(k)\ \mathsf{in} \\
+    \mathsf{let}\ newStore = e.\mathsf{store}.remove(k)\ \mathsf{in} \\
+    \chain{
+      \update{e[\mathsf{store} \mapsto newStore]}
+    }{
+      \send{m.\mathsf{sender}}{\msg{Result}(v)}
+    }
+  \end{array}
+}
+\end{align*}
+
+Additionally, we can define a special guard and action to toggle the read-only mode:
+
+\begin{align*}
+g_{\mathsf{toggle}} &: \msgtype{\mathsf{kv}} \times \configtype{\mathsf{kv}} \times \envtype{\mathsf{kv}}{S_{\mathsf{kv}}} \to \Option{\Bool} \\
+&\defequal{g_{\mathsf{toggle}}(m, \ignore, \ignore)}{
+  \mathsf{case}\ m\ \mathsf{of}\ \{
+    \msg{ToggleReadOnly}(b) \Rightarrow \some{b};
+    \ignore \Rightarrow \none
+  \}
+}\\
+&a_{\mathsf{toggle}} : \Option{\Bool} \times \msgtype{\mathsf{kv}} \times \configtype{\mathsf{kv}} \times \envtype{\mathsf{kv}}{S_{\mathsf{kv}}} \to \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}} \\
+&\defequal{a_{\mathsf{toggle}}(b, m, c, e)}{
+  \chain{
+    \update{e[\mathsf{readOnly} \mapsto b]}
+  }{
+    \send{m.\mathsf{sender}}{\msg{Result}(\some{b})}
+  }
+}
+\end{align*}
+
+
+\begin{align*}
+g_{\mathsf{stats}} &: \msgtype{\mathsf{kv}} \times \configtype{\mathsf{kv}} \times \envtype{\mathsf{kv}}{S_{\mathsf{kv}}} \to \Option{\mathsf{Key}} \\
+&\defequal{g_{\mathsf{stats}}(m, \ignore, \ignore)}{
+  \mathsf{case}\ m\ \mathsf{of}\ \{
+    \msg{GetStats}(k) \Rightarrow \some{k};
+    \ignore \Rightarrow \none
+  \}
+}\\
+&a_{\mathsf{stats}} : \Option{\mathsf{Key}} \times \msgtype{\mathsf{kv}} \times \configtype{\mathsf{kv}} \times \envtype{\mathsf{kv}}{S_{\mathsf{kv}}} \to \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}} \\
+&\defequal{a_{\mathsf{stats}}(k, m, c, e)}{
+  \begin{array}{l}
+    \mathsf{let}\ count = e.\mathsf{accessCount}.getOrDefault(k, 0)\ \mathsf{in} \\
+    \mathsf{let}\ exists = e.\mathsf{store}.containsKey(k)\ \mathsf{in} \\
+    \send{m.\mathsf{sender}}{\msg{StatsResult}(k, count, exists)}
+  \end{array}
+}
+\end{align*}
+
+The key-value store's behaviour now includes guarded actions like 
+$\langle g_{\mathsf{get}}, a_{\mathsf{get}} \rangle$, 
+$\langle g_{\mathsf{put}}, a_{\mathsf{put}} \rangle$, 
+$\langle g_{\mathsf{delete}}, a_{\mathsf{delete}} \rangle$,
+$\langle g_{\mathsf{toggle}}, a_{\mathsf{toggle}} \rangle$, and
+$\langle g_{\mathsf{stats}}, a_{\mathsf{stats}} \rangle$.
+
+\end{example}
 
 %TODO: comment on the given guard action evaluation strategy in the corresponding op. rule
 
@@ -654,8 +796,8 @@ enables computational universality.
 \end{remark}
 
 \begin{definition}[Engine behaviour]\label{def:engine-behaviour}
-Given an engine $\engine{j}$, the type of its behaviour is denoted with
-$\behaviourtype{i}$, and it is the set of its guarded actions.
+Given an engine $p$, the type of its behaviour is denoted with
+$\behaviourtype{p}$, and it is the set of its guarded actions.
 \end{definition}
 
 \subsection{Engines}\label{sec:processing-engines}
