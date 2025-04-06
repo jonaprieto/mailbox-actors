@@ -495,6 +495,29 @@ with $\configtype{p}$.
 Given an engine $p$, we use $\config{p}$ to refer to its configuration.
 \end{definition}
 
+\begin{example}\label{ex:keyvalue-store-configuration}%
+Let us define the configuration type $C_{\mathsf{kv}}$ for the key-value store engine
+from \Cref{ex:keyvalue-engine}. One could define the configuration to establish the
+operational constraints of the key-value store, similar to how database systems
+often have different access modes.
+\begin{equation}\label{eq:keyvalue-store-configuration}
+\begin{aligned}
+\typedef{%
+  \ctype{C}_{\mathsf{kv}}
+}{
+        &\quad \ccon{AppendOnly} & \text{(only allows adding new entries)} \\
+   \mid & \quad \ccon{NoDeletion} & \text{(allows reads/updates but not deletions)} \\
+   \mid & \quad \ccon{ReadWrite} & \text{(full CRUD capabilities)}
+}.
+\end{aligned}
+\end{equation}
+
+These configuration options enable different usage patterns. For instance,
+$\ccon{AppendOnly}$ is suitable for audit logs or event sourcing,
+$\ccon{NoDeletion}$ provides data persistence guarantees while allowing updates,
+and $\ccon{ReadWrite}$ offers complete general-purpose storage.
+\end{example}
+
 While engines operate in isolation and process messages independently, their
 configuration alone cannot support their full functionality. Each engine
 requires additional state management capabilities to operate effectively.
