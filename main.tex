@@ -158,7 +158,7 @@ a \emph{configuration}, an \emph{execution environment}, \emph{message interface
 and a \emph{behaviour}. These components, or better their types are used to
 define the types for engines for a system, as in~\Cref{def:engine}.
 
-Briefly, the configuration of an engine (\Cref{def:engine-configuration}) conveys  
+Briefly, the configuration of an engine (\Cref{def:engine-configuration}) conveys
 persistent information about the engine such as its parent, operational mode, and
 other engine-type-specific configuration. The engine's execution environment
 (\Cref{def:engine-environment}) contains its local state and an \emph{address
@@ -307,8 +307,8 @@ presented.
   \begin{equation}\label{eq:message-interface-example}
   \typedef%
   {\msgtype{\mathsf{kv}}}%
-  {    \msg{Put}(\mathsf{Key}\times\mathsf{Val}) 
-  \mid \msg{Get}(\mathsf{Key}) 
+  {    \msg{Put}(\mathsf{Key}\times\mathsf{Val})
+  \mid \msg{Get}(\mathsf{Key})
   \mid \msg{Delete}(\mathsf{Key})
   \mid \msg{Result}(\Option{\mathsf{Val}})
   },
@@ -328,7 +328,7 @@ We model the system in such a way that it enjoys type-safe communication. This
 is possible because of how we define a message.
 
 \begin{definition}[Message]\label{def:messages}
-A \textbf{message} is a triple $\langle s, t, v \rangle$ 
+A \textbf{message} is a triple $\langle s, t, v \rangle$
 denoted with $\msgpacket{s}{t}{v}$
 where:
 \begin{itemize}
@@ -342,7 +342,7 @@ where:
 \end{definition}
 
 \begin{example}[Message Example]\label{ex:message-example}%
-  A message sent to the key-value store engine might be 
+  A message sent to the key-value store engine might be
   $\msgpacket{\loc{1}{2}}{\loc{3}{4}}{\msg{Put}(\text{cd2edf}, \text{Alice})}$
   where the sender resides on node $1$ with engine identifier $2$, and the target
   resides on node $3$ with engine identifier $4$. The payload is a key-value pair,
@@ -358,7 +358,7 @@ valid messages, defined as,
 where $\msgtype{i}$ is the message interface of engine type $i$. To simplify the
 notation, we assume message type subtyping, that is, $\typing{\msgtype{i}}{\Msg}$
 for all $i \in \SetOfEngines$. When no confusion arises, using $p$ to refer to an
-engine, we use $\msgtype{p}$ to refer to its message interface. 
+engine, we use $\msgtype{p}$ to refer to its message interface.
 % Also, we may use $\enginetype{p}$ to refer to the engine type of $p$.
 
 % Ill-formed message example
@@ -388,16 +388,16 @@ engine's lifecycle such as its parent reference, while others may change during
 execution such as the engine's local state.
 
 \begin{definition}[Engine Lifecycle]\label{def:engine-status}%
-The \textbf{status} of an engine $p$ of type $\EngineStatus{p}$
-determines the engine's operational state within its lifecycle as shown in
-\Cref{fig:engine-status}.
+The \textbf{status} of an engine $p$ of type $\EngineStatus{M_p}$ where $M_p$ is the
+engine's message interface, determines the engine's operational state within its
+lifecycle as shown in \Cref{fig:engine-status}.
 
 \begin{equation}\label{eq:engine-status}
 \begin{aligned}
 \typedef%
-  {\EngineStatus{p}}%
-  {    &\quad \ready{\Option{\msgtype{p} \to \Bool}} \\%
-  \mid & \quad \busy{\msgtype{p}} \\%
+  {\EngineStatus{M_p}}%
+  {    &\quad \ready{\Option{M_p \to \Bool}} \\%
+  \mid & \quad \busy{M_p} \\%
   \mid & \quad \terminated  \, .
   }
 \end{aligned}
@@ -417,7 +417,7 @@ determines the engine's operational state within its lifecycle as shown in
 \caption{The engine life cycle: every engine starts in \ready{f} state waiting
 for a message where $f$ is an optional predicate that communicates which
 messages the engine is interested in processing. Once it reacts to a message, it
-changes to \busy{m} where $m$ is the message to which the engine reacts. 
+changes to \busy{m} where $m$ is the message to which the engine reacts.
 Then, depending on its logic, the engine may either return to \ready{f'} for
 some optional predicate $f'$ or \terminated{}, meaning the engine will not process
 any more messages.}
@@ -469,7 +469,7 @@ based on the engine's purpose and how messages are routed to it.
 The \textbf{operational mode} of an engine is of type $\EngineMode$,
 \begin{equation}\label{eq:engine-mode}
 \typedef{\EngineMode}
-  {    \process 
+  {    \process
   \mid \mail
   }\,.
 \end{equation}
@@ -492,7 +492,7 @@ a tuple $\configval{p}{\mode}{c}$ where:
     \item $\typing{c}{C_p}$ is configuration data specific to the engine type of $p$.
 \end{itemize}
 The type of engine configurations for engine type $\enginetype{p}$ is denoted
-with $\configtype{p}{C_p}$. 
+with $\configtype{p}{C_p}$.
 % The type $S_p$ comes from the engine's type.
 Given an engine $p$, we use $\config{p}$ to refer to its configuration.
 \end{definition}
@@ -516,14 +516,14 @@ database systems often have different access/update modes.
 For convenience, given a key-value store engine $p$, and its configuration
 $\config{p}$, we define predicates that check if the configuration is of a
 certain mode, $\mathsf{isReadOnly}$, $\mathsf{isReadAppend}$,
-$\mathsf{isReadModify}$, and $\mathsf{isReadWrite}$. 
+$\mathsf{isReadModify}$, and $\mathsf{isReadWrite}$.
 \end{example}
 
 While engines operate in isolation and process messages independently, their
 configuration alone cannot support their full functionality. Each engine
 requires additional state management capabilities to operate effectively.
 To address this need, every engine maintains its own state within an execution
-context, collectively referred to as the engine's \emph{environment}. 
+context, collectively referred to as the engine's \emph{environment}.
 
 \begin{definition}\label{def:engine-environment}%
 Given a type $L_p$ for the local state of an engine $p$ as defined by its engine
@@ -542,6 +542,7 @@ automatically added during engine spawning.
 % For convenience, the system also provides a function \self{} that
 % refers to the engine's own address.
 \end{remark}
+
 \begin{example}\label{ex:keyvalue-store-engine-local-state}%
 For the key-value store engine, we define the type $L_{\mathsf{kv}}$ for the
 local state to include both the store and access statistics:
@@ -559,7 +560,7 @@ the pair,
 \defequal{
   \typing{
     l_{\mathsf{kv}}
-  }{ 
+  }{
     L_{\mathsf{kv}}
   }
   }{
@@ -594,7 +595,7 @@ processing a message.
 \begin{equation}\label{eq:effects}
 \begin{aligned}
 \typedef{%
-   \effecttype{&p}{C_p}{L_p}
+  \effecttype{&p}{C_p}{L_p}
 }{\\
       &\quad \noop & &%
         \text{(null operation)} \\
@@ -621,7 +622,7 @@ processing a message.
 % also mention CCS?
 \begin{figure}%[!htbp]
 % https://q.uiver.app/#q=WzAsOSxbMSwwLCIobSwgXFxtYXRoc2Z7Y2ZnX2p9LFxcbWF0aHNme2Vudn1faikiXSxbMCwyLCJyXzEiXSxbMSwyLCJcXGNkb3RzIl0sWzIsMiwicl9rIl0sWzAsMywiZV8xOlxcbWF0aHNme0VmZmVjdH0oU19qKSJdLFsyLDMsImVfazpcXG1hdGhzZntFZmZlY3R9KFNfaikiXSxbMCwwXSxbMiwwXSxbMSwzLCJcXGNkb3RzIl0sWzAsMiwiZ19pIiwyLHsic3R5bGUiOnsidGFpbCI6eyJuYW1lIjoibWFwcyB0byJ9fX1dLFswLDMsImdfayIsMCx7InN0eWxlIjp7InRhaWwiOnsibmFtZSI6Im1hcHMgdG8ifX19XSxbMSw0LCJjXzEiLDIseyJzdHlsZSI6eyJ0YWlsIjp7Im5hbWUiOiJtYXBzIHRvIn19fV0sWzMsNSwiY19rIiwwLHsic3R5bGUiOnsidGFpbCI6eyJuYW1lIjoibWFwcyB0byJ9fX1dLFswLDEsImdfMSIsMix7InN0eWxlIjp7InRhaWwiOnsibmFtZSI6Im1hcHMgdG8ifX19XSxbNiw3LCIiLDAseyJsYWJlbF9wb3NpdGlvbiI6MTAwLCJjdXJ2ZSI6NCwic2hvcnRlbiI6eyJzb3VyY2UiOjIwLCJ0YXJnZXQiOjIwfSwic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoiZGFzaGVkIn0sImhlYWQiOnsibmFtZSI6Im5vbmUifX19XSxbMiw4LCIiLDIseyJzdHlsZSI6eyJ0YWlsIjp7Im5hbWUiOiJtYXBzIHRvIn19fV1d
-\[\begin{tikzcd}
+\[\begin{tikzcd}[row sep=small]
 	{} & {(m, \config{p},\localenv{p})} & {} \\
 	\\
 	{r_1} & \cdots & {r_k} \\
@@ -672,9 +673,9 @@ specific effects by the system's runtime.
 Similarly, as in the case of guards, an \textbf{action} acting on data of type
 $\returntype$ is a mapping of type %
 \begin{equation}
-\returntype \times 
+\returntype \times
 \In{p}
-  \to 
+  \to
 \Out{p} \text{ where }
 \defequal{\Out{p}}{\effecttype{p}{C_p}{L_p}}.
 \end{equation}
@@ -714,7 +715,7 @@ $\returntype$ is a mapping of type %
 
 \begin{definition}[Engine Behaviour]\label{def:engine-behaviour}%
 Under the same assumptions as in \Cref{def:guarded-action}, given an engine $p$,
-the type of its behaviour is denoted with $\behaviourtype{p}$, 
+the type of its behaviour is denoted with $\behaviourtype{p}$,
 
 \begin{equation}
 \defequal{
@@ -727,7 +728,7 @@ the type of its behaviour is denoted with $\behaviourtype{p}$,
 \,.
 \end{equation}
 \end{definition}
-    
+
 
 \begin{example}\label{ex:keyvalue-engine}%
 For the key-value store engine, we define guarded actions for each message type.
@@ -741,7 +742,7 @@ otherwise $\none$. The action $a_{\mathsf{get}}$ retrieves the value, updates
 the access count, and sends the result back. We assume that the sender engine,
 the consumer of the key-value store engine's result, has
 $\msg{Result}(\mathsf{Val})$ and $\msg{Ack}$ as part of its message interface,
-so we can write back the result directly. 
+so we can write back the result directly.
 
 \begin{equation}\label{eq:keyvalue-engine-get-guard}
   \begin{minipage}{0.45\textwidth}
@@ -749,8 +750,8 @@ so we can write back the result directly.
   &\typing{
     g_{\mathsf{get}}
   }{
-    \In{\mathsf{kv}} 
-      \to 
+    \In{\mathsf{kv}}
+      \to
     \Option{\mathsf{Key}}
     \,.
   } \\
@@ -766,23 +767,23 @@ so we can write back the result directly.
   \end{align*}
   \vfill
   \end{minipage}
-  \hfill\vrule width 1pt\quad\hfill
+  \hfill\vrule width .5pt\quad\hfill
   \begin{minipage}{0.48\textwidth}
   \begin{align*}
   &\typing{
     a_{\mathsf{get}}
   }{
-    \mathsf{Key} \times \In{\mathsf{kv}} 
-      \to 
+    \mathsf{Key} \times \In{\mathsf{kv}}
+      \to
      \Out{\mathsf{kv}}
     \,.
   } \\
   &\defequal{
     a_{\mathsf{get}}(
-      k, 
-      \langle 
-        m, 
-        \ignore, 
+      k,
+      \langle
+        m,
+        \ignore,
         \langle \mathsf{st}, \mathsf{cnt} \rangle
       \rangle)
   }{ \chain{\\
@@ -811,8 +812,8 @@ the sender.
   &\typing{
     g_{\mathsf{put}}
   }{
-    \In{\mathsf{kv}} 
-      \to 
+    \In{\mathsf{kv}}
+      \to
     \Option{\mathsf{Key} \times \mathsf{Val}}
     \,.
   } \\
@@ -833,18 +834,27 @@ the sender.
   \end{align*}
   \vfill
   \end{minipage}
-  \hfill\quad \vrule width 1pt\quad\hfill
+  \hfill\quad \vrule width .5pt\quad\hfill
   \begin{minipage}{0.40\textwidth}
   \begin{align*}
   &\typing{
     a_{\mathsf{put}}
   }{
-    (\mathsf{Key} \times \mathsf{Val}) \times \In{\mathsf{kv}} 
+    (\mathsf{Key} \times \mathsf{Val}) \times \In{\mathsf{kv}}
       \to \Out{\mathsf{kv}}
     \,.
   } \\
   &\defequal{
-    a_{\mathsf{put}}(\langle k, v \rangle, \langle m, \ignore, \langle \mathsf{st}, \mathsf{cnt} \rangle \rangle)
+    a_{\mathsf{put}}(
+      \langle
+        k,
+        v
+      \rangle,
+      \langle
+        m,
+        \ignore,
+        \langle \mathsf{st}, \mathsf{cnt} \rangle
+      \rangle)
   }{ \\
   &\quad \chain{\\
   &\quad \quad      \update{%
@@ -868,8 +878,8 @@ We define the guard and action for delete operations as follows:
   &\typing{
     g_{\mathsf{delete}}
   }{
-    \In{\mathsf{kv}} 
-      \to 
+    \In{\mathsf{kv}}
+      \to
     \Option{\mathsf{Key}}
     \,.
   } \\
@@ -890,23 +900,23 @@ We define the guard and action for delete operations as follows:
   \end{align*}
   \vfill
   \end{minipage}
-  \hfill\quad \vrule width 1pt\quad\hfill
+  \hfill\quad \vrule width .5pt\quad\hfill
   \begin{minipage}{0.40\textwidth}
   \begin{align*}
   &\typing{
     a_{\mathsf{delete}}
   }{
-    \mathsf{Key} \times \In{\mathsf{kv}} 
+    \mathsf{Key} \times \In{\mathsf{kv}}
       \to \Out{\mathsf{kv}}
     \,.
   } \\
   &\defequal{
     a_{\mathsf{delete}}
-      (k, 
-        \langle 
-          m, 
-          \ignore, 
-          \langle \mathsf{st}, \mathsf{cnt} \rangle 
+      (k,
+        \langle
+          m,
+          \ignore,
+          \langle \mathsf{st}, \mathsf{cnt} \rangle
         \rangle)
   }{ \\
   &\quad \chain{\\
@@ -932,11 +942,11 @@ by the following set of guarded actions.
 \begin{equation}\label{eq:keyvalue-engine-behaviour}
   \begin{aligned}
   \defequal{
-      \behaviourtype{\mathsf{kv}}
+      \typing{\behaviour{\mathsf{kv}}}{\behaviourtype{\mathsf{kv}}}
     }{
     [  (g_{\mathsf{get}} \odot a_{\mathsf{get}})
      , (g_{\mathsf{put}} \odot a_{\mathsf{put}})
-     , (g_{\mathsf{delete}} \odot a_{\mathsf{delete}}) 
+     , (g_{\mathsf{delete}} \odot a_{\mathsf{delete}})
     ]
   }
   \,.
@@ -970,9 +980,10 @@ capabilities. We have established the types of their constituent parts, that is,
 guards, actions, configurations and environments.
 
 \begin{definition}[Engine]\label{def:engine}%
-Given $C_p$ the type of the engine's configuration, $L_p$ the type of the
-engine's local state, an \textbf{engine} is the computational unit of the
+Given $C_p$ the type of the specific engine's configuration, $L_p$ the type of
+the engine's local state, an \textbf{engine} is the computational unit of the
 system, formally specified by a tuple
+
 $\engineval{i}{b}{s}{\mathsf{cfg}}{\mathsf{env}}$ where:
 \begin{itemize}
 \item $\typing{i}{\msgtype{p}}$ is the engine's message interface,
@@ -988,14 +999,14 @@ Therefore, the type of an engine, $\enginetype{p}$, is defined as:
   \defequal{
     \enginetype{p}
   }{
-    \msgtype{p} 
-      \times 
-    \behaviourtype{p} 
-      \times 
-    \EngineStatus{p} 
-      \times 
-    \configtype{p}{C_p} 
-      \times 
+    \msgtype{p}
+      \times
+    \behaviourtype{p}
+      \times
+    \EngineStatus{p}
+      \times
+    \configtype{p}{C_p}
+      \times
     \envtype{p}{L_p}
   }
   \,.
@@ -1008,46 +1019,116 @@ Therefore, the type of an engine, $\enginetype{p}$, is defined as:
 % messages.
 % \end{remark}
 
-Our system defines two engine types: \emph{processing engines} and \emph{mailbox
-engines}. Users can only explicitly create processing engines, while mailbox
-engines are automatically created by the system when a processing engine is
-instantiated, as detailed in \Cref{sec:creation-rules}. A processing engine is
-distinguished by having its operational mode set to $\process$ through
-its configuration's mode field. The internals of mailbox engines are described
-in \Cref{def:mailbox-engine}.
+\begin{example}[Key-Value Store Engine]\label{ex:keyvalue-engine-definition}
+With all the components in place, we can now define the type for key-value store engines.
+\begin{equation}\label{eq:keyvalue-engine-definition}
+  \begin{aligned}
+  \defequal{
+    \enginetype{\mathsf{kv}}
+  }{
+    &\,\, \Msg &  \\
+        \times
+    &\,\, \behaviourtype{\mathsf{kv}} & (\text{as in \eqref{eq:keyvalue-engine-behaviour}}) \\
+      \times
+    &\,\, \EngineStatus{\msgtype{\mathsf{kv}}} & (\text{as in \Cref{def:engine-status}}) \\
+      \times
+    &\,\, \configtype{\mathsf{kv}}{\ctype{C}_\mathsf{kv}} & (\text{as in \eqref{eq:keyvalue-store-configuration}}) \\
+      \times
+    &\,\, \envtype{\mathsf{kv}}{\ctype{L}_\mathsf{kv}} & (\text{as in \eqref{eq:keyvalue-store-engine-local-state}\,.})
+  }
+  \end{aligned}
+\end{equation}
 
-\begin{definition}[Mailbox engine]\label{def:mailbox-engine}
-A \emph{mailbox engine} $\mailbox{j}$ is a system-pre-configured engine
-automatically created when instantiating a processing engine $\engine{j}$. It must
-satisfy:
+A key-value store engine can be defined as follows.
+% The terms
+% $\msgtype{\mathsf{kv}}$, $\behaviour{\mathsf{kv}}$, $\ready{\none}$, $\langle
+% \none, \process, \ccon{ReadWrite} \rangle$, and
+% $\hyperref[eq:keyvalue-store-engine-initial-local-state]{l_{\mathsf{kv}}}$ are
+% defined in
+% \Cref{ex:keyvalue-engine-definition,eq:keyvalue-engine-behaviour,eq:keyvalue-store-engine-initial-local-state
+% }.
+
+\begin{equation}\label{eq:keyvalue-engine-definition-example}
+  \begin{aligned}
+    \defequal{
+      \typing{\mathsf{kvEng}}{\enginetype{\mathsf{kv}}}
+    }{
+    \engineval%
+      {\msgtype{\mathsf{kv}}}%
+      {\hyperref[eq:keyvalue-engine-behaviour]{\behaviour{\mathsf{kv}}}}%
+      {\ready{\none}}%
+      {\langle \none, \process, \ccon{ReadWrite} \rangle}%
+      {\hyperref[eq:keyvalue-store-engine-initial-local-state]{l_{\mathsf{kv}}}}
+    }
+  \end{aligned}
+  \,.
+\end{equation}
+\end{example}
+
+Recall when we introduced the operational modes in \Cref{def:engine-mode}, we
+mentioned that our system defines two engine types: \emph{processing engines}
+and \emph{mailbox engines}. System users can only explicitly create processing
+engines, while mailbox engines are automatically created by the system when a
+processing engine is instantiated, as detailed in \Cref{sec:creation-rules}. A
+processing engine is distinguished by having its operational mode set to
+$\process$ through its configuration's mode field. The pre-configured mailbox
+engines are described below.
+% TODO: reference the missing rules for changing 
+% the mailbox engine's operational mode.
+
+\begin{definition}[Mailbox Engine]\label{def:mailbox-engine}%
+A \emph{mailbox engine} $m$ for a processing engine $p$ is a
+system-pre-configured engine created when spawning engine $p$. The engine $m$
+satisfies the following.
 \begin{itemize}
-\item Operational mode set to $\mail$ (per \Cref{def:engine-mode})
-\item Parent reference pointing to its paired processing engine $\engine{j}$
-\item Fixed message interface with one message type:
-\begin{equation*}
-  \typedef%
-    {\msgtype{\mailbox{j}}}
-    {\append(\msgtype{j})}
-\end{equation*}
-carrying a payload of type $\msgtype{j}$
-\item State $q$ of type $S$ implementing a queue-like structure with:
+\item The operational mode is set to $\mail$.
+\item The parent reference points to its paired processing engine $p$.
+\item It has a fixed message interface:
+\begin{equation}\label{eq:mailbox-engine-message-interface}
+\begin{aligned}
+  \defequal{
+    \msgtype{m}
+  }{
+    & \append(\msgtype{p}) \\
+  }
+  \,.
+\end{aligned}
+\end{equation}
+% carrying a payload of type $\msgtype{p}$.
+\item The mailbox engine $m$ maintains a local state of type $\envtype{m}{S}$ that implements a queue-like structure with:
   \begin{itemize}
-  \item $\emptyset$ denoting empty state.
-  \item Message insertion to support $\append\mbox{-}$messages, %
-  $\typing{\insertmsgop}{S \times \msgtype{j} \to S}.$
-  \item Message deletion, %
-  $\typing{\deletemsgop}{S \times \msgtype{j} \to S}.$
+  \item $\emptyset$ representing the empty state.
+  \item A message insertion operation, %
+  $\typing{(\insertmsgop)}{\envtype{m}{S} \times \msgtype{p} \to \envtype{m}{S}}.$
+  \item A message deletion operation, %
+  $\typing{(\deletemsgop)}{\envtype{m}{S} \times \msgtype{p} \to \envtype{m}{S}}.$
   % for verification, one might want to add proof that the operations
   % actually insert/delete the element from the structure
   \end{itemize}
 \end{itemize}
 \end{definition}
 
-\noindent With mailbox engines added to the system, we have a strict producer-consumer
-pattern introduced through explicit message-reception semantics, decoupling
-message storage from processing logic. This allows for independent scaling of
-message ingestion and core computation.
+
+With mailbox engines added to the system, we introduce a strict
+producer-consumer pattern through explicit message-reception semantics,
+decoupling message storage from processing logic. This allows for independent
+scaling of message ingestion and core computation. 
+% We will see later how to work with mailbox engines in \Cref{sec:mailbox-engine-semantics}.
+
 %TODO: add a reference to the corresponing rules in the operational semantics
+
+\begin{figure}
+% TODO: missing TikZ figure  
+\caption{%
+  Architectural representation of a processing engine and its dedicated mailbox engine.
+  The processing engine on the right, represented by a dashed box, contains its configuration, status, state, and environment.
+  The mailbox engine on the left, represented by a solid box, has similar components but is pre-configured with a fixed
+  message interface and a queue-like local state structure. The bidirectional link
+  between them represents their communication channel, enabling the processing engine
+  to retrieve messages from its mailbox when ready to process them.
+}
+\label{fig:engine-components}
+\end{figure}
 
 \subsection{Nodes}\label{sec:nodes}
 
@@ -1901,7 +1982,7 @@ $}
   {(\SetOfNodes, \SetOfMessages, \SetOfPlugins)}
   {\mfilter{f}}
   {(\SetOfNodes[
-    \enginemap(p) 
+    \enginemap(p)
       \mapsto %
       \engineval%
         {\ignore}
@@ -2310,16 +2391,16 @@ Troyer.
 % } \\
 % &\defequal{g_{\mathsf{put}}((m, c, \ignore))}{
 %   \mathsf{case}\ m\ \mathsf{of}\ \{\\
-%   &\hspace{3mm}  \msg{Put}(k, v) \Rightarrow 
-%         \mathsf{if}\ \neg\, \mathsf{readOnly}(c)\ 
-%         \mathsf{then}\ \some{\langle k, v \rangle}\ 
+%   &\hspace{3mm}  \msg{Put}(k, v) \Rightarrow
+%         \mathsf{if}\ \neg\, \mathsf{readOnly}(c)\
+%         \mathsf{then}\ \some{\langle k, v \rangle}\
 %         \mathsf{else}\ \none;\\
 %   &\hspace{3mm} \ignore \Rightarrow \none
 %   \}
 %   \,.
 % }\\[2mm]
 % &\typing{a_{\mathsf{put}}}{
-%   (\mathsf{Key} \times \mathsf{Val}) \times \In{\mathsf{kv}} \to 
+%   (\mathsf{Key} \times \mathsf{Val}) \times \In{\mathsf{kv}} \to
 %   \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}}
 % } \\
 % &\defequal{a_{\mathsf{put}}((k, v), (m, c, (\mathsf{st}, \mathsf{cnt})))}{
@@ -2352,7 +2433,7 @@ Troyer.
 %   \}
 % }\\[2mm]
 % &\typing{a_{\mathsf{delete}}}{
-%   \mathsf{Key} \times \In{\mathsf{kv}} \to 
+%   \mathsf{Key} \times \In{\mathsf{kv}} \to
 %   \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}}
 % } \\
 % &\defequal{a_{\mathsf{delete}}(k, m, c, e)}{
@@ -2381,7 +2462,7 @@ Troyer.
 %   \}
 % }\\[2mm]
 % &\typing{a_{\mathsf{stats}}}{
-%   \mathsf{Key} \times \In{\mathsf{kv}} \to 
+%   \mathsf{Key} \times \In{\mathsf{kv}} \to
 %   \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}}
 % } \\
 % &\defequal{a_{\mathsf{stats}}(k, m, c, e)}{
@@ -2397,9 +2478,9 @@ Troyer.
 % The action $a_{\mathsf{stats}}$ retrieves the access count and checks if the key exists in the store,
 % then sends these statistics back to the sender.
 
-% The key-value store's behaviour consists of guarded actions 
-% $\langle g_{\mathsf{get}}, a_{\mathsf{get}} \rangle$, 
-% $\langle g_{\mathsf{put}}, a_{\mathsf{put}} \rangle$, 
+% The key-value store's behaviour consists of guarded actions
+% $\langle g_{\mathsf{get}}, a_{\mathsf{get}} \rangle$,
+% $\langle g_{\mathsf{put}}, a_{\mathsf{put}} \rangle$,
 % $\langle g_{\mathsf{delete}}, a_{\mathsf{delete}} \rangle$, and
 % $\langle g_{\mathsf{stats}}, a_{\mathsf{stats}} \rangle$.
 
