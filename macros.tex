@@ -48,8 +48,8 @@
 \newcommand{\AddressType}[1]{\ensuremath{\Address_{#1}}}
 
 \newcommand{\Env}{\hyperref[def:engine-environment]{\ctype{\ensuremath{\mathsf{Env}}}}}
-\newcommand{\envtype}[2]{{\ensuremath{\Env_{#1}(#2)}}}
-\newcommand{\behaviourtype}[1]{\hyperref[def:engine-behaviour]{\ctype{\ensuremath{\mathsf{B}}}}_{#1}}
+\newcommand{\envtype}[1]{\ensuremath{\Env_{#1}}}
+\newcommand{\behaviourtype}[1]{\hyperref[def:engine-behaviour]{\ctype{\ensuremath{\mathsf{EBeh}}}}_{#1}}
 
 \newcommand{\EngineStatusref}{\hyperref[def:engine-status]{\ctype{\ensuremath{\mathsf{EStatus}}}}}
 \newcommand{\EngineStatus}[1]{\ensuremath{\EngineStatusref(#1)}}
@@ -133,7 +133,7 @@
 \newcommand{\behaviour}[1]{\ensuremath{b_{#1}}}
 
 \newcommand{\Cfg}{\hyperref[def:engine-configuration]{\ctype{\ensuremath{\mathsf{Cfg}}}}}
-\newcommand{\configtype}[2]{\ensuremath{\Cfg{}_{#1}(#2)}}
+\newcommand{\configtype}[1]{\ensuremath{\Cfg_{#1}}}
 \newcommand{\config}[1]{\ensuremath{\mathsf{cfg}_{#1}}}
 \newcommand{\configval}[3]{\ensuremath{\langle #1 , #2 , #3 \rangle}}
 
