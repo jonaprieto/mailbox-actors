@@ -90,39 +90,42 @@ correctness under concurrent message processing.
 \section{Notation}\label{sec:notation}
 
 We use an informal type-theoretic notation. For example, a term $x$ of type $A$
-is denoted $\typing{x}{A}$. Capital letters or capitalized words are used for types,
-and lowercase letters or lowercase words are used for terms. There is a universe
-of types $\U$, so if $A$ is a type, then $\typing{A}{\U}$. We also work with inductive
-types presented in the following form:
+is denoted $\typing{x}{A}$. Capital letters or capitalized words are used for
+types, and lowercase letters or lowercase words are used for terms. There is a
+universe of types $\U$, so if $A$ is a type, then $\typing{A}{\U}$. We also work
+with indexed inductive types presented in the following form:
 %
-\begin{align}\label{eq:inductive-type-definition}
-  \defequal{\ctype{A}}{\cdots \mid \mathsf{\ccon{C}}(A_1, \dots, A_n) \, ,}
-\end{align}
+\begin{equation}\label{eq:inductive-type-definition}
+  \typedef{\ctype{A}(\gamma_1, \dots, \gamma_n)}{\cdots \mid \ccon{C}(A_1, \dots, A_m) \, ,}
+\end{equation}
 %
-where $\ccon{C}$ is a constructor of the type $\ctype{A}$, and $A_1, \dots, A_n$ are
-the types of the constructor arguments.
+where $\gamma_1, \dots, \gamma_n$ are parameters, terms, in principle types, and
+$\ccon{C}$ is a constructor of the type $\ctype{A}$, and $A_1, \dots, A_m$ are the
+types of the constructor arguments.
+
 % If, in the context, there is no ambiguity about the type constructor, we may refer
 % to it directly as $\ccon{C}$. Otherwise we use the notation $A.\ccon{C}$ to
 % specify the type constructor. This means, type constructor names are not unique,
 % and we need to specify the type constructor when we use it.
-
 We use standard type notation where $\N$ denotes the inductive type of natural
 numbers, $\EmptyType$ represents the empty type, $\Unit$ denotes the type with
-exactly one term denoted with $*$, $\Bool$ denotes the type with two terms,
-$\mathsf{tt}$ and $\mathsf{ff}$, and $\List{A}$ represents the type of
-parametric lists. The notation $[a_1, \dots, a_n]$ is used to denote a list
-with elements $a_1, \dots, a_n$. The empty list is denoted with $[]$.
-Now, $\defequal{x}{y}$ indicates definitional
-equality where term $x$ is defined as $y$, while $\equal{a}{b}$ signifies
-definitional equality between terms, and $\propequal{a}{b}$ denotes propositional equality.
-$A \times B$ denotes the product of $A$ and $B$, and their terms, tuples, are denoted
-with $\langle a,b \rangle$, where $a : A$ and $b : B$. %
-A \emph{tuple} $\langle a_1, a_2, \dots, a_n \rangle$ is a generalisation of an
-ordered pair to an ordered $n$-tuple, where $n \in \N$, of type $A_1 \times
-\cdots \times A_n$, and $a_i$ is of type $A_i$ for all $i$ from $1$ to $n$.
-Given a type $A$, we can define the optional type $\Option{A}$ as $A \oplus \Unit$.
-The terms $\none$ and $\some{a}$ are the
-corresponding terms for the optional type when $\typing{a}{A}$.
+exactly one term denoted with $*$, $\Bool$ denotes the two-element type with
+$\mathsf{tt}$ and $\mathsf{ff}$ representing truth values, and $\List{A}$
+represents the type of parametric lists. The notation $[a_1, \dots, a_n]$ is
+used to denote a list with elements $a_1, \dots, a_n$. The empty list is denoted
+with $[]$. We use $\defequal{x}{y}$ to indicate definitional equality where term $x$
+is defined as $y$, while $\equal{a}{b}$ signifies definitional equality between
+terms, and $\propequal{a}{b}$ denotes propositional equality. The $\Sigma$ type
+is the dependent product of a type $A$ and a type family $B$ on $A$, denoted with 
+$\Sigma_{(x : A)} B(x)$. The non-dependent product of $A$ and $B$ is
+denoted with $A \times B$, and its terms, tuples, are denoted with $\langle
+a,b \rangle$, where $a : A$ and $b : B$. A \emph{tuple} $\langle a_1, a_2,
+\dots, a_n \rangle$ is a generalisation of an ordered pair to an ordered
+$n$-tuple, where $n \in \N$, of type $A_1 \times \cdots \times A_n$, and $a_i$
+is of type $A_i$ for all $i$ from $1$ to $n$. Given a type $A$, we can define
+the optional type $\Option{A}$ as $A \oplus \Unit$. The terms $\none$ and
+$\some{a}$ are the corresponding terms for the optional type when
+$\typing{a}{A}$. 
 
 Some types are sets, and we equip them with some common set-theoretic notations.
 The membership relation is denoted with $\in$, so $a \in A$ is a proposition
@@ -304,32 +307,36 @@ engine type $\mathsf{kv}$ would be defined later, once all required constructs a
 presented.
 
 % The following is our running example of an engine.
-
 \begin{example}[Key-Value Store Engine]\label{ex:keyvalue-engine}%
   Let us assume the system defines the engine type $\enginetype{\mathsf{kv}}$
-  and that an engine of this type works as a simple key-value store. An engine
-  of this type has the following message interface:
+  and that an engine of this type works as a simple key-value store. The keys
+  and values can be of different types\footnote{ The type
+  $\msgtype{\mathsf{kv}}$ can easily be extended to a family of message
+  interfaces indexed by the key and value types, $\msgtype{\mathsf{kv}}(\Key,
+  \Value)$. }. For our example, $\Key$ and $\Value$ are type synonyms for $\N$,
+  so the message interface is $\msgtype{\mathsf{kv}}$.
+
   \begin{equation}\label{eq:message-interface-example}
+  \begin{aligned}
   \typedef%
-  {\msgtype{\mathsf{kv}}}%
-  {    \msg{Put}(\mathsf{Key}\times\mathsf{Val})
-  \mid \msg{Get}(\mathsf{Key})
-  \mid \msg{Delete}(\mathsf{Key})
-  \mid \msg{Result}(\Option{\mathsf{Val}})
-  },
+  {
+    \msgtype{\mathsf{kv}}
+  }{    &\quad \msg{Put}(\Key\times\Value) \\
+  \mid & \quad \msg{Get}(\Key) \\
+  \mid & \quad \msg{Delete}(\Key) \\
+  \mid & \quad \msg{Result}(\Option{\Value})
+  }\,,
+\end{aligned}
 \end{equation}
 
 where $\msg{Put}$, $\msg{Get}$, $\msg{Delete}$ and $\msg{Result}$ are message tags
 representing the operations that the key-value store engine can perform to
-modify or query its memory. The message type $\mathsf{Key}\times\mathsf{Val}$
-that $\msg{Put}$ wraps encodes a key-value pair, representing the data to be
-stored. The message type $\mathsf{Key}$ that $\msg{Get}$ and $\msg{Delete}$ wrap
-represents the key to retrieve or remove. The message tag $\msg{Result}$ wraps
-an optional value, representing the result of a query operation which may or may
-not find a value for the requested key. The types $\mathsf{Key}$ and $\mathsf{Val}$
-do not have a concrete specification here as they are type parameters that define a
-family of message interfaces for key-value stores. For the upcoming examples,
-we will assume that both types are type synonyms for $\N$.
+modify or query its memory. The message type $\Key\times\Value$ that $\msg{Put}$
+wraps encodes a key-value pair, representing the data to be stored. The message
+type $\Key$ that $\msg{Get}$ and $\msg{Delete}$ wrap represents the key to retrieve
+or remove. The message tag $\msg{Result}$ wraps an optional value, representing
+the result of a query operation which may or may not find a value for the requested
+key.
 \end{example}
 
 We model the system in such a way that it enjoys type-safe communication. This
@@ -361,7 +368,7 @@ To refer to an arbitrary type of a message \emph{within the system} at any step,
 $\Msg$, the sum type of all message interfaces, and therefore the type of all
 valid messages, defined as,
 \begin{equation}\label{eq:message-type-sum}
-\defequal{\Msg}{\bigoplus_{i} \msgtype{i}},
+\defequal{\Msg}{\cdots \mid \msgtype{i} \mid \cdots},
 \end{equation}
 where $\msgtype{i}$ is the message interface of engine type $i$. To simplify the
 notation, we assume message type subtyping, that is, $\typing{\msgtype{i}}{\Msg}$
@@ -390,22 +397,23 @@ engine, we use $\msgtype{p}$ to refer to its message interface.
 \subsection{Engine components}\label{sec:engine-components}
 
 In the system, an engine is a term of type $\enginetype{i}$ where $i$ is one of
-the predefined engine types. These engines are composed of various components,
-some containing engine-specific data that remains unchanged throughout the
-engine's lifecycle such as its parent reference, while others may change during
-execution such as the engine's local state.
+the predefined engine types. We cannot yet formally define $\enginetype{}$ as we
+need to first introduce its components. These components include both static
+elements that remain unchanged throughout the engine's lifecycle such as its
+parent reference and dynamic elements that may change during execution such as
+the engine's local state.
 
 \begin{definition}[Engine Lifecycle]\label{def:engine-status}%
-The \textbf{status} of an engine $p$ of type $\EngineStatus{M_p}$ where $M_p$ is the
-engine's message interface, determines the engine's operational state within its
-lifecycle as shown in \Cref{fig:engine-status}.
+The \textbf{status} of an engine is a term of type $\EngineStatus{M}$ where $M$
+is the engine's message interface. This status determines the engine's
+operational state within its lifecycle as shown in \Cref{fig:engine-status}.
 
 \begin{equation}\label{eq:engine-status}
 \begin{aligned}
 \typedef%
-  {\EngineStatus{M_p}}%
-  {    &\quad \ready{\Option{M_p \to \Bool}} \\%
-  \mid & \quad \busy{M_p} \\%
+  {\EngineStatus{M}}%
+  {    &\quad \ready{\Option{M \to \Bool}} \\%
+  \mid & \quad \busy{M} \\%
   \mid & \quad \terminated  \, .
   }
 \end{aligned}
@@ -451,11 +459,15 @@ processing messages and is removed from the system in the next step.
   the store is populated, the filter can be updated, for example, to \none{} so
   that all messages are accepted.
   \begin{equation}\label{eq:engine-status-example}
-    \mathsf{f} := \lambda m.%
+    \defequal{%
+      \mathsf{f}
+    }{
+      \lambda m.%
   \mathsf{case}\ m\ \mathsf{of}\ \{%
     \msg{Delete}(x) \Rightarrow \mathsf{ff};%
     \ignore \Rightarrow \mathsf{tt}%
-    \}\,.
+    \}
+    } \,.
   \end{equation}
 \end{example}
 
@@ -491,34 +503,34 @@ and route them back to their \process engine when appropriate. The operational
 mode is stored in the engine's configuration.
 
 \begin{definition}\label{def:engine-configuration}%
-Given a type $C_p$, the \textbf{configuration} of an engine $p$ parameterised by $C_p$ is
+Given a type $C$, the \textbf{configuration} of an engine $p$ parameterised by $C$ is
 a tuple $\configval{r}{\mode}{c}$ where:
 \begin{itemize}
-    \item $\typing{r}{\Option{\Address}}$ is an optional reference (address) of the engine's parent,
+    \item $\typing{r}{\Option{\Address}}$ is an optional reference (address) of
+    the engine's parent,
     \item $\typing{\mode}{\EngineMode}$ is the engine's \hyperref[def:engine-mode]{operational mode}, and
-    \item $\typing{c}{C_p}$ is configuration data specific to the engine type of $p$.
+    \item $\typing{c}{C}$ is configuration data specific to the engine $p$.
 \end{itemize}
 The type family of engine configurations is denoted with $\Cfg$, where
 \begin{equation}\label{eq:engine-configuration-type}
 \defequal{
-  \Cfg(C_p)
+  \Cfg(C)
 }{
          \Option{\Address} 
   \times \EngineMode 
-  \times C_p
+  \times C
 }\,.
 \end{equation}
-We denote with $\config{p}$ to refer to a generic configuration of engine $p$ and
-$\configtype{p}$ as an alias for $\Cfg(C_p)$ if it can be inferred from the
-context.
+The type parameter $C$ is fixed when declaring an engine type. For an engine
+$p$, we use $\config{p}$ to refer to its configuration, the term, and
+$\configtype{p}$ as shorthand for its type, $\Cfg(C)$.
 \end{definition}
 
 \begin{example}\label{ex:keyvalue-store-configuration}%
-Let us define the engine-specific configuration type $\ctype{C}_{\mathsf{kv}}$
-for the key-value store engine from \Cref{ex:keyvalue-engine}. This type
-establishes the operational constraints of the key-value store, similar to how
-database systems often have different access/update modes.
-
+Let us define the engine configuration type $\configtype{\mathsf{kv}}$ for all
+key-value store engines. With this configuration type, we are establishing the
+operational constraints of any key-value store engine, which are similar to how
+database systems often define the different access/update modes.
 \begin{equation}\label{eq:keyvalue-store-configuration-type}
 \begin{aligned}
   \defequal{
@@ -540,11 +552,12 @@ where
 }.
 \end{aligned}
 \end{equation}
-Given a key-value store engine $p$, and a configuration $\config{p}$, for
-convenience, we define predicates that check if the configuration is of a
-certain mode, $\mathsf{isReadOnly}$, $\mathsf{isReadAppend}$,
-$\mathsf{isReadModify}$, and $\mathsf{isReadWrite}$. For example,
 
+For a key-value store engine $p$ with configuration $\config{p}$, we define
+predicates to check the configuration mode. These predicates include
+$\mathsf{isReadOnly}$, $\mathsf{isReadAppend}$, $\mathsf{isReadModify}$, and
+$\mathsf{isReadWrite}$, which evaluate to $\mathsf{tt}$ when the configuration
+matches the corresponding mode and $\mathsf{ff}$ otherwise. For instance,
 \begin{equation}\label{eq:keyvalue-store-configuration-predicates}
 \begin{aligned}
   \defequal{
@@ -566,29 +579,30 @@ within an execution context, collectively referred to as the engine's
 processes messages and the model allows any type of state.
 
 \begin{definition}\label{def:engine-environment}%
-Given a type $L_p$ for the local state of an engine $p$ as defined by its engine
+Given a type $L$ for the local state of an engine $p$ as defined by its engine
 type, the execution \textbf{environment} of an engine $p$ is a tuple
-$\localenvval{s}{m}$, of type $\Env(L_p)$, where:
+$\localenvval{s}{m}$, of type $\Env(L)$, where:
 \begin{itemize}
-    \item $\typing{s}{L_p}$ is the local state of the engine, and
+    \item $\typing{s}{L}$ is the local state of the engine, and
     \item $\typing{m}{\List{\Address}}$ is the engine's address book.
 \end{itemize}
 The type family of engine environments is denoted with $\Env$, where
 \begin{equation}\label{eq:engine-environment-type}
 \defequal{
-  \Env(L_p)
+  \Env(L)
 }{
-  L_p \times \List{\Address}
+  L \times \List{\Address}
 }\,.
 \end{equation}
-Given an engine $p$, we use $\localenv{p}$ to refer to a generic environment of
-engine $p$ and $\envtype{p}$ as an alias for $\Env(L_p)$ if it can be inferred
-from the context.
+The type parameter $L$ is fixed when declaring an engine type. For an engine
+$p$, we use $\localenv{p}$ to refer to its environment, the term, and
+$\envtype{p}$ as shorthand for its type, $\Env(L)$.
 \end{definition}
 
 \begin{remark}\label{rem:engine-environment}%
 Every engine's address book contains at least its own address, which is
 automatically added during engine spawning.
+% TODO: reference the rule related to this.
 % For convenience, the system also provides a function \self{} that
 % refers to the engine's own address.
 \end{remark}
@@ -607,8 +621,8 @@ local state to include both the store and access statistics.
 where
 \begin{equation}\label{eq:keyvalue-store-engine-local-state}
 \defequal{L_{\mathsf{kv}}}{
-          ({\mathsf{Key}}\to {\Option{\mathsf{Val}}})
-   \times ({\mathsf{Key}}\to {\N})
+          ({\Key}\to {\Option{\Value}})
+   \times ({\Key}\to {\N})
    \,.
 }
 \end{equation}
@@ -640,37 +654,39 @@ actions ---pairs of pre-conditions called \emph{guards} and their corresponding
 \emph{actions}. When a message is being processed, the system evaluates it
 against the engine's guards, considering both the engine's environment and
 configuration. If a guard is satisfied, its associated action produces an
-\emph{effect} that the system executes, as illustrated in \Cref{fig:effect}.
+\emph{effect}, a command, that the system executes, as illustrated in
+\Cref{fig:effect}.
 
 \begin{definition}[Effect System]\label{def:effects}%
-An \textbf{effect} of type $\effecttype{p}{C_p}{L_p}$ parameterized by types
-$C_p$ and $L_p$ represents a primitive operation that engine $p$ can perform to
-influence the system state when processing a message. $C_p$ is the type
-representing the engine-specific configuration, and $L_p$ is the type
-representing the local state of the engine.
+An \textbf{effect} is a term of type $\effect$. It represents a primitive
+operation that an engine of type $\enginetype{i}$ can perform to influence the
+system state when processing a message.
 
-This type family of effects for engine $p$ is defined as follows.
+This type family of effects for engine $p$ of type $\enginetype{i}$ is defined
+as in \eqref{eq:effects}. The variable $j$ is used below to refer to another
+engine type $\enginetype{j}$.
 
 \begin{equation}\label{eq:effects}
 \begin{aligned}
 \typedef{%
-  \effecttype{&p}{C_p}{L_p}
-}{\\
-      &\quad \noop & &%
+  \effecttype{i}
+}{   &\quad \noop & &%
         \text{(null operation)} \\
-\mid & \quad \send{\Address}{\Msg} & &%
+\mid & \quad \send{\Address}{\msgtype{}} & &%
         \text{(message dispatch)} \\
-\mid & \quad \update{\Env(L_p)} & &%
+\mid & \quad \update{\envtype{i}} & &%
         \text{(env. modification)} \\
-\mid & \quad \spawn{\Cfg(C_p)}{\Env(L_p)} & &%
+\mid & \quad \spawn{
+    \Sigma_{(j : \N)}\, (\configtype{j} \times \envtype{j})
+  } & &%
         \text{(engine creation)} \\
 \mid & \quad \mfilter{%
-                \Option{\msgtype{p} \to \Bool}
+                \Option{\msgtype{i} \to \Bool}
               }& &%
         \text{(new mailbox filter)} \\
 \mid & \quad \terminate & &%
         \text{(engine shutdown)} \\
-\mid & \quad \chain{\effecttype{p}{C_p}{L_p}}{\effecttype{p}{C_p}{L_p}} & &%
+\mid & \quad \chain{\effecttype{i}}{\effecttype{i}} & &%
         \text{(effect sequencing)\, .}
 }
 \end{aligned}
@@ -691,7 +707,7 @@ a guard is satisfied.
 	{} & {(m, \config{p},\localenv{p})} & {} \\
 	\\
 	{r_1} & \cdots & {r_k} \\
-	{e_1:\effecttype{p}{C_p}{L_p}} & \cdots & {e_k:\effecttype{p}{C_p}{L_p}}
+	{e_1:\effecttype{p}{C}{L}} & \cdots & {e_k:\effecttype{p}{C}{L}}
 	\arrow[curve={height=24pt}, shorten <=24pt, shorten >=24pt, dashed, no head, from=1-1, to=1-3]
 	\arrow["{g_1}"', maps to, from=1-2, to=3-1]
 	\arrow["{g_i}"', maps to, from=1-2, to=3-2]
@@ -715,7 +731,7 @@ null operation, $\noop$.}
 \begin{definition}[Guard]\label{def:guards}%
 Given types $\returntype$, $C_p$, and $L_p$, a \textbf{guard} is a mapping of
 type $\In{}(C_p, L_p) \to \Option{\returntype}$ where
-\begin{equation}
+\begin{equation}\label{eq:guard-type-in}
 \defequal{\In{}(C_p, L_p)}{\msgtype{p} \times \Cfg(C_p) \times \Env(L_p)}\,
 \end{equation}
 such that when applied to a message, an engine's configuration, and an engine's
@@ -741,7 +757,7 @@ specific effects by the system's runtime.
 \begin{definition}\label{def:action}%
 Similarly, as in the case of guards, an \textbf{action} acting on data of type
 $\returntype$ is a mapping/program of type %
-\begin{equation}
+\begin{equation}\label{eq:action-type-out}
 \returntype \times
 \In{}(C_p, L_p)
 \to
@@ -806,7 +822,7 @@ engine in question.
 \end{definition}
 
 
-\begin{example}\label{ex:keyvalue-engine}%
+\begin{example}\label{ex:keyvalue-engine-guarded-actions}%
 For the key-value store engine, we define guarded actions for each message type.
 The environment and configuration types are $\envtype{\mathsf{kv}}$ and
 $\configtype{\mathsf{kv}}$ as in
@@ -816,7 +832,7 @@ $g_{\mathsf{get}}$ to check for the $\msg{Get}$ tag and return the key if found,
 otherwise $\none$. The action $a_{\mathsf{get}}$ retrieves the value, updates
 the access count, and sends the result back. We assume that the sender engine,
 the consumer of the key-value store engine's result, has
-$\msg{Result}(\mathsf{Val})$ and $\msg{Ack}$ as part of its message interface,
+$\msg{Result}(\Value)$ and $\msg{Ack}$ as part of its message interface,
 so we can write back the result directly.
 
 \begin{equation}\label{eq:keyvalue-engine-get-guard}
@@ -848,7 +864,7 @@ so we can write back the result directly.
   &\typing{
     a_{\mathsf{get}}
   }{
-    \mathsf{Key} \times \In{\mathsf{kv}}
+    \Key \times \In{\mathsf{kv}}
       \to
      \Out{\mathsf{kv}}
     \,.
@@ -889,7 +905,7 @@ the sender.
   }{
     \In{\mathsf{kv}}
       \to
-    \Option{\mathsf{Key} \times \mathsf{Val}}
+    \Option{\Key \times \Value}
     \,.
   } \\
   &\defequal{
@@ -1320,8 +1336,8 @@ operational semantics are expressed through the reduction relation
 $\stepsymbol$, where $\sysstep{\SystemState^{(i)}}{\SystemState^{(i+1)}}$
 indicates the transition from state $\SystemState^{(i)}$ to
 $\SystemState^{(i+1)}$. By definition, a system state $\kappa$ is represented as
-$(\SetOfNodes, \SetOfMessages, \SetOfPlugins)$. Briefly,$\SetOfNodes$ is the set
-of system nodes, $\enginemap$ maps engine addresses to instances, and
+$(\SetOfNodes, \SetOfMessages, \SetOfPlugins)$. Briefly, $\SetOfNodes$ is the
+set of system nodes, $\enginemap$ maps engine addresses to instances, and
 $\SetOfEngines$ is the set of engine instances. The function $\alpha$ maps
 instances to addresses, and $\SetOfMessages$ contains all in-transit messages.
 
@@ -1329,7 +1345,6 @@ This reduction relation is refined into sub-relations, each representing a
 specific system transition.
 
 \subsection{System-level initialisation}\label{sec:creation-rules}
-
 
 \begin{definition}[\srule{Node}]\label{rule:s-Node}
 \sloppy~\hfill\\[-\baselineskip]%\hspace{-1.5em}
@@ -1358,139 +1373,352 @@ $}
 }%
 $}
 \end{prooftree}
+Recall that $\plugins_n$ is the set of functions for the node $n$, which may
+include, for example, the function to get the address of the mailbox engine for
+a given processing engine denoted by $\mailboxOfname$.
 \end{definition}
 
 % Rules to introduce engine types and related types.
 
 \subsection{Engine creation}\label{sec:engine-creation-rules}
 
-This section outlines the rules for creating and initializing engines within the
+This section outlines the rules for creating and initialising engines within the
 system. The process involves setting up both the processing engine and its
-associated mailbox engine, ensuring that each engine is properly configured and
-ready to operate.
+mailbox engine, ensuring each engine is properly configured and ready to
+operate.
 
-\begin{definition}[\srule{EngineSpawn}]\label{rule:s-EngineSpawn}
-\hspace{-1.5em}
-\begin{prooftree}
-% Level 1: Node and configuration setup
-\AxiomC{$%
+\begin{comment}
+For some of the rules, a few parameters/data are not provided to simplify the
+presenation but also because they may be inferred from the context.
+\end{comment}
+
+\begin{definition}[\srule{GenericEngineSpawn}]\label{rule:s-GenericEngineSpawn}
+  \hspace{-1.5em}
+% The rule \sruleref{EngineSpawn} is used to create an engine of any kind.
+  \begin{prooftree}
+  % Level 1: Node and configuration setup
+  \AxiomC{$%
+        \equal{%
+          \node{i}
+        }{%
+          \nodeval%
+            {\mathsf{id}_i}
+            {\enginemap_i}
+            {\plugins_i}
+        }
+        \in \SetOfNodes
+  \quad \typing{C, S}{\U} %
+  $}
+  \noLine
+  \UnaryInfC{$%
+        \typing{\Contract}{\Msg} %
+  \quad \typing{b}{\behaviourtype{}(C, S)}
+  \quad \typing{f}{\Option{\Contract \to \Bool}}%
+  $}
+  \noLine
+  \UnaryInfC{$%
+        \typing{\pi}{\mathsf{Option}(\Address)} %
+  \quad %
+        \equal{%
+          \typing{
+            \config{\new}
+            }{\Cfg(C)}%
+        }{%
+          \configval%
+            {\pi}
+            {m}
+            {c}
+        }%
+  $}
+\noLine
+\UnaryInfC{$%
 \equal{%
-  \node{i}
-}{%
-  \nodeval%
-    {\mathsf{id}_i}
-    {\enginemap_i}
-    {\plugins_i}
-}
-\in \SetOfNodes
-$}
-\noLine
-\UnaryInfC{$%
-\quad \typing{\pi}{\mathsf{Option}(\Address)} %
-\quad %
-      \equal{%
-        \config{\new}%
-      }{%
-        \configval{\pi}{\process}{\ignore}
-      }%
-$}
-\noLine
-\UnaryInfC{$%
-\quad \typing{S}{\U} %
-\quad \typing{\environment{\new}}{\Env(S)}
-$}
-\noLine
-\UnaryInfC{$%
-\quad \typing{\texttt{prot}}{\Msg} %
-$}
-\noLine
-\UnaryInfC{$%
-\quad %
-      \equal{%
-        \engine{\new}
+          \typing{\localenv{\new}}{\Env(S)}
       }{
-        \engineval%
-          {\texttt{prot}} %
-          {b} %
-          {\ready{\none}} %
-          {\config{\new}} %
-          {\environment{\new}}
+        \localenvval%
+          {s}
+          {[(\textsc{self}, \iota)]}
       }
 $}
 \noLine
 \UnaryInfC{$%
-      \defequal{\iota}{\freshid}%
-\quad \defequal{\eta}{\freshid} %
-\quad %
-      \equal{%
-        \config{\mailboxOfname}
-      }{%
-        \configval%
-          {\iota} %
-          {\mail}
-          {\ignore}
-      }%
-$}
-\noLine
-\UnaryInfC{$%
-\equal{%
-  \mailbox{\mathsf{new}}
-}{%
-  \engineval%
-    {\interface{\mailboxOfname}} %
-    {\behaviour{\mailboxOfname}} %
-    {\status{\mathsf{ready}(\none)}} %
-    {\config{\mailboxOfname}} %
-    {\environment{\mailboxOfname}}%
-  }%
-$}
-\noLine
-\UnaryInfC{$%
-\equal{%
-  \enginemap'
-}{
-  \enginemap_i%
-    [\iota \mapsto \engine{\mathsf{new}} ]%
-    [\eta  \mapsto \mailbox{\mathsf{new}}]
-}%
-$}
-\UnaryInfC{$%
-\opstep%
-  { \SystemState
-  , \node{i}
-  , c % the configuration of the engine
-  , s % the local environment of the engine
+  \equal{%
+    \engine{\new}
+  }{
+    \engineval%
+      {\Contract} %
+      {b} %
+      {\ready{f}} %
+      {\config{\new}} %
+      {\environment{\new}}
   }
-  {spawn}%
-  {%
-    ( \SetOfNodes[\enginemap_i \mapsto \enginemap']%
-    , \SetOfMessages%
-    , \SetOfPlugins%
-    )
-  }%
 $}
+  \noLine
+  \UnaryInfC{$%
+  \quad \typing{\loc{\mathsf{id}_i}{\iota}}{\Address} 
+  \quad \equal{%
+          \enginemap'
+        }{
+          \enginemap_i%
+            [\iota \mapsto \engine{\mathsf{new}} ]%
+        }%
+  $}
+  \UnaryInfC{$%
+  \opstep%
+    { \SystemState  %
+    , \node{i}
+    , \Contract
+    , \pi  % the parent of the engine
+    , \iota % the address of the engine
+    , b  % the behaviour of the engine
+    , f % the filter function
+    , m  % the operational mode of the engine
+    , c % the configuration of the engine
+    , s % the local environment of the engine
+    }
+    {gspawn}%
+    {%
+      ( \SetOfNodes[\enginemap_i \mapsto \enginemap']%
+      , \SetOfMessages%
+      , \SetOfPlugins%
+      )
+    }%
+  $}
 \end{prooftree}
-
-The terms $\interface{\mailboxOfname}$, $\behaviour{\mailboxOfname}$, and
-$\environment{\mailboxOfname}$ refer to the message interface, behaviour, and environment of the mailbox engine, respectively. These follow the specifications outlined in \Cref{def:mailbox-engine}, and default values are used when specific values are not provided.
-% TODO: it may seem the function to get mailbox address needs to be defined
-% in the node-specific operations.
 \end{definition}
 
-\begin{remark}
-The rule \sruleref{EngineSpawn} takes place in the context of a node $\node{i}$.
-When defining a processing engine $\engine{\mathsf{new}}$, the system also
-creates a mailbox engine on the same node, $\mailbox{\mathsf{new}}$. While the
-only parameters required by this rule are the processing engine parameters
-(configuration and environment) for $\engine{\mathsf{new}}$, one could customize
-the mailbox parameters, such as its behaviour $\behaviourtype{\mathsf{new}}$, to
-enable specialised message routing or priority-based message organisation.
-However, for simplicity, we use a uniform mailbox behaviour across all mailbox
-engines.
+\begin{remark}\label{remark:generic-engine-spawn} The rule
+\sruleref{GenericEngineSpawn} takes place in the context of a node $\node{i}$
+and system's state. With that set, we provide all the data required to
+instantiate an engine of any kind, whether it is a processing engine or a
+mailbox engine.
 \end{remark}
 
+% \begin{definition}[\srule{ProcessingEngineSpawn}]\label{rule:s-ProcessingEngineSpawn}
+% \hspace{-1.5em}
+% \begin{prooftree}
+%   % Level 1: Node and configuration setup
+%   \AxiomC{$%
+%         \equal{%
+%           \node{i}
+%         }{%
+%           \nodeval%
+%             {\mathsf{id}_i}
+%             {\enginemap_i}
+%             {\plugins_i}
+%         }
+%         \in \SetOfNodes
+%   \quad \typing{C, S}{\U} %
+%   $}
+%   \noLine
+%   \UnaryInfC{$%
+%         \typing{\Contract}{\Msg} %
+%   \quad \typing{b}{\behaviourtype{}(C, S)}
+%   \quad \typing{f}{\Option{\Contract \to \Bool}}%
+%   $}
+%   \noLine
+%   \UnaryInfC{$%
+%         \typing{\pi}{\mathsf{Option}(\Address)} %
+%   \quad %
+%         \equal{%
+%           \typing{
+%             \config{\new}
+%             }{\Cfg(C)}%
+%         }{%
+%           \configval%
+%             {\pi}
+%             {m}
+%             {c}
+%         }%
+%   $}
+% \noLine
+% \UnaryInfC{$%
+% \equal{%
+%           \typing{\localenv{\new}}{\Env(S)}
+%       }{
+%         \localenvval%
+%           {s}
+%           {[(\textsc{self}, \iota)]}
+%       }
+% $}
+% \noLine
+% \UnaryInfC{$%
+%   \equal{%
+%     \engine{\new}
+%   }{
+%     \engineval%
+%       {\Contract} %
+%       {b} %
+%       {\ready{f}} %
+%       {\config{\new}} %
+%       {\environment{\new}}
+%   }
+% $}
+%   \noLine
+%   \UnaryInfC{$%
+%   \quad \typing{\loc{\mathsf{id}_i}{\iota}}{\Address} 
+%   \quad \equal{%
+%           \enginemap'
+%         }{
+%           \enginemap_i%
+%             [\iota \mapsto \engine{\mathsf{new}} ]%
+%         }%
+%   $}
+%   \UnaryInfC{$%
+%   \opstep%
+%     { \SystemState  %
+%     , \node{i}
+%     , \pi  % the parent of the engine
+%     , \iota % the address of the engine
+%     , c % the configuration of the engine
+%     , s % the local environment of the engine
+%     }
+%     {spawn}%
+%     {%
+%       ( \SetOfNodes[\enginemap_i \mapsto \enginemap']%
+%       , \SetOfMessages%
+%       , \SetOfPlugins%
+%       )
+%     }%
+%   $}
+% \end{prooftree}
+% \end{definition}
+
+% \begin{remark}\label{remark:processing-engine-spawn}
+% The rule \sruleref{ProcessingEngineSpawn} takes place in the context of a node
+% $\node{i}$. When defining a processing engine $\engine{\mathsf{new}}$, the
+% system also creates a mailbox engine on the same node, $\mailbox{\mathsf{new}}$.
+% While the only parameters required by this rule are the processing engine
+% parameters (configuration and environment) for $\engine{\mathsf{new}}$, one
+% could customize the mailbox parameters, such as its behaviour
+% $\behaviourtype{\mathsf{new}}$, to enable specialised message routing or
+% priority-based message organisation. However, for simplicity, we use a uniform
+% mailbox behaviour across all mailbox engines.
+% \end{remark}
+
+
+% \begin{definition}[\srule{EngineSpawn}]\label{rule:s-EngineSpawn}
+% \hspace{-1.5em}
+% \begin{prooftree}
+% \newcommand{\Prot}{\texttt{Prot}}
+% % Level 1: Node and configuration setup
+% \AxiomC{$%
+% \equal{%
+%   \node{i}
+% }{%
+%   \nodeval%
+%     {\mathsf{id}_i}
+%     {\enginemap_i}
+%     {\plugins_i}
+% }
+% \in \SetOfNodes
+% \quad \typing{C, S}{\U} %
+% $}
+% \noLine
+% \UnaryInfC{$%
+% \quad \typing{\Prot}{\Msg} %
+% \quad \typing{b}{\behaviourtype{}(C, S)}
+% \quad \typing{\environment{\new}}{\Env(S)}
+% $}
+% \noLine
+% \UnaryInfC{$%
+% \quad \typing{\pi}{\mathsf{Option}(\Address)} %
+% \quad \typing{c}{C}
+% \quad %
+%       \equal{%
+%         \typing{
+%           \config{\new}
+%           }{\Cfg(C)}%
+%       }{%
+%         \configval{\pi}{\process}{c}
+%       }%
+% $}
+% \noLine
+% \UnaryInfC{$%
+% \quad \typing{f}{\Option{\Prot \to \Bool}}%
+% % $}
+% % \noLine
+% % \UnaryInfC{$%
+% \quad %
+%       \equal{%
+%         \engine{\new}
+%       }{
+%         \engineval%
+%           {\texttt{prot}} %
+%           {b} %
+%           {\ready{f}} %
+%           {\config{\new}} %
+%           {\environment{\new}}
+%       }
+% $}
+% \noLine
+% \UnaryInfC{$%
+% \quad \defequal{\iota}{\freshid}%
+% \quad \typing{C_m, S_m}{\U}%
+% \quad \typing{c_m}{C_m}%
+% \quad \equal{%
+%         \typing{\config{\mailboxOfname}}{\Cfg(C_m)}
+%       }{%
+%         \configval%
+%           {\iota} %
+%           {\mail}
+%           {c_m}
+%       }%
+% $}
+% \noLine
+% \UnaryInfC{$%
+% \equal{%
+%   \mailbox{\mathsf{new}}
+% }{%
+%   \engineval%
+%     {\interface{\mailboxOfname}} %
+%     {\behaviour{\mailboxOfname}} %
+%     {\ready{\none}} %
+%     {\config{\mailboxOfname}} %
+%     {\environment{\mailboxOfname}}%
+%   }%
+% $}
+% \noLine
+% \UnaryInfC{$%
+% \quad \defequal{\eta}{\freshid} %
+% \quad \equal{%
+%         \enginemap'
+%       }{
+%         \enginemap_i%
+%           [\iota \mapsto \engine{\mathsf{new}} ]%
+%           [\eta  \mapsto \mailbox{\mathsf{new}}]
+%       }%
+% $}
+% \UnaryInfC{$%
+% \opstep%
+%   { \SystemState
+%   , \node{i}
+%   , \config{\new} % the configuration of the engine
+%   , \environment{\new} % the local environment of the engine
+%   , f % the filter function
+%   , \config{\mailboxOfname} % the configuration of the mailbox engine
+%   , \environment{\mailboxOfname} % the local environment of the mailbox engine
+%   }
+%   {spawn}%
+%   {%
+%     ( \SetOfNodes[\enginemap_i \mapsto \enginemap']%
+%     , \SetOfMessages%
+%     , \SetOfPlugins%
+%     )
+%   }%
+% $}
+% \end{prooftree}
+
+% The terms $\interface{\mailboxOfname}$, $\behaviour{\mailboxOfname}$, and
+% $\environment{\mailboxOfname}$ refer to the message interface, behaviour, and
+% environment of the mailbox engine, respectively. These follow the specifications
+% outlined in \Cref{def:mailbox-engine}, and default values are used when specific
+% values are not provided.
+% % TODO: it may seem the function to get mailbox address needs to be defined
+% % in the node-specific operations.
+
 \begin{comment}
-We could think of adding rules for removing nodes and engines. However,
+We could think of adding rules for removing nodes and engine types. However,
 one question just arises to me: how to handle broken references to those
 engines that are removed?
 \end{comment}
@@ -2055,18 +2283,13 @@ $}
         {\process}
         {\ignore}
     }
+\quad \defequal{\iota}{\freshid}
+\quad \typing{\loc{\mathsf{id}(n_i)}{\iota}}{\Address}
 $}
 \noLine
 \UnaryInfC{$%
       \typing{S}{\U}%
 \quad \typing{s}{\envtype{j}{S}}% %FIXME: ENV? which
-\quad %
-      \spawnstep%
-        {\SystemState}
-        {\node{i}}
-        {c}
-        {s}
-        {\SystemState'}%
 $}
 \UnaryInfC{$%
   \effectevalstep%

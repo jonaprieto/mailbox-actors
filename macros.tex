@@ -6,20 +6,22 @@
 \definecolor{darkmagenta}{RGB}{139,0,139}
 
 
-\newcommand{\ctype}[1]{\ensuremath{\mathsf{\textcolor{teal}{#1}}}}
-\newcommand{\ccon}[1]{\ensuremath{\mathsf{\textcolor{darkmagenta}{#1}}}}
-\newcommand{\stype}[1]{\ensuremath{\mathsf{\textcolor{blue}{#1}}}}
-\newcommand{\scon}[1]{\ensuremath{\mathsf{\textcolor{darkgreen}{#1}}}}
+\newcommand{\ctype}[1]{\ensuremath{\mathsf{\color{teal}{#1}}}}
+\newcommand{\ccon}[1]{\ensuremath{\mathsf{\color{darkmagenta}{#1}}}}
+\newcommand{\stype}[1]{\ensuremath{\mathsf{\color{blue}{#1}}}}
+\newcommand{\scon}[1]{\ensuremath{\mathsf{\color{darkgreen}{#1}}}}
 
 \newcommand{\Map}[2]{\ensuremath{\mathsf{Map}(#1, #2)}}
 \newcommand{\equal}[2]{\ensuremath{#1 \equiv #2}}
 \newcommand{\propequal}[2]{\ensuremath{#1 = #2}}
 \newcommand{\defequal}[2]{\ensuremath{#1 :\equiv #2}}
 \newcommand{\typing}[2]{\ensuremath{#1\colon#2}}
-\newcommand{\typedef}[2]{\ensuremath{#1 := #2}}
+\newcommand{\typedef}[2]{\ensuremath{%
+\defequal{#1}{#2}%
+}}
 
-\newcommand{\U}{\mathfrak{U}}
-\newcommand{\N}{\ensuremath{\mathbf{N}}}
+\newcommand{\U}{\ensuremath{\mathfrak{U}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
 \newcommand{\Bool}{\ensuremath{\mathbf{B}}}
 % \newcommand{\unit}{\ensuremath{*}}
 \newcommand{\EmptyType}{\ensuremath{\mathbf{0}}}
@@ -38,6 +40,11 @@
 \newcommand{\SetOfMessages}{\ensuremath{\mathcal{M}}}
 \newcommand{\SetOfPlugins}{\ensuremath{\Omega}}
 \newcommand{\append}{\ccon{Append}}
+
+\newcommand{\Key}{\ensuremath{\mathsf{\color{darkred}{Key}}}}
+\newcommand{\Value}{\ensuremath{\mathsf{\color{darkgreen}{Value}}}}
+
+\newcommand{\Contract}{\texttt{Prt}}
 
 % Common mathematical operators and symbols
 \newcommand{\Msg}{\hyperref[eq:message-type-sum]{\ctype{\ensuremath{\mathsf{Msg}}}}}
@@ -108,8 +115,8 @@
 \newcommand{\uid}[1]{\ensuremath{\mathsf{uid}(#1)}}
 \newcommand{\loc}[2]{\ensuremath{ \langle #1, #2 \rangle}}
 
-\newcommand{\In}[1]{\ensuremath{\mathsf{In}_{#1}}}
-\newcommand{\Out}[1]{\ensuremath{\mathsf{Out}_{#1}}}
+\newcommand{\In}[1]{\hyperref[eq:guard-type-in]{\ensuremath{\mathsf{In}}}_{#1}}
+\newcommand{\Out}[1]{\hyperref[eq:action-type-out]{\ensuremath{\mathsf{Out}}}_{#1}}
 
 % Rules
 
@@ -154,7 +161,7 @@
 \newcommand{\mailboxOfname}{\ensuremath{\mathsf{mbox}}}
 \newcommand{\mailboxOf}[1]{\ensuremath{\mailboxOfname(#1)}}
 
-\newcommand{\msg}[1]{\text{\texttt{\color{violet}#1}}}
+\newcommand{\msg}[1]{\ensuremath{\mathsf{\color{violet}{#1}}}}
 \newcommand{\msgpacket}[3]{%
     \ensuremath{%
        ({\color{teal}{#1}}%
@@ -168,17 +175,17 @@
 
 % Effects
 \newcommand{\effectsym}{E}
-\newcommand{\effect}{\hyperref[def:effects]{\ctype{\ensuremath{\mathsf{Effect}}}}}
-\newcommand{\effecttype}[3]{\ensuremath{\effect{}(%
-  #1 % engine
-, #2 % configuration specific to the engine
-, #3 % local state of the engine
-)}}
+\newcommand{\effect}{\hyperref[def:effects]{\ctype{\ensuremath{\mathsf{Effect}}}}\xspace}
+\newcommand{\effecttype}[1]{\ensuremath{\effect(#1)}}
+%   #1 % engine
+% % , #2 % configuration specific to the engine
+% % , #3 % local state of the engine
+% )}}
 
 \newcommand{\refeffect}[1]{\hyperref[eq:effects]{\ccon{#1}}}
 \newcommand{\send}[2]{\refeffect{Send}(#1, #2)}
 \newcommand{\update}[1]{\refeffect{Update}(#1)}
-\newcommand{\spawn}[2]{\refeffect{Spawn}(#1, #2)}
+\newcommand{\spawn}[1]{\refeffect{Spawn}(#1)}
 \newcommand{\mfilter}[1]{\refeffect{MFilter}(#1)}
 \newcommand{\chain}[2]{\refeffect{Chain}(#1, #2)}
 \newcommand{\terminate}{\refeffect{Terminate}}
@@ -193,8 +200,7 @@
 \newcommand{\stepsymbol}{\ensuremath{\rightsquigarrow}}
 \newcommand{\sysstep}[2]{#1 \stepsymbol #2}
 \newcommand{\opstep}[3]{#1 \stepsymbol_{\mathsf{#2}} #3}
-
-\newcommand{\spawnstep}[5]{\ensuremath{#1, #2, #3, #4 \stepsymbol_{\mathsf{spawn}} #5}}
+% \newcommand{\spawnstep}[11]{\ensuremath{#1, #2, #3, #4, #5, #6, #7, #8, #9, #10 \stepsymbol_{\mathsf{spawn}} #11}}
 \newcommand{\processstep}[4]{\ensuremath{#1, #2, #3 \stepsymbol_{\process} #4}}
 \newcommand{\sendstep}[4]{\ensuremath{#1, #2, #3 \stepsymbol_{\mathsf{send}} #4}}
 
