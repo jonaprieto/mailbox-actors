@@ -1023,8 +1023,11 @@ by the following set of guarded actions.
 \end{equation}
 \end{example}
 
-%TODO: comment on the given guard action evaluation strategy in the
-%corresponding op. rule
+\begin{remark}[Fixed behaviour]\label{rem:fixed-behaviour}%
+The behaviour of an engine is fixed at the time of its creation and cannot be
+changed during the engine's lifetime. The implementation of the engine's
+behaviour is defined as part of the engine type's definition.
+\end{remark}
 
 \begin{remark}\label{rem:turing-completeness}%
 At this point, a natural question is whether engines can enable unbounded
@@ -1193,13 +1196,12 @@ Having previously introduced the system $\SystemState$, which comprises a set of
 ~$\SetOfNodes$ that host engines $\SetOfEngines$ governed by a message-passing
 mechanism defined by the system's requirements, we now formally define what
 constitutes a node.
-
 \begin{definition}[Node]\label{def:node}%
 A \textbf{node} in $\SetOfNodes$ is a tuple
 $\nodeval{n_i}{\enginemap_i}{\plugins_i}$ where $\node{i}$ corresponds to the
 node's unique identifier across the system, $\enginemap_i$ is a mapping from
 identifiers to engine instances on the node, and $\plugins_i$ represents
-node-specific functionality, including, for example, storage and freshness of
+node-specific functionality, including, for example, storage and management of
 unique engine identifiers.
 \end{definition}
 
@@ -1207,54 +1209,62 @@ For convenience, given a node with identifier $n_i$, we have the following notat
 \begin{itemize}
   \item $\SetOfEngines_i$ is the set of engines on the node, which are precisely
   the values of the mapping $\enginemap_i$, and
-  \item $\alpha_i$ is a mapping from engine instances into
+  \item $\alpha_i$ is a mapping from engine instances to
   their identifiers.
 \end{itemize}
 
-\begin{remark}[Modification of nodes and engines]\label{rem:node-operations}
-%By design, nodes cannot create, destroy, or modify engines directly.
-The creation, destruction, and modification of engines will be \todo{describe in
-a phrase} covered in \todo{ref}.
-% J:to consider, if an engine is destroyed, is its mailbox engine also destroyed?
-% also, what does it implies if an engine is modified? What can be modified any
-% way? or more generally, what happend when the parent of an engine dies.
-These
-operations require global coordination through system-level mechanisms rather
-than node-local decisions. This architectural constraint exists because nodes
-lack awareness of critical system-wide concerns like address registry management,
-topology relationships between components, and coordination mechanisms for
-distributed state consistency.
+% \begin{remark}[Modification of nodes and engines]\label{rem:node-operations}
+% %By design, nodes cannot create, destroy, or modify engines directly.
+% The creation, destruction, and modification of engines will be \todo{describe in
+% a phrase} covered in \todo{ref}.
+% % J:to consider, if an engine is destroyed, is its mailbox engine also destroyed?
+% % also, what does it implies if an engine is modified? What can be modified any
+% % way? or more generally, what happend when the parent of an engine dies.
+% These
+% operations require global coordination through system-level mechanisms rather
+% than node-local decisions. This architectural constraint exists because nodes
+% lack awareness of critical system-wide concerns like address registry management,
+% topology relationships between components, and coordination mechanisms for
+% distributed state consistency.
 
-%TODO: introduce a forward reference to the related op. rules
-\end{remark}
+% %TODO: introduce a forward reference to the related op. rules
+% \end{remark}
+\subsection{System}\label{sec:system}%
 
-\subsection{System state}\label{sec:state}%
-Having defined the concept of nodes, we now define the overall system. A system
-state consists of a collection of nodes and a set of in-transit messages that
-represent ongoing communication between engines. The system is a variation of a
-Kripke structure. We therefore define the possible system states, \emph{the
-possible worlds}, and then specify the transition rules that govern its evolution,
-one labelled transition at a time.
-%TODO: Review this one more time
-% When referecing a "system" we are really
-% referencing a "system state". It's confusing.
+The system incorporates a fixed collection of types that remain constant
+throughout its lifetime. These include message interfaces, $\msgtype{i}$,
+engine configuration types, $\configtype{i}$, engine environment types,
+$\envtype{i}$, behaviours, $\behaviourtype{i}$, and engine types,
+$\enginetype{i}$, where $i$ ranges over the system's index set. These types
+collectively constitute the typing context for the system, making type
+information an inherent part of the system definition.
+
+The system structure resembles a Kripke model. We first define the possible
+system states---the \emph{possible worlds}---and then specify the transition
+rules governing the system's evolution through a sequence of labelled
+transitions.
+
+\subsection{System State}\label{sec:state}%
+
+A system state consists of a collection of nodes and a set of in-transit
+messages representing ongoing communication between engines. Additional
+information such as engine types and configurations remains ambient and, being
+fixed throughout the system's lifetime, is omitted from the state
+representation.
 
 \begin{definition}[State]\label{def:state}%
 A \textbf{state} of the system
 $\SystemState$ is a tuple
-$\equal{%
-    \SystemState
-}{%
-\langle
+$\langle
     \SetOfNodes
   , \SetOfMessages
   , \SetOfPlugins
 \rangle
-}$ where,
+$ where,
 \begin{itemize}
 \item $\SetOfNodes$ is the set of nodes,
 \item $\SetOfMessages$ is the set of in-transit messages representing ongoing communications, and
-\item $\SetOfPlugins$ is the set of system-wide services and functions.
+\item $\SetOfPlugins$ is the set of system-wide services/functions.
 \end{itemize}
 \end{definition}
 
@@ -1272,8 +1282,7 @@ is denoted by $\SystemState^{(0)}$. In principle, we could define the initial
 state as
 $\defequal{\SystemState^{(0)}}{\systemval{\emptyset}{\emptyset}{\emptyset}}$, %
 no nodes, no messages, and no services. Via primitives that we will define
-later, we can step from the initial state to a successor state with nodes,
-messages, and functions.
+later, we can step from the initial state to a successor state.
 
 \begin{remark}\label{rem:system-model}%
 The Engine Model \cite{art-engines}, which
@@ -1289,9 +1298,10 @@ here for the state in \Cref{def:state}, and we adopt as principle that all
 messages are eventually delivered.%, see \Cref{lem:message-delivery}.
 \end{remark}
 
-The set $\SetOfPlugins$ consists of the primitives that the system requires to
-operate correctly, for example, at the engine creation step. For example, the
-following functions are found in $\SetOfPlugins$.
+In particular, the system's state component $\SetOfPlugins$ consists of the
+primitives that the system requires to operate correctly. For example, at the
+engine creation step, we need a service to generate unique identifiers. The
+following functions are therefore included in $\SetOfPlugins$.
 
 \begin{itemize}
 \item \freshidname{} is the system function that when called, generates a unique
@@ -1306,7 +1316,7 @@ engine.
 % executed.
 \end{itemize}
 
-We can extend the node-specific function $\enginemap_i$ for each node $i$ to
+We also extend the node-specific function $\enginemap_i$ for each node $i$ to
 construct a global version $\enginemap$ that operates over all engine instances
 $\SetOfEngines$ in $\SystemState$. Recall $\SetOfEngines$ is the collection
 of engine instances $\SetOfEngines_i$ for $i$ ranging over the node set. This
@@ -1319,17 +1329,18 @@ node it runs on.
 \section{Operational Semantics}\label{sec:semantics}
 
 The state machine transitions define system evolution and message-passing. The
-operational semantics are expressed through the reduction relation
-$\stepsymbol$, where $\sysstep{\SystemState^{(i)}}{\SystemState^{(i+1)}}$
-indicates the transition from state $\SystemState^{(i)}$ to
-$\SystemState^{(i+1)}$. By definition, a system state $\kappa$ is represented as
-$(\SetOfNodes, \SetOfMessages, \SetOfPlugins)$. Briefly, $\SetOfNodes$ is the
-set of system nodes, $\enginemap$ maps engine addresses to instances, and
-$\SetOfEngines$ is the set of engine instances. The function $\alpha$ maps
-instances to addresses, and $\SetOfMessages$ contains all in-transit messages.
+operational semantics are expressed through the reduction relation denoted by
+$\stepsymbol$ and its refinements, where
+$\sysstep{\SystemState^{(i)}}{\SystemState^{(i+1)}}$ indicates the transition
+from state $\SystemState^{(i)}$ to $\SystemState^{(i+1)}$. By definition, a
+system state $\kappa$ is represented as $(\SetOfNodes, \SetOfMessages,
+\SetOfPlugins)$. Here, $\SetOfNodes$ is the set of system nodes, $\enginemap$
+maps engine addresses to instances, and $\SetOfEngines$ is the set of engine
+instances. The function $\alpha$ maps engine instances to addresses, and
+$\SetOfMessages$ contains all in-transit messages.
 
-This reduction relation is refined into sub-relations, each representing a
-specific system transition.
+% This reduction relation is further refined into sub-relations, each representing
+% a specific case of system transition.
 
 \subsection{System-level initialisation}\label{sec:creation-rules}
 
