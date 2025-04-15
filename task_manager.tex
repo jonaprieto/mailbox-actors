@@ -1,0 +1,185 @@
+
+\begin{example}[Task Manager Engine]\label{ex:task-manager-engine}%
+    Let us define a task manager engine that can create and manage tasks by
+    spawning worker engines. This example demonstrates all the model
+    characteristics including spawning engines, message passing, and state
+    management.
+    
+    First, we define the message interface for the task manager engine:
+    
+    \begin{equation}\label{eq:task-manager-message-interface}
+    \begin{aligned}
+    \typedef%
+    {
+      \msgtype{\mathsf{taskmgr}}
+    }{    &\quad \msg{CreateTask}(\N \times \N) \\
+    \mid &\quad \msg{TaskStatus}(\N) \\
+    \mid &\quad \msg{TaskResult}(\N \times \N) \\
+    \mid &\quad \msg{WorkerReady}(\N) \\
+    \mid &\quad \msg{WorkerDone}(\N \times \N)
+    }\,,
+    \end{aligned}
+    \end{equation}
+    
+    where:
+    \begin{itemize}
+        \item $\msg{CreateTask}(n, m)$ creates a new task to compute $n + m$
+        \item $\msg{TaskStatus}(id)$ queries the status of task $id$
+        \item $\msg{TaskResult}(id, result)$ reports the result of task $id$
+        \item $\msg{WorkerReady}(id)$ indicates a worker is ready to process tasks
+        \item $\msg{WorkerDone}(id, result)$ reports a worker has completed a task
+    \end{itemize}
+    
+    The configuration type for the task manager engine specifies its operational mode:
+    
+    \begin{equation}\label{eq:task-manager-configuration}
+    \begin{aligned}
+    \typedef{%
+      \ctype{C}_{\mathsf{taskmgr}}
+    }{    &\quad \ccon{Master} \\
+    \mid &\quad \ccon{Worker}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The environment type tracks the task manager's state:
+    
+    \begin{equation}\label{eq:task-manager-environment}
+    \begin{aligned}
+    \typedef{%
+      \ctype{L}_{\mathsf{taskmgr}}
+    }{    &\quad \ccon{TaskManagerState}(\Map{\N}{\N} \times \Map{\N}{\Address}) \\
+    \mid &\quad \ccon{WorkerState}(\N)
+    }\,,
+    \end{aligned}
+    \end{equation}
+    
+    where:
+    \begin{itemize}
+        \item $\ccon{TaskManagerState}$ tracks task results and worker assignments
+        \item $\ccon{WorkerState}$ tracks the worker's current task
+    \end{itemize}
+    
+    Now we define the guarded actions for the task manager engine. First, the guard for creating tasks:
+    
+    \begin{equation}\label{eq:task-manager-create-guard}
+    \begin{aligned}
+    &\typing{
+      g_{\mathsf{create}}
+    }{
+      \In{\mathsf{taskmgr}}
+        \to
+      \Option{\N \times \N}
+    }\,. \\
+    &\defequal{
+      g_{\mathsf{create}}
+    }{
+      \lambda \langle m, c, \langle \mathsf{st}, \mathsf{workers} \rangle \rangle .
+      \mathsf{case}\ m\ \mathsf{of}\ \{ \\
+    &\quad \msg{CreateTask}(n, m) \Rightarrow \some{\langle n, m \rangle}; \\
+    &\quad \ignore \Rightarrow \none \\
+    &\}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The corresponding action spawns a worker engine to process the task:
+    
+    \begin{equation}\label{eq:task-manager-create-action}
+    \begin{aligned}
+    &\typing{
+      a_{\mathsf{create}}
+    }{
+      \N \times \N \times \In{\mathsf{taskmgr}}
+        \to \Out{\mathsf{taskmgr}}
+    }\,. \\
+    % &\defequal{
+      a_{\mathsf{create}}
+    % }{
+      \lambda \langle n, m, \langle \ignore, \ignore, \langle \mathsf{st}, \mathsf{workers} \rangle \rangle \rangle . \\
+    &\quad \chain{ \\
+    &\quad \quad \spawn{ \\
+    &\quad \quad \quad \configval{%
+                \some{\self}%
+              }{%
+                \process%
+              }{%
+                \ccon{Worker}%
+              }%
+            }{%
+              \localenvval{%
+                \ccon{WorkerState}(0)%
+              }{%
+                [(\self, \ignore)]%
+              }%
+            }%
+          }{ \\
+    &\quad \quad \send{\self}{\msg{WorkerReady}(\freshid)} \\
+    &\quad \quad } \\
+    &\quad \}
+    \,.
+    \end{aligned}
+    \end{equation}
+    
+    
+    The guard for processing worker results:
+    
+    \begin{equation}\label{eq:task-manager-result-guard}
+    \begin{aligned}
+    &\typing{
+      g_{\mathsf{result}}
+    }{
+      \In{\mathsf{taskmgr}}
+        \to
+      \Option{\N \times \N}
+    }\,. \\
+    &\defequal{
+      g_{\mathsf{result}}
+    }{
+      \lambda \langle m, \ignore, \langle \mathsf{st}, \mathsf{workers} \rangle \rangle .
+      \mathsf{case}\ m\ \mathsf{of}\ \{ \\
+    &\quad \msg{WorkerDone}(id, result) \Rightarrow \some{\langle id, result \rangle}; \\
+    &\quad \ignore \Rightarrow \none \\
+    &\}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The corresponding action updates the task status:
+    
+    \begin{equation}\label{eq:task-manager-result-action}
+    \begin{aligned}
+    &\typing{
+      a_{\mathsf{result}}
+    }{
+      \N \times \N \times \In{\mathsf{taskmgr}}
+        \to \Out{\mathsf{taskmgr}}
+    }\,. \\
+    &\defequal{
+      a_{\mathsf{result}}
+    }{
+      \lambda \langle id, result, \langle \ignore, \ignore, \langle \mathsf{st}, \mathsf{workers} \rangle \rangle \rangle . \\
+    &\quad \update{%
+            \langle
+              \mathsf{st}[id \mapsto result],
+              \mathsf{workers}
+            \rangle
+          }%
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    Finally, we define the complete behaviour of the task manager engine:
+    
+    \begin{equation}\label{eq:task-manager-behaviour}
+    \begin{aligned}
+    \defequal{
+      \typing{\behaviour{\mathsf{taskmgr}}}{\behaviourtype{\mathsf{taskmgr}}}
+    }{
+      [ g_{\mathsf{create}} \odot a_{\mathsf{create}}
+      , g_{\mathsf{result}} \odot a_{\mathsf{result}}
+      ]
+    }\,.
+    \end{aligned}
+    \end{equation}
+    \end{example}
