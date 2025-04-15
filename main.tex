@@ -22,35 +22,48 @@
 \section{Introduction}
 
 % Introduction to actor models and their communication mechanism.
-Actor models provide a framework for concurrent systems. In these
-systems, the main entity is the notion of an \emph{actor}. Actors are
-independent computational units that encapsulate the execution environment of
-their processing logic. Asynchronous communication between actors occurs
-solely via messages. A message is defined as any piece of data sent from one
-actor to another. The reception of these messages is handled by the recipient
-actor's \emph{mailbox}, a dedicated piece of storage that preserves message
-order while remaining separate from the actor's core logic.
+Actor models provide a framework for concurrent systems. In these systems, the
+main entity is the notion of an \emph{actor}. Actors are independent
+computational units that encapsulate the execution environment of their
+processing logic. Asynchronous communication between actors occurs solely via
+messages, which are defined as any piece of data sent from one actor to another.
+The reception of these messages is handled by the recipient actor's
+\emph{mailbox}, a dedicated piece of storage that preserves message order while
+remaining separate from the actor's core logic.
 
-% Challenges in actor system message flow management
-One challenge in actor systems is managing message flow under high volumes.
-Although some techniques such as rate limiting and \emph{backpressure
-routing}~\cite{backpressure} help regulate message rates, these control
+% Outline the challenges with traditional approaches
+Traditional approaches to message passing and state machine formalisms provide a
+foundation for reasoning about actor-based systems. However, these approaches
+are often too coarse-grained to capture the nuanced dynamics of modern
+actor-based systems, abstracting away elements that significantly impact system
+behaviour and properties. We argue that a more refined model is necessary to
+adequately represent the complexities inherent in message-driven architectures.
+
+% One of the challenges in actor system message flow management
+For example, one challenge in actor-based systems is managing message flow under
+high volumes. Techniques such as rate limiting and \emph{backpressure
+routing}~\cite{backpressure} help regulate message rates, but these control
 mechanisms may also fail under heavily loaded systems. Message delivery is often
 assumed to be reliable, but practical implementations must consider the
 possibility of message loss and delays from processing bottlenecks or crashing
 actors.
 
+To address some of these challenges, we distinguish between two perspectives on
+message passing. The first is an abstract view that considers direct
+communication between actors while ignoring the underlying mailbox mechanisms.
+The second is a concrete refinement that explicitly models the mailbox as a
+first-class entity in the system's formalism.
+
 % Proposes a solution by decoupling mailboxes from processing actors.
-To address some of these challenges, in particular the need to handle message
-loss and delays in processing messages, we propose decoupling mailboxes
-from \emph{processing actors}, which are the actors that carry out the processing
-logic. In this design, communication occurs through message passing to
-dedicated \emph{mailbox actors}, with processing actors pulling messages only
-when ready to handle them. %
-This approach is simple and similar in spirit to Kilim's buffered mailboxes
-(multi-producer, single consumer queues) ~\cite{kilim-framework}, allowing us to
-give an explicit specification of the message-passing mechanism, where the
-mailbox actors remain opaque to both senders and receivers to maintain
+For the concrete view, we propose decoupling mailboxes from \emph{processing
+actors}---the actors carrying out the processing logic. In this design,
+communication occurs through message passing to dedicated \emph{mailbox actors},
+with processing actors pulling messages only when they are ready to handle them.
+
+This approach is simple and similar in spirit to Kilim's buffered mailboxes and
+the pattern of multi-producer, single consumer queues ~\cite{kilim-framework},
+allowing us to give an explicit specification of the message-passing mechanism,
+where the mailbox actors remain opaque to both senders and receivers to maintain
 compatibility with existing actor frameworks such as Agha's Object-oriented
 programming Actor Model~\cite{foundation97agha,taxonomy-of-actor-models}.
 
@@ -59,10 +72,11 @@ The architectural separation of mailboxes from processing actors provides
 several key benefits. First, it cleanly separates message management from
 processing logic, allowing mailbox actors to specialise in queue management
 while processing actors focus on their core functionality. Second, it enables
-flexible message scheduling—different mailbox implementations can support
-priority queues, batch processing, or custom dispatch strategies without affecting
-processing actors. Third, mailbox actors become modular components that can be
-modified or replaced independently.
+flexible message scheduling ---different mailbox implementations can support
+priority queues, batch processing, or custom dispatch strategies without
+affecting processing actors. Third, mailbox actors can be implemented as any
+other actor, and thus become modular components that can be replaced
+independently.
 
 % Discusses the trade-offs and potential drawbacks of the design.
 This design may come with some trade-offs. The primary drawback we foresee is
@@ -90,10 +104,10 @@ correctness under concurrent message processing.
 \section{Notation}\label{sec:notation}
 
 We use an informal type-theoretic notation. For example, a term $x$ of type $A$
-is denoted $\typing{x}{A}$. Capital letters or capitalized words are used for
-types, and lowercase letters or lowercase words are used for terms. There is a
-universe of types $\U$, so if $A$ is a type, then $\typing{A}{\U}$. We also work
-with inductive types presented in the following form:
+is denoted with $\typing{x}{A}$. Capital letters or capitalized words are used
+for types, and lowercase letters or lowercase words are used for terms. There is
+a universe of types $\U$, so if $A$ is a type, then $\typing{A}{\U}$. We also
+work with inductive types presented in the following form.
 %
 \begin{equation}\label{eq:inductive-type-definition}
   \typedef{
@@ -104,27 +118,27 @@ with inductive types presented in the following form:
 \end{equation}
 %
 where $\ccon{B}$ and $\ccon{C}$ are constructors of the type $\ctype{A}$, with
-$\ccon{B}$ having no arguments, and $\ccon{C}$ having $m$ arguments. It may be the case
-that the type $\ctype{A}$ is also indexed by some parameters.
+$\ccon{B}$ having no arguments, and $\ccon{C}$ having $m$ arguments. It may be
+the case that the type $\ctype{A}$ is also indexed by parameters.
 
-We denote with $\N$ the inductive type of natural numbers, $\EmptyType$ the empty
-type, $\Unit$ the type with exactly one term denoted with $*$, $\Bool$ the two-element
-type with $\mathsf{tt}$ and $\mathsf{ff}$ representing truth values, and $\List{A}$
-represents the type of parametric lists. The notation $[a_1, \dots, a_n]$ is
-used to denote a list with elements $a_1, \dots, a_n$. The empty list is denoted
-with $[]$. We use $\defequal{x}{y}$ to indicate definitional equality where term $x$
-is defined as $y$, while $\equal{a}{b}$ signifies definitional equality between
-terms, and $\propequal{a}{b}$ denotes propositional equality. The $\Sigma$ type
-is the dependent product of a type $A$ and a type family $B$ on $A$, denoted with 
-$\Sigma_{(x : A)} B(x)$. The non-dependent product of $A$ and $B$ is
-denoted with $A \times B$, and its terms, tuples, are denoted with $\langle
-a,b \rangle$, where $a : A$ and $b : B$. A \emph{tuple} $\langle a_1, a_2,
-\dots, a_n \rangle$ is a generalisation of an ordered pair to an ordered
-$n$-tuple, where $n \in \N$, of type $A_1 \times \cdots \times A_n$, and $a_i$
-is of type $A_i$ for all $i$ from $1$ to $n$. Given a type $A$, we can define
-the optional type $\Option{A}$ as $A \oplus \Unit$. The terms $\none$ and
-$\some{a}$ are the corresponding terms for the optional type when
-$\typing{a}{A}$. 
+We denote with $\N$ the inductive type of natural numbers, $\EmptyType$ the
+empty type, $\Unit$ the type with exactly one term denoted with $*$, $\Bool$ the
+two-element type with $\mathsf{tt}$ and $\mathsf{ff}$ representing truth values,
+and $\List{A}$ represents the type of parametric lists. The notation $[a_1,
+\dots, a_n]$ is used to denote a list with elements $a_1, \dots, a_n$. The empty
+list is denoted with $[]$. We use $\defequal{x}{y}$ to indicate definitional
+equality where term $x$ is defined as $y$, while $\equal{a}{b}$ signifies
+definitional equality between terms, and $\propequal{a}{b}$ denotes
+propositional equality. The $\Sigma$-type is the dependent product of a type $A$
+and a type family $B$ on $A$, denoted with $\Sigma_{(x : A)} B(x)$, and its
+terms are denoted with $\langle a,b \rangle$, where $a : A$ and $b : B(a)$. The
+non-dependent product of $A$ and $B$ is denoted with $A \times B$ and its terms
+are called \emph{tuples}. We generalise the notation so $\langle a_1, \dots, a_n
+\rangle$ is a tuple of $n$ elements, where $n \in \N$, of type $A_1 \times
+\cdots \times A_n$, and $a_i$ is of type $A_i$ for all $i$ from $1$ to $n$.
+Given a type $A$, we can define the optional type $\Option{A}$ as $A \oplus
+\Unit$. The terms $\none$ and $\some{a}$ are the corresponding terms for the
+optional type when $\typing{a}{A}$.
 
 Some types are sets, and we equip them with some common set-theoretic notations.
 The membership relation is denoted with $\in$, so $a \in A$ is a proposition
@@ -135,19 +149,31 @@ The disjoint union of $A_1, \dots, A_n$ is denoted with $A_1 \oplus \cdots \oplu
 % and $\mathsf{inj_i}(a_i)$ are the corresponding injections into $A_1 \oplus \cdots
 % \oplus A_n$ from $A_i$ for all $i \in \{1, \dots, n\}$.
 
-A function $f$ that takes an argument $a$ of type $A$ and returns a
-value of type $B$ is denoted $f : A \to B$ and application is denoted with
-$f(a)$. We also use the notation $f[a \mapsto c]$ to define a new function that
-is similar to $f$ except that the output of $f$ is replaced by $c$ when the
-input is $a$, if $a$ is in the domain of $f$. Otherwise, we extend $f$
-accordingly. We overload the notation $\mathcal{N}[a \mapsto c]$ to also apply
-to sets, so if $\mathcal{N}$ is a set, then $\mathcal{N}[a \mapsto c]$ is the
-set resulting from $\mathcal{N}$ by replacing the element $a$ with $c$, if $a$
-is a valid element of $\mathcal{N}$. Otherwise, we extend $\mathcal{N}$
-accordingly. Finally, we use (\ignore) to omit terms that are not important or
-can be inferred from the context. For example, $\langle \ignore, a, b, \ignore
-\rangle$ is a tuple where the first and last elements are irrelevant so the
-second and third elements are the only ones that matter.
+A function $f$ that takes an argument $a$ of type $A$ and returns a value of
+type $B$ is denoted with $f : A \to B$ and application is denoted with $f(a)$.
+We also use the notation $f[a \mapsto c]$ to define a new function that is
+similar to $f$ except that the output of $f$ is replaced by $c$ when the input
+is $a$, if $a$ is in the domain of $f$. Otherwise, we extend $f$ accordingly. We
+overload the notation $\mathcal{N}[a \mapsto c]$ to also apply to sets, so if
+$\mathcal{N}$ is a set, then $\mathcal{N}[a \mapsto c]$ is the set resulting
+from $\mathcal{N}$ by replacing the element $a$ with $c$, if $a$ is a valid
+element of $\mathcal{N}$. Otherwise, we extend $\mathcal{N}$ accordingly.
+Finally, we use (\ignore) to omit terms that are not important or can be
+inferred from the context. For example, $\langle \ignore, a, b, \ignore \rangle$
+is a tuple where the first and last elements are irrelevant to the discussion so
+the second and third elements are the only ones that matter.
+
+\section{Motivation}\label{sec:motivation}
+
+\begin{itemize}
+  \item message passing / state machine approach is "too coarse" / deserves refinement
+  \item make clear that we have two message passing views
+  \begin{itemize}
+    \item abstract (ignoring mailbox)
+    \item concrete, as a refinement (to be made precise in future work)
+  \end{itemize}
+\end{itemize}
+
 
 \section{Model}\label{sec:model}
 
@@ -155,10 +181,11 @@ This section presents a variation of dynamic effective communicating systems
 \cite{art-engines} by introducing terminating behaviour guarantees while
 preserving their actor-like semantics. Building on this foundation, we formalise
 engines as refined effective communicating Moore machines, that is, stateful
-message-processing units structured around four core components:
-a \emph{configuration}, an \emph{execution environment}, \emph{message interface},
-and a \emph{behaviour}. These components, or more precisely their types, are used to
-define the types for engines in a system, as in~\Cref{def:engine}.
+message-processing units structured around four core components: a
+\emph{configuration}, an \emph{execution environment}, a \emph{message
+interface}, and a \emph{behaviour}. These components, or more precisely their
+types, define the type signature for engines in a system, as detailed
+in~\Cref{def:engine}.
 
 Briefly, the configuration of an engine conveys persistent information,
 or metadata, about the engine such as its parent, operational mode, and other
@@ -217,6 +244,18 @@ The model operates on a system state $\SystemState$ consisting of finite sets
 of uniquely identified nodes $\SetOfNodes$, engines $\SetOfEngines$, and
 in-transit messages $\SetOfMessages$. The subsequent sections detail these
 concepts in a bottom-up manner.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/system}
+  \caption{The figure shows a system state $\SystemState$ consisting of finite
+  sets of uniquely identified nodes $\SetOfNodes$ in dashed regions, engines
+  $\SetOfEngines$ as boxes, and in-transit messages $\SetOfMessages$ as arrows.
+  Following the notation of \Cref{def:messages}, the message $\msgpacket{\loc{1}{e_{s}}}{\loc{2}{e_{t}}}{m}$
+  is in transit from engine $e_{s}$ to engine $e_{t}$.}
+  \label{fig:system-state}
+\end{figure}
+
 
 As a state machine, the system evolves in discrete time steps, where the state
 at step $i$ is denoted with $\SystemState^{(i)}$. The sets $\SetOfNodes^{(i)}$,
@@ -1053,34 +1092,41 @@ our system, engines encapsulate both processing logic and state management
 capabilities. We have established the types of their constituent parts, namely
 configurations, environments, and behaviours.
 
-In other words, at this point, just before defining the type for engine types,
-we already have the types for message interfaces $\msgtype{i}$, behaviours
-$\behaviourtype{i}$, configurations $\configtype{i}$, and environments
-$\envtype{i}$ for $i$ ranging over the index set part of the system.
+\begin{definition}[Engine Type]\label{def:engine-type}%
+  A predefined \textbf{engine type} is a term of type $\enginetype{}$ where
+  \begin{equation}
+    \begin{aligned}
+    \defequal{
+      \enginetype{}
+    }{
+      \Sigma_{(\typing{C,\,L}{\U})}
+      \,
+            \msgtype{}
+      \times \behaviourtype{C, L} 
+    }
+    \,.
+    \end{aligned}
+  \end{equation} 
+\end{definition}
+
+The systems provides a predefined set of engine types indexed by $i$ ranging
+over the index of natural numbers. Consistent with previous notation, 
+$\enginetype{i}$ to denote the engine type indexed by $i$. 
+
+
 
 \begin{definition}[Engine]\label{def:engine}%
-An \textbf{engine} is a term representing the computational unit of the
-system, with a predefined type $\enginetype{}(i)$ where $i$ serves as an
-index/identifier for the engine type. The type $\enginetype{}(i)$ is defined as follows:
-\begin{equation}
-  \begin{aligned}
-  \defequal{
-    \enginetype{}(i)
-  }{
-    \msgtype{i}
-    \times \behaviourtype{i} 
-    \times \EngineStatus{\msgtype{i}} 
-    \times \configtype{i} 
-    \times \envtype{i}
-  }
-  \,.
-  \end{aligned}
-\end{equation}
-In other words, an engine is a tuple of the form
-$\engineval{\msgtype{i}}{b}{m}{c}{s}$ where:
+An \textbf{engine} (instance) is a term of type $\EngineStatus{\msgtype{i}}
+\times \configtype{i} \times \envtype{i}$ where $i$ serves as an
+index/identifier for the corresponding \textbf{engine type}. By abuse of notation,
+we refer to this as its engine type. This associated
+\textbf{engine type} provides the engine's message interface, behaviour, typing
+for configuration, and execution environment. 
+
+
+In other words, an engine instance is a tuple of the form
+$\engineval{}{m}{c}{s}{}$ where:
 \begin{itemize}
-\item $\typing{b}{\behaviourtype{i}}$ is the engine's behaviour as in
-\Cref{def:engine-behaviour},
 \item $\typing{m}{\EngineStatus{\msgtype{i}}}$ is the engine's operational mode as in
 \Cref{def:engine-status},
 \item $\typing{c}{\configtype{i}}$ is the engine's configuration as in
@@ -1230,11 +1276,11 @@ For convenience, given a node with identifier $n_i$, we have the following notat
 % %TODO: introduce a forward reference to the related op. rules
 % \end{remark}
 \subsection{System}\label{sec:system}%
-
-The system incorporates a fixed collection of types that remain constant
-throughout its lifetime. These include message interfaces, $\msgtype{i}$,
-engine configuration types, $\configtype{i}$, engine environment types,
-$\envtype{i}$, behaviours, $\behaviourtype{i}$, and engine types,
+The system is a set of interacting components called engines residing in nodes.
+Each engine is of a type from a fixed collection of types that remain constant
+throughout the system's lifetime. These include message interfaces,
+$\msgtype{i}$, engine configuration types, $\configtype{i}$, engine environment
+types, $\envtype{i}$, behaviours, $\behaviourtype{i}$, and engine types,
 $\enginetype{i}$, where $i$ ranges over the system's index set. These types
 collectively constitute the typing context for the system, making type
 information an inherent part of the system definition.
@@ -1390,7 +1436,7 @@ For some of the rules, a few parameters/data are not provided to simplify the
 presenation but also because they may be inferred from the context.
 \end{comment}
 
-\begin{definition}[\srule{GenericEngineSpawn}]\label{rule:s-GenericEngineSpawn}
+\begin{definition}[\srule{EngineSpawn}]\label{rule:s-EngineSpawn}
   \hspace{-1.5em}
 % The rule \sruleref{EngineSpawn} is used to create an engine of any kind.
   \begin{prooftree}
@@ -1405,7 +1451,6 @@ presenation but also because they may be inferred from the context.
             {\plugins_i}
         }
         \in \SetOfNodes
-  \quad \typing{C, S}{\U} %
   $}
   \noLine
   \UnaryInfC{$%
@@ -1465,7 +1510,7 @@ $}
   \opstep%
     { \SystemState  %
     , \node{i}
-    , \Contract
+    , j
     , \pi  % the parent of the engine
     , \iota % the address of the engine
     , b  % the behaviour of the engine
@@ -1474,7 +1519,7 @@ $}
     , c % the configuration of the engine
     , s % the local environment of the engine
     }
-    {gspawn}%
+    {spawn}%
     {%
       ( \SetOfNodes[\enginemap_i \mapsto \enginemap']%
       , \SetOfMessages%
@@ -1486,101 +1531,10 @@ $}
 \end{definition}
 
 \begin{remark}\label{remark:generic-engine-spawn} The rule
-\sruleref{GenericEngineSpawn} takes place in the context of a node $\node{i}$
-and system's state. With that set, we provide all the data required to
-instantiate an engine of any kind, whether it is a processing engine or a
-mailbox engine.
+\sruleref{EngineSpawn} takes place in the context of a node $\node{i}$ and
+system's state. With that set, we provide all the data required to instantiate an
+engine of any kind, whether it is a processing engine or a mailbox engine.
 \end{remark}
-
-% \begin{definition}[\srule{ProcessingEngineSpawn}]\label{rule:s-ProcessingEngineSpawn}
-% \hspace{-1.5em}
-% \begin{prooftree}
-%   % Level 1: Node and configuration setup
-%   \AxiomC{$%
-%         \equal{%
-%           \node{i}
-%         }{%
-%           \nodeval%
-%             {\mathsf{id}_i}
-%             {\enginemap_i}
-%             {\plugins_i}
-%         }
-%         \in \SetOfNodes
-%   \quad \typing{C, S}{\U} %
-%   $}
-%   \noLine
-%   \UnaryInfC{$%
-%         \typing{\Contract}{\Msg} %
-%   \quad \typing{b}{\behaviourtype{}(C, S)}
-%   \quad \typing{f}{\Option{\Contract \to \Bool}}%
-%   $}
-%   \noLine
-%   \UnaryInfC{$%
-%         \typing{\pi}{\mathsf{Option}(\Address)} %
-%   \quad %
-%         \equal{%
-%           \typing{
-%             \config{\new}
-%             }{\Cfg(C)}%
-%         }{%
-%           \configval%
-%             {\pi}
-%             {m}
-%             {c}
-%         }%
-%   $}
-% \noLine
-% \UnaryInfC{$%
-% \equal{%
-%           \typing{\localenv{\new}}{\Env(S)}
-%       }{
-%         \localenvval%
-%           {s}
-%           {[(\textsc{self}, \iota)]}
-%       }
-% $}
-% \noLine
-% \UnaryInfC{$%
-%   \equal{%
-%     \engine{\new}
-%   }{
-%     \engineval%
-%       {\Contract} %
-%       {b} %
-%       {\ready{f}} %
-%       {\config{\new}} %
-%       {\environment{\new}}
-%   }
-% $}
-%   \noLine
-%   \UnaryInfC{$%
-%   \quad \typing{\loc{\mathsf{id}_i}{\iota}}{\Address} 
-%   \quad \equal{%
-%           \enginemap'
-%         }{
-%           \enginemap_i%
-%             [\iota \mapsto \engine{\mathsf{new}} ]%
-%         }%
-%   $}
-%   \UnaryInfC{$%
-%   \opstep%
-%     { \SystemState  %
-%     , \node{i}
-%     , \pi  % the parent of the engine
-%     , \iota % the address of the engine
-%     , c % the configuration of the engine
-%     , s % the local environment of the engine
-%     }
-%     {spawn}%
-%     {%
-%       ( \SetOfNodes[\enginemap_i \mapsto \enginemap']%
-%       , \SetOfMessages%
-%       , \SetOfPlugins%
-%       )
-%     }%
-%   $}
-% \end{prooftree}
-% \end{definition}
 
 % \begin{remark}\label{remark:processing-engine-spawn}
 % The rule \sruleref{ProcessingEngineSpawn} takes place in the context of a node
@@ -1593,119 +1547,6 @@ mailbox engine.
 % priority-based message organisation. However, for simplicity, we use a uniform
 % mailbox behaviour across all mailbox engines.
 % \end{remark}
-
-
-% \begin{definition}[\srule{EngineSpawn}]\label{rule:s-EngineSpawn}
-% \hspace{-1.5em}
-% \begin{prooftree}
-% \newcommand{\Prot}{\texttt{Prot}}
-% % Level 1: Node and configuration setup
-% \AxiomC{$%
-% \equal{%
-%   \node{i}
-% }{%
-%   \nodeval%
-%     {\mathsf{id}_i}
-%     {\enginemap_i}
-%     {\plugins_i}
-% }
-% \in \SetOfNodes
-% \quad \typing{C, S}{\U} %
-% $}
-% \noLine
-% \UnaryInfC{$%
-% \quad \typing{\Prot}{\Msg} %
-% \quad \typing{b}{\behaviourtype{}(C, S)}
-% \quad \typing{\environment{\new}}{\Env(S)}
-% $}
-% \noLine
-% \UnaryInfC{$%
-% \quad \typing{\pi}{\mathsf{Option}(\Address)} %
-% \quad \typing{c}{C}
-% \quad %
-%       \equal{%
-%         \typing{
-%           \config{\new}
-%           }{\Cfg(C)}%
-%       }{%
-%         \configval{\pi}{\process}{c}
-%       }%
-% $}
-% \noLine
-% \UnaryInfC{$%
-% \quad \typing{f}{\Option{\Prot \to \Bool}}%
-% % $}
-% % \noLine
-% % \UnaryInfC{$%
-% \quad %
-%       \equal{%
-%         \engine{\new}
-%       }{
-%         \engineval%
-%           {\texttt{prot}} %
-%           {b} %
-%           {\ready{f}} %
-%           {\config{\new}} %
-%           {\environment{\new}}
-%       }
-% $}
-% \noLine
-% \UnaryInfC{$%
-% \quad \defequal{\iota}{\freshid}%
-% \quad \typing{C_m, S_m}{\U}%
-% \quad \typing{c_m}{C_m}%
-% \quad \equal{%
-%         \typing{\config{\mailboxOfname}}{\Cfg(C_m)}
-%       }{%
-%         \configval%
-%           {\iota} %
-%           {\mail}
-%           {c_m}
-%       }%
-% $}
-% \noLine
-% \UnaryInfC{$%
-% \equal{%
-%   \mailbox{\mathsf{new}}
-% }{%
-%   \engineval%
-%     {\interface{\mailboxOfname}} %
-%     {\behaviour{\mailboxOfname}} %
-%     {\ready{\none}} %
-%     {\config{\mailboxOfname}} %
-%     {\environment{\mailboxOfname}}%
-%   }%
-% $}
-% \noLine
-% \UnaryInfC{$%
-% \quad \defequal{\eta}{\freshid} %
-% \quad \equal{%
-%         \enginemap'
-%       }{
-%         \enginemap_i%
-%           [\iota \mapsto \engine{\mathsf{new}} ]%
-%           [\eta  \mapsto \mailbox{\mathsf{new}}]
-%       }%
-% $}
-% \UnaryInfC{$%
-% \opstep%
-%   { \SystemState
-%   , \node{i}
-%   , \config{\new} % the configuration of the engine
-%   , \environment{\new} % the local environment of the engine
-%   , f % the filter function
-%   , \config{\mailboxOfname} % the configuration of the mailbox engine
-%   , \environment{\mailboxOfname} % the local environment of the mailbox engine
-%   }
-%   {spawn}%
-%   {%
-%     ( \SetOfNodes[\enginemap_i \mapsto \enginemap']%
-%     , \SetOfMessages%
-%     , \SetOfPlugins%
-%     )
-%   }%
-% $}
-% \end{prooftree}
 
 % The terms $\interface{\mailboxOfname}$, $\behaviour{\mailboxOfname}$, and
 % $\environment{\mailboxOfname}$ refer to the message interface, behaviour, and
@@ -2635,118 +2476,6 @@ Troyer.
 
 \bibliography{art.bib,ref.bib}
 \appendix
-
-% \section{Key-value guarded actions}
-
-% \Cref{fig:keyvalue-engine-get} shows the guarded actions for the key-value store engine.
-
-% The guard $g_{\mathsf{get}}$ checks if the message is a $\msg{Get}$ request and extracts the key.
-% The action $a_{\mathsf{get}}$ retrieves the value for the key, increments the access count,
-% and sends the result back to the sender.
-% \begin{align*}
-% &\typing{
-%   g_{\mathsf{put}}
-% }{
-%   \In{\mathsf{kv}} \to \Option{\mathsf{Key} \times \mathsf{Val}}
-%   \,.
-% } \\
-% &\defequal{g_{\mathsf{put}}((m, c, \ignore))}{
-%   \mathsf{case}\ m\ \mathsf{of}\ \{\\
-%   &\hspace{3mm}  \msg{Put}(k, v) \Rightarrow
-%         \mathsf{if}\ \neg\, \mathsf{readOnly}(c)\
-%         \mathsf{then}\ \some{\langle k, v \rangle}\
-%         \mathsf{else}\ \none;\\
-%   &\hspace{3mm} \ignore \Rightarrow \none
-%   \}
-%   \,.
-% }\\[2mm]
-% &\typing{a_{\mathsf{put}}}{
-%   (\mathsf{Key} \times \mathsf{Val}) \times \In{\mathsf{kv}} \to
-%   \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}}
-% } \\
-% &\defequal{a_{\mathsf{put}}((k, v), (m, c, (\mathsf{st}, \mathsf{cnt})))}{
-%   \chain{
-%     \update{(
-%       \mathsf{st}[k \mapsto v],
-%       \mathsf{cnt}
-%     )}
-%   }{
-%     \send{\sender{m}}{\msg{Result}(\some{v})}
-%   }
-% }
-% \end{align*}
-
-% The guard $g_{\mathsf{put}}$ checks if the message is a $\msg{Put}$ request and verifies the store
-% is not in read-only mode. The action $a_{\mathsf{put}}$ updates the store with the new key-value pair
-% and confirms the operation to the sender.
-
-% \begin{align*}
-% &\typing{
-%   g_{\mathsf{delete}}
-% }{
-%   \In{\mathsf{kv}} \to \Option{\mathsf{Key}} \,.
-% } \\
-% &\defequal{g_{\mathsf{delete}}(m, c, \ignore)}{
-%   \mathsf{case}\ m\ \mathsf{of}\ \{\\
-%     &\msg{Delete}(k) \Rightarrow\\
-%     &\quad\mathsf{if}\ \neg \mathsf{readOnly}(c)\ \mathsf{then}\ \some{k}\ \mathsf{else}\ \none;\\
-%     &\ignore \Rightarrow \none\\
-%   \}
-% }\\[2mm]
-% &\typing{a_{\mathsf{delete}}}{
-%   \mathsf{Key} \times \In{\mathsf{kv}} \to
-%   \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}}
-% } \\
-% &\defequal{a_{\mathsf{delete}}(k, m, c, e)}{
-%   \begin{array}{l}
-%     \mathsf{let}\ v = \mathsf{store}(e).get(k)\ \mathsf{in} \\
-%     \mathsf{let}\ newStore = \mathsf{store}(e).remove(k)\ \mathsf{in} \\
-%     \chain{
-%       \update{e[\mathsf{store} \mapsto newStore]}
-%     }{
-%       \send{m.\mathsf{sender}}{\msg{Result}(v)}
-%     }
-%   \end{array}
-% }
-% \end{align*}
-
-% The guard $g_{\mathsf{delete}}$ checks if the message is a $\msg{Delete}$ request and ensures
-% the store is not in read-only mode. The action $a_{\mathsf{delete}}$ retrieves the current value,
-% removes the key from the store, and returns the previous value to the sender.
-
-% \begin{align*}
-% &\typing{g_{\mathsf{stats}}}{\In{\mathsf{kv}} \to \Option{\mathsf{Key}}} \\
-% &\defequal{g_{\mathsf{stats}}(m, \ignore, \ignore)}{
-%   \mathsf{case}\ m\ \mathsf{of}\ \{\\
-%     &\msg{GetStats}(k) \Rightarrow \some{k};\\
-%     &\ignore \Rightarrow \none\\
-%   \}
-% }\\[2mm]
-% &\typing{a_{\mathsf{stats}}}{
-%   \mathsf{Key} \times \In{\mathsf{kv}} \to
-%   \effecttype{\mathsf{kv}}{S_{\mathsf{kv}}}
-% } \\
-% &\defequal{a_{\mathsf{stats}}(k, m, c, e)}{
-%   \begin{array}{l}
-%     \mathsf{let}\ cnt = \mathsf{accessCount}(e).getOrDefault(k, 0)\ \mathsf{in} \\
-%     \mathsf{let}\ exists = \mathsf{store}(e).containsKey(k)\ \mathsf{in} \\
-%     \send{m.\mathsf{sender}}{\msg{StatsResult}(k, cnt, exists)}
-%   \end{array}
-% }
-% \end{align*}
-
-% The guard $g_{\mathsf{stats}}$ checks if the message is a $\msg{GetStats}$ request and extracts the key.
-% The action $a_{\mathsf{stats}}$ retrieves the access count and checks if the key exists in the store,
-% then sends these statistics back to the sender.
-
-% The key-value store's behaviour consists of guarded actions
-% $\langle g_{\mathsf{get}}, a_{\mathsf{get}} \rangle$,
-% $\langle g_{\mathsf{put}}, a_{\mathsf{put}} \rangle$,
-% $\langle g_{\mathsf{delete}}, a_{\mathsf{delete}} \rangle$, and
-% $\langle g_{\mathsf{stats}}, a_{\mathsf{stats}} \rangle$.
-
-% Why not just one guarded action? Using multiple guarded actions provides clearer separation of concerns, better maintainability, and more efficient message handling than combining all logic into a single complex guard-action pair.
-
 
 
 \end{document}
