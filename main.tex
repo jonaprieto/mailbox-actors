@@ -177,6 +177,21 @@ interface}, and a \emph{behaviour}. These components, or more precisely their
 types, define the type signature for engines in a system, as detailed
 in~\Cref{def:engine}.
 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.6\textwidth]{figures/engine}
+  \caption{
+  The figure shows an engine (instance) $e$ processing a message $m$ that
+  conforms to its message interface $\msgtype{e}$ and producing an effect by
+  evaluating its behaviour $\behaviour{e}$ in the context of its internal state,
+  its configuration $\config{e}$, and its execution environment $\environment{e}$.
+  The dashed line means that in a future step, these components may change. The
+  behaviour $\behaviour{e}$ consists of guarded actions
+  $\langle g_1, a_1 \rangle, \langle g_2, a_2 \rangle, \langle g_2, a_3
+  \rangle$. }
+  \label{fig:engine}
+\end{figure}
+
 Briefly, the configuration of an engine conveys persistent information,
 or metadata, about the engine such as its parent, operational mode, and other
 engine-type-specific configuration, see \Cref{def:engine-configuration}. The
@@ -247,7 +262,6 @@ concepts in a bottom-up manner.
   \label{fig:system-state}
 \end{figure}
 
-
 As a state machine, the system evolves in discrete time steps, where the state
 at step $i$ is denoted with $\SystemState^{(i)}$. The sets $\SetOfNodes^{(i)}$,
 $\SetOfEngines^{(i)}$, and $\SetOfMessages^{(i)}$ may also change between steps.
@@ -272,9 +286,9 @@ types, message types are fixed once the system is defined.
 \begin{remark}[Static Typing]\label{rem:static-typing}%
   This model employs static typing. Engine types are predetermined within the
   system, and new engine instances must conform to these types. The sum type of
-  these engine types is denoted with $\mathsf{Eng}$. Similarly, message payloads
-  adhere to predefined types specific to the target engine. The sum type of
-  these message types is denoted with $\Msg$. Extending this model to support
+  these engine types is denoted with $\Eng$. Similarly, message payloads
+  are typed using predefined types specific to the target engine. The sum type
+  of these message types is denoted with $\Msg$. Extending this model to support
   dynamic typing is left for future work.
 \end{remark}
 
