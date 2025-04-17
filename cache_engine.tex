@@ -1,0 +1,403 @@
+\begin{example}[Distributed Caching Engine]\label{ex:cache-engine}%
+    Let us define a distributed caching engine built as a layer on top of
+    key-value store actors. This engine demonstrates actor composition, where
+    cache actors coordinate with underlying key-value store actors to provide
+    efficient data access with features like expiration, eviction policies, and
+    consistency guarantees.
+    
+    First, we define the message interface for the caching engine:
+    
+    \begin{equation}\label{eq:cache-engine-message-interface}
+    \begin{aligned}
+    \typedef%
+    {
+      \msgtype{\mathsf{cache}}
+    }{    &  \msg{Get}(\mathsf{Key}) \\
+    \mid &  \msg{Put}(\mathsf{Key} \times \mathsf{Value} \times \Option{\mathsf{TTL}}) \\
+    \mid &  \msg{Delete}(\mathsf{Key}) \\
+    \mid &  \msg{ClearCache}() \\
+    \mid &  \msg{Invalidate}(\mathsf{Key}) \\
+    \mid &  \msg{Replicate}(\mathsf{Key} \times \mathsf{Value} \times \mathsf{Version}) \\
+    \mid &  \msg{CacheStats}() \\
+    \mid &  \msg{CacheResponse}(\mathsf{Key} \times \Option{\mathsf{Value}} \times \mathsf{Status}) \\
+    \mid &  \msg{EvictionNotice}(\Set{\mathsf{Key}}) \\
+    \mid &  \msg{KeyValueStoreResponse}(\mathsf{Key} \times \Option{\mathsf{Value}})
+    }\,,
+    \end{aligned}
+    \end{equation}
+    
+    where:
+    \begin{itemize}
+        \item $\msg{Get}(key)$ retrieves a value for the specified key
+        \item $\msg{Put}(key, value, ttl)$ stores a key-value pair with optional
+        time-to-live
+        \item $\msg{Delete}(key)$ removes an entry from the cache
+        \item $\msg{ClearCache}()$ purges all entries from the cache
+        \item $\msg{Invalidate}(key)$ marks a cache entry as invalid across the
+        cluster
+        \item $\msg{Replicate}(key, value, version)$ propagates updates to other
+        cache nodes
+        \item $\msg{CacheStats}()$ requests cache performance metrics 
+        \item $\msg{CacheResponse}(key, value, status)$ returns cache operation
+        results
+        \item $\msg{EvictionNotice}(keys)$ notifies of keys that were evicted
+        \item $\msg{KeyValueStoreResponse}(key, value)$ response from backing
+        key-value store
+    \end{itemize}
+    
+    The configuration type for the cache engine specifies its role in the
+    distributed system:
+    
+    \begin{equation}\label{eq:cache-engine-configuration}
+    \begin{aligned}
+    \typedef{%
+      \ctype{C}_{\mathsf{cache}}
+    }{    &  \ccon{Primary}(\mathsf{EvictionPolicy} \times \mathsf{ConsistencyModel} \times \N) \\
+    \mid &  \ccon{Replica}(\Address) \\
+    \mid &  \ccon{ReadOnly}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    where the integer parameter in $\ccon{Primary}$ specifies the number of
+    key-value store shards to spawn.
+    
+    The environment type tracks the cache's state:
+    
+    \begin{equation}\label{eq:cache-engine-environment}
+    \begin{aligned}
+    \typedef{%
+      \ctype{L}_{\mathsf{cache}}
+    }{    &  \ccon{CacheState}(\Map{\mathsf{Key}}{\mathsf{CacheEntry}} \times \mathsf{Stats} \times \Map{\N}{\Address}) \\
+    \mid &  \ccon{CacheEntry}(\mathsf{Value} \times \mathsf{Timestamp} \times \Option{\mathsf{TTL}} \times \mathsf{Version})
+    }\,,
+    \end{aligned}
+    \end{equation}
+    
+    where:
+    \begin{itemize}
+        \item $\ccon{CacheState}$ tracks cache entries, performance statistics,
+        and addresses of key-value store actors
+        \item $\ccon{CacheEntry}$ contains the cached value, insertion
+        timestamp, TTL, and version for consistency
+    \end{itemize}
+    
+    The initialisation action sets up the cache by spawning key-value store
+    actors:
+    
+    \begin{equation}\label{eq:cache-init-action}
+    \begin{aligned}
+    &\typing{
+      a_{\mathsf{init}}
+    }{
+      \In{\mathsf{cache}}
+        \to \Out{\mathsf{cache}}
+    }\,. \\
+    &\defequal{
+      a_{\mathsf{init}}
+    }{
+      \lambda \langle \ignore, c, \langle \mathsf{entries}, \mathsf{stats}, \mathsf{kvStores} \rangle \rangle . \\
+    &  \mathsf{case}\ c\ \mathsf{of}\ \{ \\
+    &    \ccon{Primary}(\ignore, \ignore, numShards) \Rightarrow \\
+    &      \chain{ \\
+    &        \mathsf{let}\ newStores = \emptyset \\
+    &        \mathsf{for}\ i \gets 0\ \mathsf{to}\ numShards-1\ \mathsf{do} \\
+    &          \chain{ \\
+    &            \spawn{ \\
+    &              \configval{%
+                \some{\self}%
+              }{%
+                \mathsf{keyValueStore}%
+              }{%
+                \ccon{Standard}%
+              }%
+            }{%
+              \localenvval{%
+                \ccon{KVState}(\emptyset)%
+              }{%
+                [(\self, \ignore)]%
+              }%
+            }%
+          }{ \\
+    &            \mathsf{let}\ newStores = newStores[i \mapsto \self] \\
+    &            } \\
+    &          } \\
+    &        \update{\langle \mathsf{entries}, \mathsf{stats}, newStores \rangle} \\
+    &        } \\
+    &    \ignore \Rightarrow \update{\langle \mathsf{entries}, \mathsf{stats}, \mathsf{kvStores} \rangle} \\
+    &  \}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    Now we define the guarded actions for the caching engine. First, the guard
+    for cache retrieval:
+    
+    \begin{equation}\label{eq:cache-get-guard}
+    \begin{aligned}
+    &\typing{
+      g_{\mathsf{get}}
+    }{
+      \In{\mathsf{cache}}
+        \to
+      \Option{\mathsf{Key}}
+    }\,. \\
+    &\defequal{
+      g_{\mathsf{get}}
+    }{
+      \lambda \langle m, \ignore, \langle \mathsf{entries}, \mathsf{stats}, \ignore \rangle \rangle .
+      \mathsf{case}\ m\ \mathsf{of}\ \{ \\
+    &  \msg{Get}(key) \Rightarrow \some{key}; \\
+    &  \ignore \Rightarrow \none \\
+    &\}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The corresponding action checks the cache and handles cache miss by querying
+    the key-value store:
+    
+    \begin{equation}\label{eq:cache-get-action}
+    \begin{aligned}
+    &\typing{
+      a_{\mathsf{get}}
+    }{
+      \mathsf{Key} \times \In{\mathsf{cache}}
+        \to \Out{\mathsf{cache}}
+    }\,. \\
+    &\defequal{
+      a_{\mathsf{get}}
+    }{
+      \lambda \langle key, \langle \mathsf{sender}, c, \langle \mathsf{entries}, \mathsf{stats}, \mathsf{kvStores} \rangle \rangle \rangle . \\
+    &  \chain{ \\
+    &    \mathsf{let}\ \mathsf{cacheResult} = \mathsf{lookup}(key, \mathsf{entries}) \\
+    &    \mathsf{case}\ \mathsf{cacheResult}\ \mathsf{of}\ \{ \\
+    &      \some{\langle value, ts, ttl, version \rangle} \Rightarrow \\
+    &        \mathsf{if}\ \isExpired{ts, ttl}\ \mathsf{then} \\
+    &          \chain{ \\
+    &            \update{\langle \mathsf{entries}\setminus\{key\}, \mathsf{updateStats}(\mathsf{stats}, \mathsf{Miss}), \mathsf{kvStores} \rangle} \\
+    &            \send{\mathsf{sender}}{\msg{CacheResponse}(key, \none, \mathsf{Expired})} \\
+    &            \mathsf{let}\ kvStore = \selectKVStore{key, \mathsf{kvStores}} \\
+    &            \send{kvStore}{\msg{Get}(key)} \\
+    &          } \\
+    &        \mathsf{else} \\
+    &          \chain{ \\
+    &            \update{\langle \mathsf{entries}, \mathsf{updateStats}(\mathsf{stats}, \mathsf{Hit}), \mathsf{kvStores} \rangle} \\
+    &            \send{\mathsf{sender}}{\msg{CacheResponse}(key, \some{value}, \mathsf{Hit})} \\
+    &          } \\
+    &      \none \Rightarrow \\
+    &        \chain{ \\
+    &          \update{\langle \mathsf{entries}, \mathsf{updateStats}(\mathsf{stats}, \mathsf{Miss}), \mathsf{kvStores} \rangle} \\
+    &          \mathsf{let}\ kvStore = \selectKVStore{key, \mathsf{kvStores}} \\
+    &          \send{kvStore}{\msg{Get}(key)} \\
+    &        } \\
+    &    \} \\
+    &  \}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The guard for handling key-value store responses:
+    
+    \begin{equation}\label{eq:cache-kvresponse-guard}
+    \begin{aligned}
+    &\typing{
+      g_{\mathsf{kvresponse}}
+    }{
+      \In{\mathsf{cache}}
+        \to
+      \Option{\mathsf{Key} \times \Option{\mathsf{Value}} \times \Address}
+    }\,. \\
+    &\defequal{
+      g_{\mathsf{kvresponse}}
+    }{
+      \lambda \langle m, \ignore, \ignore \rangle .
+      \mathsf{case}\ m\ \mathsf{of}\ \{ \\
+    &  \msg{KeyValueStoreResponse}(key, value) \Rightarrow \some{\langle key, value, \mathsf{sender} \rangle}; \\
+    &  \ignore \Rightarrow \none \\
+    &\}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The corresponding action updates the cache with data from the key-value
+    store:
+    
+    \begin{equation}\label{eq:cache-kvresponse-action}
+    \begin{aligned}
+    &\typing{
+      a_{\mathsf{kvresponse}}
+    }{
+      \mathsf{Key} \times \Option{\mathsf{Value}} \times \Address \times \In{\mathsf{cache}}
+        \to \Out{\mathsf{cache}}
+    }\,. \\
+    &\defequal{
+      a_{\mathsf{kvresponse}}
+    }{
+      \lambda \langle key, value, kvStore, \langle \mathsf{sender}, c, \langle \mathsf{entries}, \mathsf{stats}, \mathsf{kvStores} \rangle \rangle \rangle . \\
+    &  \chain{ \\
+    &    \mathsf{case}\ value\ \mathsf{of}\ \{ \\
+    &      \some{v} \Rightarrow \\
+    &        \chain{ \\
+    &          \mathsf{let}\ newEntry = \langle v, \mathsf{now}(), \mathsf{defaultTTL}, \freshid \rangle \\
+    &          \update{\langle \mathsf{entries}[key \mapsto newEntry], \mathsf{stats}, \mathsf{kvStores} \rangle} \\
+    &          \send{\mathsf{sender}}{\msg{CacheResponse}(key, \some{v}, \mathsf{LoadedFromStore})} \\
+    &        } \\
+    &      \none \Rightarrow \\
+    &        \send{\mathsf{sender}}{\msg{CacheResponse}(key, \none, \mathsf{NotFoundInStore})} \\
+    &    \} \\
+    &  \}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The guard for cache updates:
+    
+    \begin{equation}\label{eq:cache-put-guard}
+    \begin{aligned}
+    &\typing{
+      g_{\mathsf{put}}
+    }{
+      \In{\mathsf{cache}}
+        \to
+      \Option{\mathsf{Key} \times \mathsf{Value} \times \Option{\mathsf{TTL}}}
+    }\,. \\
+    &\defequal{
+      g_{\mathsf{put}}
+    }{
+      \lambda \langle m, c, \langle \mathsf{entries}, \mathsf{stats}, \ignore \rangle \rangle .
+      \mathsf{case}\ m\ \mathsf{of}\ \{ \\
+    &  \msg{Put}(key, value, ttl) \Rightarrow \some{\langle key, value, ttl \rangle}; \\
+    &  \ignore \Rightarrow \none \\
+    &\}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The corresponding action updates both the cache and the underlying key-value
+    store:
+    
+    \begin{equation}\label{eq:cache-put-action}
+    \begin{aligned}
+    &\typing{
+      a_{\mathsf{put}}
+    }{
+      \mathsf{Key} \times \mathsf{Value} \times \Option{\mathsf{TTL}} \times \In{\mathsf{cache}}
+        \to \Out{\mathsf{cache}}
+    }\,. \\
+    &\defequal{
+      a_{\mathsf{put}}
+    }{
+      \lambda \langle key, value, ttl, \langle \mathsf{sender}, c, \langle \mathsf{entries}, \mathsf{stats}, \mathsf{kvStores} \rangle \rangle \rangle . \\
+    &  \chain{ \\
+    &    \mathsf{let}\ version = \freshid \\
+    &    \mathsf{let}\ timestamp = \mathsf{now}() \\
+    &    \mathsf{let}\ entry = \langle value, timestamp, ttl, version \rangle \\
+    &    \mathsf{let}\ newEntries = \mathsf{entries}[key \mapsto entry] \\
+    &    \mathsf{let}\ kvStore = \selectKVStore{key, \mathsf{kvStores}} \\
+    &    \mathsf{case}\ c\ \mathsf{of}\ \{ \\
+    &      \ccon{Primary}(policy, consistency, \ignore) \Rightarrow \\
+    &        \chain{ \\
+    &          \mathsf{let}\ \langle evictedKeys, entriesAfterEviction \rangle = \applyEvictionPolicy{policy, newEntries} \\
+    &          \update{\langle entriesAfterEviction, \mathsf{updateStats}(\mathsf{stats}, \mathsf{Put}), \mathsf{kvStores} \rangle} \\
+    &          \send{kvStore}{\msg{Put}(key, value)} \\
+    &          \send{\mathsf{sender}}{\msg{CacheResponse}(key, \some{value}, \mathsf{Stored})} \\
+    &          \mathsf{if}\ \mathsf{not}\ \mathsf{isEmpty}(evictedKeys)\ \mathsf{then} \\
+    &            \send{\mathsf{sender}}{\msg{EvictionNotice}(evictedKeys)} \\
+    &          \propagateToReplicas{key, value, version} \\
+    &        } \\
+    &      \ccon{Replica}(primary) \Rightarrow \\
+    &        \chain{ \\
+    &          \update{\langle newEntries, \mathsf{updateStats}(\mathsf{stats}, \mathsf{Put}), \mathsf{kvStores} \rangle} \\
+    &          \send{\mathsf{sender}}{\msg{CacheResponse}(key, \some{value}, \mathsf{Stored})} \\
+    &        } \\
+    &      \ccon{ReadOnly} \Rightarrow \\
+    &        \send{\mathsf{sender}}{\msg{CacheResponse}(key, \none, \mathsf{ReadOnlyError})} \\
+    &    \} \\
+    &  \}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The guard for cache invalidation:
+    
+    \begin{equation}\label{eq:cache-invalidate-guard}
+    \begin{aligned}
+    &\typing{
+      g_{\mathsf{invalidate}}
+    }{
+      \In{\mathsf{cache}}
+        \to
+      \Option{\mathsf{Key}}
+    }\,. \\
+    &\defequal{
+      g_{\mathsf{invalidate}}
+    }{
+      \lambda \langle m, \ignore, \langle \mathsf{entries}, \mathsf{stats}, \ignore \rangle \rangle .
+      \mathsf{case}\ m\ \mathsf{of}\ \{ \\
+    &  \msg{Invalidate}(key) \Rightarrow \some{key}; \\
+    &  \msg{Delete}(key) \Rightarrow \some{key}; \\
+    &  \ignore \Rightarrow \none \\
+    &\}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The corresponding action removes the entry from both cache and key-value
+    store:
+    
+    \begin{equation}\label{eq:cache-invalidate-action}
+    \begin{aligned}
+    &\typing{
+      a_{\mathsf{invalidate}}
+    }{
+      \mathsf{Key} \times \In{\mathsf{cache}}
+        \to \Out{\mathsf{cache}}
+    }\,. \\
+    &\defequal{
+      a_{\mathsf{invalidate}}
+    }{
+      \lambda \langle key, \langle \mathsf{sender}, c, \langle \mathsf{entries}, \mathsf{stats}, \mathsf{kvStores} \rangle \rangle \rangle . \\
+    &  \chain{ \\
+    &    \update{\langle \mathsf{entries}\setminus\{key\}, \mathsf{updateStats}(\mathsf{stats}, \mathsf{Invalidate}), \mathsf{kvStores} \rangle} \\
+    &    \mathsf{let}\ kvStore = \selectKVStore{key, \mathsf{kvStores}} \\
+    &    \send{kvStore}{\msg{Delete}(key)} \\
+    &    \mathsf{case}\ c\ \mathsf{of}\ \{ \\
+    &      \ccon{Primary}(\ignore, \ignore, \ignore) \Rightarrow \\
+    &        \chain{ \\
+    &          \send{\mathsf{sender}}{\msg{CacheResponse}(key, \none, \mathsf{Invalidated})} \\
+    &          \propagateInvalidation{key} \\
+    &        } \\
+    &      \ignore \Rightarrow \\
+    &        \send{\mathsf{sender}}{\msg{CacheResponse}(key, \none, \mathsf{Invalidated})} \\
+    &    \} \\
+    &  \}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    Finally, we define the complete behaviour of the distributed caching engine:
+    
+    \begin{equation}\label{eq:cache-engine-behaviour}
+    \begin{aligned}
+    \defequal{
+      \typing{\behaviour{\mathsf{cache}}}{\behaviourtype{\mathsf{cache}}}
+    }{
+      [ a_{\mathsf{init}}
+      , g_{\mathsf{get}} \odot a_{\mathsf{get}}
+      , g_{\mathsf{kvresponse}} \odot a_{\mathsf{kvresponse}}
+      , g_{\mathsf{put}} \odot a_{\mathsf{put}}
+      , g_{\mathsf{invalidate}} \odot a_{\mathsf{invalidate}}
+      ]
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    This example demonstrates actor composition, where the cache engine spawns
+    and coordinates with underlying key-value store actors. The cache layer sits
+    between clients and the persistent key-value stores, providing efficient
+    access to frequently used data while ensuring durability through the backing
+    stores. The system handles common cache challenges such as expiration,
+    eviction, and invalidation, while leveraging the reliability of distributed
+    key-value stores.
+    \end{example} 
