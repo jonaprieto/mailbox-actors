@@ -121,7 +121,7 @@ denoted with $A \times B$, and its terms, tuples, are denoted with $\langle
 a,b \rangle$, where $a : A$ and $b : B$. A \emph{tuple} $\langle a_1, a_2,
 \dots, a_n \rangle$ is a generalisation of an ordered pair to an ordered
 $n$-tuple, where $n \in \N$, of type $A_1 \times \cdots \times A_n$, and $a_i$
-is of type $A_i$ for all $i$ from $1$ to $n$. Given a type $A$, we can define
+is of type $A_i$ for all $i$ from $1$ to $n$. Given a type~$A$, we can define
 the optional type $\Option{A}$ as $A \oplus \Unit$. The terms $\none$ and
 $\some{a}$ are the corresponding terms for the optional type when
 $\typing{a}{A}$. 
@@ -296,12 +296,13 @@ For example, $\Bool$, $\N$, or $\List{\N}$ could be message types.
 
 \begin{definition}[Message Interface]\label{def:message-interface}%
 The \textbf{message interface} of an engine $p$ is a sum type where its type
-constructors, called them \textbf{message tags}, wrap a message type with a given
-semantic meaning that the engine can process.
+constructors, called \textbf{message tags}, wrap a message type 
+%with a given semantic meaning
+that the engine can process.\footnote{Each message tag typically carries a name that describes the purpose or content of the message, very much like a method name in object oriented systems.}
 \end{definition}
 
 As our running example, we will consider the engine type $\mathsf{kv}$ that
-can process messages of type in \eqref{eq:message-interface-example}. The complete
+can process messages of type $\msgtype{\mathsf{kv}}$ in \eqref{eq:message-interface-example}. The complete
 engine type $\mathsf{kv}$ would be defined later, once all required constructs are
 presented.
 
@@ -327,7 +328,7 @@ presented.
 \end{aligned}
 \end{equation}
 
-where $\msg{Put}$, $\msg{Get}$, $\msg{Delete}$ and $\msg{Result}$ are message tags
+\noindent{}where $\msg{Put}$, $\msg{Get}$, $\msg{Delete}$ and $\msg{Result}$ are message tags
 representing the operations that the key-value store engine can perform to
 modify or query its memory. The message type $\Key\times\Value$ that $\msg{Put}$
 wraps encodes a key-value pair, representing the data to be stored. The message
@@ -431,7 +432,7 @@ operational state within its lifecycle as shown in \Cref{fig:engine-status}.
 	\arrow[from=2-3, to=1-2, bend right]
 	\arrow[from=2-3, to=2-1, bend left]
 \end{tikzcd}\]%
-\caption{The engine life cycle: every engine starts in \ready{f} state waiting
+\caption{The engine life cycle: every engine starts in $\ready{f}$ state waiting
 for a message where $f$ is an optional predicate that communicates which
 messages the engine is interested in processing. Once it reacts to a message
 $m$, it changes to \busy{m}. Then, depending on its logic, the engine may either
@@ -440,7 +441,7 @@ the engine will not process any more messages.}
 \label{fig:engine-status}
 \end{figure}
 \end{definition}
-An engine in the \ready{f} state can process messages. The optional predicate
+An engine in the $\ready{f}$ state can process messages. The optional predicate
 $f$ specifies which message types the engine wants to receive. When no predicate
 is provided, that is \none, all messages pass through by default. This is
 equivalent to having a predicate that always returns $\mathsf{tt}$. At
@@ -502,7 +503,7 @@ accept all messages and route them back to their respective \process{} engines
 when appropriate. The operational mode is stored in the engine's configuration.
 
 \begin{definition}\label{def:engine-configuration}%
-Given a type $C$, the \textbf{configuration} of an engine $p$ parameterised by $C$ is
+Given a type $C$, the \textbf{configuration} of an engine $p$ parametrized by $C$ is
 a tuple $\configval{r}{\mode}{c}$ where:
 \begin{itemize}
     \item $\typing{r}{\Option{\Address}}$ is an optional reference (address) of
@@ -588,7 +589,7 @@ $\localenvval{s}{m}$ of type $\Env(L)$, where:
     \item $\typing{s}{L}$ is the local state of the engine, and
     \item $\typing{m}{\Name \to \Address}$ is the engine's address book, where
     the type $\Name$ is the type of words used to identify engines. In
-    particular, the systems includes a predefined name \self for the engine's
+    particular, the system includes a predefined name \self for the engine's
     own address.
 \end{itemize}
 The type family of engine environments is denoted by $\Env$, where
