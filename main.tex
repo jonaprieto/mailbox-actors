@@ -1430,10 +1430,10 @@ maps engine addresses to instances, and $\SetOfEngines$ is the set of engine
 instances. The function $\alpha$ maps engine instances to addresses, and
 $\SetOfMessages$ contains all in-transit messages. 
 
-
-The system provides predefined types for each engine type $k$, such as
-$\configtype{k}$, $\envtype{k}$, $\behaviourtype{k}$, and $\msgtype{k}$. These
-types are used to instantiate any kind of engine.
+For each engine type $k$, the system defines a set of standard types:
+configuration types $\configtype{k}$, environment types $\envtype{k}$, behaviour
+types $\behaviourtype{k}$, and message interface types $\msgtype{k}$. The system
+also provides the concrete implementations of engine behaviours $\behaviour{k}$.
 
 
 % This reduction relation is further refined into sub-relations, each representing
@@ -2171,11 +2171,31 @@ $}
 \UnaryInfC{$%
       \typing{S}{\U}%
 \quad \typing{s}{\envtype{j}}% %FIXME: ENV? which
+\quad 
+\opstep%
+    { \SystemState  %
+    , \node{i}
+    , j % the index of the engine type
+    , \pi  % the parent of the engine
+    , \iota % the address of the engine
+    , b  % the behaviour of the engine
+    , f % the filter function
+    , o  % the operational mode of the engine
+    , c % the configuration of the engine
+    , s % the local environment of the engine
+    }
+    {spawn}%
+    {%
+      ( \SetOfNodes[\enginemap_i \mapsto \enginemap']%
+      , \SetOfMessages%
+      , \SetOfPlugins%
+      )
+    }%
 $}
 \UnaryInfC{$%
   \effectevalstep%
     {\SystemState}
-    {\spawn{c}{s}}
+    {\spawn{\langle j, c, s, o, f, \rangle}}
     {\SystemState'}
 $}
 \end{prooftree}
