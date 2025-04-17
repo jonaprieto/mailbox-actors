@@ -1,66 +1,81 @@
-
-\begin{example}[Task Manager Engine]\label{ex:task-manager-engine}%
-    Let us define a task manager engine that can create and manage tasks by
-    spawning worker engines. This example demonstrates all the model
-    characteristics including spawning engines, message passing, and state
-    management.
+\begin{example}[Task Manager]\label{ex:task-manager-engine}%
+    Let us define a task manager that coordinates work across a
+    network of actor-based workers. This example demonstrates core actor model
+    characteristics including message passing, state encapsulation, location
+    transparency, and fault tolerance.
     
-    First, we define the message interface for the task manager engine:
+    First, we define the message interface for the distributed task manager:
     
     \begin{equation}\label{eq:task-manager-message-interface}
     \begin{aligned}
     \typedef%
     {
       \msgtype{\mathsf{taskmgr}}
-    }{    &\quad \msg{CreateTask}(\N \times \N) \\
+    }{    &\quad \msg{CreateTask}(\N \times \N \times \mathsf{Priority}) \\
     \mid &\quad \msg{TaskStatus}(\N) \\
     \mid &\quad \msg{TaskResult}(\N \times \N) \\
-    \mid &\quad \msg{WorkerReady}(\N) \\
-    \mid &\quad \msg{WorkerDone}(\N \times \N)
+    \mid &\quad \msg{WorkerReady}(\N \times \mathsf{Capacity}) \\
+    \mid &\quad \msg{WorkerDone}(\N \times \N) \\
+    \mid &\quad \msg{WorkerFailed}(\N \times \mathsf{Error}) \\
+    \mid &\quad \msg{Heartbeat}(\N) \\
     }\,,
     \end{aligned}
     \end{equation}
     
     where:
     \begin{itemize}
-        \item $\msg{CreateTask}(n, m)$ creates a new task to compute $n + m$
+        \item $\msg{CreateTask}(n, m, priority)$ creates a new task to compute
+        $n + m$ with specified priority
         \item $\msg{TaskStatus}(id)$ queries the status of task $id$
         \item $\msg{TaskResult}(id, result)$ reports the result of task $id$
-        \item $\msg{WorkerReady}(id)$ indicates a worker is ready to process tasks
-        \item $\msg{WorkerDone}(id, result)$ reports a worker has completed a task
+        \item $\msg{WorkerReady}(id, capacity)$ indicates a worker is ready with
+        processing capacity
+        \item $\msg{WorkerDone}(id, result)$ reports a worker has completed a
+        task
+        \item $\msg{WorkerFailed}(id, error)$ reports a worker failure with
+        specific error
+        \item $\msg{Heartbeat}(id)$ confirms worker liveness for fault detection
     \end{itemize}
     
-    The configuration type for the task manager engine specifies its operational mode:
+    The configuration type for the task manager specifies its role in the
+    distributed system:
     
     \begin{equation}\label{eq:task-manager-configuration}
     \begin{aligned}
     \typedef{%
       \ctype{C}_{\mathsf{taskmgr}}
-    }{    &\quad \ccon{Master} \\
-    \mid &\quad \ccon{Worker}
+    }{    &\quad \ccon{Coordinator} \\
+    \mid &\quad \ccon{Worker} \\
+    \mid &\quad \ccon{Supervisor}
     }\,.
     \end{aligned}
     \end{equation}
     
-    The environment type tracks the task manager's state:
+    The environment type tracks the distributed system's state:
     
     \begin{equation}\label{eq:task-manager-environment}
     \begin{aligned}
     \typedef{%
       \ctype{L}_{\mathsf{taskmgr}}
-    }{    &\quad \ccon{TaskManagerState}(\Map{\N}{\N} \times \Map{\N}{\Address}) \\
-    \mid &\quad \ccon{WorkerState}(\N)
+    }{    &\quad \ccon{CoordinatorState}(\Map{\N}{\N} \times \Map{\N}{\Address} \times \Map{\Address}{\mathsf{Status}}) \\
+    \mid &\quad \ccon{WorkerState}(\N \times \mathsf{Capacity} \times \mathsf{Status}) \\
+    \mid &\quad \ccon{SupervisorState}(\Set{\Address} \times \mathsf{Strategy})
     }\,,
     \end{aligned}
     \end{equation}
     
     where:
     \begin{itemize}
-        \item $\ccon{TaskManagerState}$ tracks task results and worker assignments
-        \item $\ccon{WorkerState}$ tracks the worker's current task
+        \item $\ccon{CoordinatorState}$ tracks task results, worker assignments,
+        and worker health
+        \item $\ccon{WorkerState}$ tracks the worker's current task, processing
+        capacity, and status
+        \item $\ccon{SupervisorState}$ monitors a set of actor addresses with a
+        recovery strategy
     \end{itemize}
     
-    Now we define the guarded actions for the task manager engine. First, the guard for creating tasks:
+    Now we define the guarded actions for the distributed task manager. First,
+    the guard for creating tasks:
     
     \begin{equation}\label{eq:task-manager-create-guard}
     \begin{aligned}
@@ -69,37 +84,39 @@
     }{
       \In{\mathsf{taskmgr}}
         \to
-      \Option{\N \times \N}
+      \Option{\N \times \N \times \mathsf{Priority}}
     }\,. \\
     &\defequal{
       g_{\mathsf{create}}
     }{
-      \lambda \langle m, c, \langle \mathsf{st}, \mathsf{workers} \rangle \rangle .
+      \lambda \langle m, c, \langle \mathsf{st}, \mathsf{workers}, \mathsf{health} \rangle \rangle .
       \mathsf{case}\ m\ \mathsf{of}\ \{ \\
-    &\quad \msg{CreateTask}(n, m) \Rightarrow \some{\langle n, m \rangle}; \\
+    &\quad \msg{CreateTask}(n, m, p) \Rightarrow \some{\langle n, m, p \rangle}; \\
     &\quad \ignore \Rightarrow \none \\
     &\}
     }\,.
     \end{aligned}
     \end{equation}
     
-    The corresponding action spawns a worker engine to process the task:
+    The corresponding action spawns a worker actor to process the task with load
+    balancing:
     
     \begin{equation}\label{eq:task-manager-create-action}
     \begin{aligned}
     &\typing{
       a_{\mathsf{create}}
     }{
-      \N \times \N \times \In{\mathsf{taskmgr}}
+      \N \times \N \times \mathsf{Priority} \times \In{\mathsf{taskmgr}}
         \to \Out{\mathsf{taskmgr}}
     }\,. \\
-    % &\defequal{
       a_{\mathsf{create}}
-    % }{
-      \lambda \langle n, m, \langle \ignore, \ignore, \langle \mathsf{st}, \mathsf{workers} \rangle \rangle \rangle . \\
+      \lambda \langle n, m, p, \langle \ignore, \ignore, \langle \mathsf{st}, \mathsf{workers}, \mathsf{health} \rangle \rangle \rangle . \\
     &\quad \chain{ \\
-    &\quad \quad \spawn{ \\
-    &\quad \quad \quad \configval{%
+    &\quad \quad \mathsf{let}\ \mathsf{availableWorker} = \selectBestWorker{\mathsf{workers}, \mathsf{health}} \\
+    &\quad \quad \mathsf{case}\ \mathsf{availableWorker}\ \mathsf{of}\ \{ \\
+    &\quad \quad \quad \some{w} \Rightarrow \send{w}{\msg{CreateTask}(n, m, p)}; \\
+    &\quad \quad \quad \none \Rightarrow \spawn{ \\
+    &\quad \quad \quad \quad \configval{%
                 \some{\self}%
               }{%
                 \process%
@@ -108,21 +125,22 @@
               }%
             }{%
               \localenvval{%
-                \ccon{WorkerState}(0)%
+                \ccon{WorkerState}(0, \mathsf{DefaultCapacity}, \mathsf{Ready})%
               }{%
                 [(\self, \ignore)]%
               }%
             }%
           }{ \\
-    &\quad \quad \send{\self}{\msg{WorkerReady}(\freshid)} \\
-    &\quad \quad } \\
+    &\quad \quad \quad \send{\self}{\msg{WorkerReady}(\freshid, \mathsf{DefaultCapacity})} \\
+    &\quad \quad \quad \quad } \\
+    &\quad \quad \} \\
     &\quad \}
     \,.
     \end{aligned}
     \end{equation}
     
     
-    The guard for processing worker results:
+    The guard for processing worker results with fault handling:
     
     \begin{equation}\label{eq:task-manager-result-guard}
     \begin{aligned}
@@ -131,45 +149,92 @@
     }{
       \In{\mathsf{taskmgr}}
         \to
-      \Option{\N \times \N}
+      \Option{\N \times \N \times \Address}
     }\,. \\
     &\defequal{
       g_{\mathsf{result}}
     }{
-      \lambda \langle m, \ignore, \langle \mathsf{st}, \mathsf{workers} \rangle \rangle .
+      \lambda \langle m, \ignore, \langle \mathsf{st}, \mathsf{workers}, \mathsf{health} \rangle \rangle .
       \mathsf{case}\ m\ \mathsf{of}\ \{ \\
-    &\quad \msg{WorkerDone}(id, result) \Rightarrow \some{\langle id, result \rangle}; \\
+    &\quad \msg{WorkerDone}(id, result) \Rightarrow \some{\langle id, result, \mathsf{sender} \rangle}; \\
+    &\quad \msg{WorkerFailed}(id, error) \Rightarrow \handleFailure{id, error, \mathsf{sender}, \mathsf{workers}}; \\
     &\quad \ignore \Rightarrow \none \\
     &\}
     }\,.
     \end{aligned}
     \end{equation}
     
-    The corresponding action updates the task status:
+    The corresponding action updates the task status and worker health:
     
     \begin{equation}\label{eq:task-manager-result-action}
     \begin{aligned}
     &\typing{
       a_{\mathsf{result}}
     }{
-      \N \times \N \times \In{\mathsf{taskmgr}}
+      \N \times \N \times \Address \times \In{\mathsf{taskmgr}}
         \to \Out{\mathsf{taskmgr}}
     }\,. \\
     &\defequal{
       a_{\mathsf{result}}
     }{
-      \lambda \langle id, result, \langle \ignore, \ignore, \langle \mathsf{st}, \mathsf{workers} \rangle \rangle \rangle . \\
-    &\quad \update{%
+      \lambda \langle id, result, worker, \langle \ignore, \ignore, \langle \mathsf{st}, \mathsf{workers}, \mathsf{health} \rangle \rangle \rangle . \\
+    &\quad \chain{ \\
+    &\quad \quad \update{%
             \langle
               \mathsf{st}[id \mapsto result],
-              \mathsf{workers}
+              \mathsf{workers},
+              \mathsf{health}[worker \mapsto \mathsf{Healthy}]
             \rangle
-          }%
+          }% \\
+    &\quad \quad \notify{id, result} \\
+    &\quad \}
     }\,.
     \end{aligned}
     \end{equation}
     
-    Finally, we define the complete behaviour of the task manager engine:
+    The heart of the supervisor mechanism:
+    
+    \begin{equation}\label{eq:task-manager-supervise-guard}
+    \begin{aligned}
+    &\typing{
+      g_{\mathsf{supervise}}
+    }{
+      \In{\mathsf{taskmgr}}
+        \to
+      \Option{\Set{\Address}}
+    }\,. \\
+    &\defequal{
+      g_{\mathsf{supervise}}
+    }{
+      \lambda \langle m, c, \langle \mathsf{actors}, \mathsf{strategy} \rangle \rangle .
+      \mathsf{case}\ c\ \mathsf{of}\ \{ \\
+    &\quad \ccon{Supervisor} \Rightarrow \detectUnresponsiveActors{\mathsf{actors}}; \\
+    &\quad \ignore \Rightarrow \none \\
+    &\}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The corresponding action restarts or replaces failed actors:
+    
+    \begin{equation}\label{eq:task-manager-supervise-action}
+    \begin{aligned}
+    &\typing{
+      a_{\mathsf{supervise}}
+    }{
+      \Set{\Address} \times \In{\mathsf{taskmgr}}
+        \to \Out{\mathsf{taskmgr}}
+    }\,. \\
+    &\defequal{
+      a_{\mathsf{supervise}}
+    }{
+      \lambda \langle failedActors, \langle \ignore, c, \langle \mathsf{actors}, \mathsf{strategy} \rangle \rangle \rangle . \\
+    &\quad \applyRecoveryStrategy{failedActors, \mathsf{strategy}}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    Finally, we define the complete behaviour of the distributed task manager:
     
     \begin{equation}\label{eq:task-manager-behaviour}
     \begin{aligned}
@@ -178,6 +243,7 @@
     }{
       [ g_{\mathsf{create}} \odot a_{\mathsf{create}}
       , g_{\mathsf{result}} \odot a_{\mathsf{result}}
+      , g_{\mathsf{supervise}} \odot a_{\mathsf{supervise}}
       ]
     }\,.
     \end{aligned}
