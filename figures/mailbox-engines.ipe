@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE ipe SYSTEM "ipe.dtd">
 <ipe version="70218" creator="Ipe 7.2.29">
-<info created="D:20250415011003" modified="D:20250417012341"/>
+<info created="D:20250415011003" modified="D:20250417023811"/>
 <ipestyle name="basic">
 <symbol name="arrow/arc(spx)">
 <path stroke="sym-stroke" fill="sym-stroke" pen="sym-pen">
@@ -361,9 +361,9 @@ h
 388 724 l
 h
 </path>
-<text matrix="0.765046 0 0 0.765046 175.839 155.675" transformations="translations" pos="185.704 755.986" stroke="black" type="label" width="69.316" height="5.235" depth="1.85" valign="baseline" size="script" style="math">\mathsf{cfg}_{e} :\equiv \langle \_, \mathsf{Process}, \_ \rangle</text>
-<text matrix="0.765046 0 0 0.765046 194.959 124.141" transformations="translations" pos="185.704 755.986" stroke="black" type="label" width="18.586" height="4.432" depth="1.49" valign="baseline" style="math">\mathsf{env}_{e}</text>
-<text matrix="0.765046 0 0 0.765046 216.27 156.022" transformations="translations" pos="298.023 792.253" stroke="black" type="label" width="4.639" height="4.289" depth="0" valign="baseline" style="math">e</text>
+<text matrix="0.765046 0 0 0.765046 175.839 155.675" transformations="translations" pos="185.704 755.986" stroke="black" type="label" width="69.628" height="5.233" depth="2.82" valign="baseline" size="script" style="math">\mathsf{cfg}_{p} :\equiv \langle \_, \mathsf{Process}, \_ \rangle</text>
+<text matrix="0.765046 0 0 0.765046 194.959 124.141" transformations="translations" pos="185.704 755.986" stroke="black" type="label" width="18.913" height="4.428" depth="2.85" valign="baseline" style="math">\mathsf{env}_p</text>
+<text matrix="0.765046 0 0 0.765046 216.27 156.022" transformations="translations" pos="298.023 792.253" stroke="black" type="label" width="5.012" height="4.297" depth="1.93" valign="baseline" style="math">p</text>
 <path stroke="black" fill="white">
 312 764 m
 312 752 l
@@ -371,7 +371,7 @@ h
 392 764 l
 h
 </path>
-<text matrix="0.765046 0 0 0.765046 201.172 177.49" transformations="translations" pos="185.704 755.986" stroke="black" type="label" width="21.934" height="6.924" depth="2.43" valign="baseline" style="math">\mathsf{Msg}_{e}</text>
+<text matrix="0.765046 0 0 0.765046 201.172 177.49" transformations="translations" pos="185.704 755.986" stroke="black" type="label" width="22.261" height="6.92" depth="3.79" valign="baseline" style="math">\mathsf{Msg}_{p}</text>
 <path matrix="1.04743 0 0 1.04743 -38.8293 -37.9403" stroke="black" fill="lightgray" opacity="30%" stroke-opacity="opaque">
 144 800 m
 144 672 l
@@ -406,7 +406,7 @@ h
 237.638 784.53
 233.082 771.833 u
 </path>
-<text matrix="1 0 0 1 -56.7061 -4.6398" transformations="translations" pos="185.704 755.986" stroke="black" type="label" width="105.506" height="5.975" depth="2.05" valign="baseline" size="footnote" style="math">\mathsf{cfg}_{m} :\equiv \langle \mathsf{some}(\mathsf{id}(e)), \mathsf{Mail}, \_ \rangle</text>
+<text matrix="1 0 0 1 -56.7061 -4.6398" transformations="translations" pos="185.704 755.986" stroke="black" type="label" width="105.84" height="5.975" depth="2.05" valign="baseline" size="footnote" style="math">\mathsf{cfg}_{m} :\equiv \langle \mathsf{some}(\mathsf{id}(p)), \mathsf{Mail}, \_ \rangle</text>
 <text matrix="1 0 0 1 -45.0796 -2.12419" transformations="translations" pos="298.023 792.253" stroke="black" type="label" width="22.637" height="6.918" depth="0" valign="baseline" style="math">\mathsf{mbox}</text>
 <path stroke="black" fill="white">
 124.52 792.754 m
@@ -415,7 +415,7 @@ h
 228 792 l
 h
 </path>
-<text matrix="1 0 0 1 -58.8663 23.9995" transformations="translations" pos="185.704 755.986" stroke="black" type="label" width="96.281" height="5.975" depth="2.05" valign="baseline" size="footnote" style="math">\mathsf{Msg}_{{\mathsf{mbox}}} :\equiv \mathsf{Append}(\mathsf{Msg}_{e})</text>
+<text matrix="1 0 0 1 -58.8663 23.9995" transformations="translations" pos="185.704 755.986" stroke="black" type="label" width="96.601" height="5.978" depth="3.21" valign="baseline" size="footnote" style="math">\mathsf{Msg}_{{\mathsf{mbox}}} :\equiv \mathsf{Append}(\mathsf{Msg}_{p})</text>
 <path stroke="black" dash="dotted">
 128 740 m
 128 684 l
@@ -465,6 +465,11 @@ h
 112 732 l
 </path>
 <text matrix="1 0 0 1 -18.9019 0" transformations="translations" pos="80 736" stroke="black" type="label" width="13.649" height="4.294" depth="1.49" valign="baseline" style="math">m_k</text>
-<text matrix="0.765046 0 0 0.765046 189.495 110.081" transformations="translations" pos="298.023 792.253" stroke="black" type="label" width="8.554" height="6.923" depth="1.49" valign="baseline" style="math">b_{e}</text>
+<text matrix="0.765046 0 0 0.765046 189.495 110.081" transformations="translations" pos="298.023 792.253" stroke="black" type="label" width="8.881" height="6.919" depth="2.85" valign="baseline" style="math">b_{p}</text>
+<path stroke="black" arrow="normal/normal">
+442.062 736.55 m
+512 736 l
+</path>
+<text matrix="1 0 0 1 390.956 2.92668" transformations="translations" pos="80 736" stroke="black" type="label" width="29.087" height="6.926" depth="1.93" valign="baseline" style="math">effect</text>
 </page>
 </ipe>
