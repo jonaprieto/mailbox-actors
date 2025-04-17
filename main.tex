@@ -1209,13 +1209,13 @@ identified by having its operational mode set to $\mail$.
 \begin{figure}
   \centering
   \includegraphics[width=\textwidth]{figures/mailbox-engines}
-  \caption{ This figure shows how a processing engine $e$ interacts with its
+  \caption{ This figure shows how a processing engine $p$ interacts with its
   dedicated mailbox engine $\mathsf{mbox}$, as defined in
-  \Cref{def:mailbox-engine}. When the processing engine $e$ receives a message
+  \Cref{def:mailbox-engine}. When the processing engine $p$ receives a message
   $m_k$, the mailbox engine $\mathsf{mbox}$ stores this message in its
-  environment. If the processing engine $e$ is ready to handle a message, the
-  mailbox engine $\mathsf{mbox}$ delivers a message to $e$. The delivered
-  message is not necessarily $m_k$ but is determined by $e$'s message filter and
+  environment. If the processing engine $p$ is ready to handle a message, the
+  mailbox engine $\mathsf{mbox}$ delivers a message to $p$. The delivered
+  message is not necessarily $m_k$ but is determined by $p$'s message filter and
   the mailbox engine's behaviour. }
   \label{fig:mailbox-engines}
 \end{figure}
@@ -1428,7 +1428,13 @@ system state $\kappa$ is represented as $(\SetOfNodes, \SetOfMessages,
 \SetOfPlugins)$. Here, $\SetOfNodes$ is the set of system nodes, $\enginemap$
 maps engine addresses to instances, and $\SetOfEngines$ is the set of engine
 instances. The function $\alpha$ maps engine instances to addresses, and
-$\SetOfMessages$ contains all in-transit messages.
+$\SetOfMessages$ contains all in-transit messages. 
+
+
+The system provides predefined types for each engine type $k$, such as
+$\configtype{k}$, $\envtype{k}$, $\behaviourtype{k}$, and $\msgtype{k}$. These
+types are used to instantiate any kind of engine.
+
 
 % This reduction relation is further refined into sub-relations, each representing
 % a specific case of system transition.
@@ -1468,18 +1474,12 @@ a given processing engine denoted by $\mailboxOfname$.
 \end{definition}
 
 % Rules to introduce engine types and related types.
-
 \subsection{Engine creation}\label{sec:engine-creation-rules}
 
-This section outlines the rules for creating and initialising engines within the
-system. The process involves setting up both the processing engine and its
-mailbox engine, ensuring each engine is properly configured and ready to
-operate.
-
-\begin{comment}
-For some of the rules, a few parameters/data are not provided to simplify the
-presenation but also because they may be inferred from the context.
-\end{comment}
+This section explains the rules for creating and initializing engines within the
+system. The process includes setting up both the processing engine and its
+mailbox engine, ensuring that each engine is properly configured and ready to
+operate. 
 
 \begin{definition}[\srule{EngineSpawn}]\label{rule:s-EngineSpawn}
   \hspace{-1.5em}
@@ -1499,9 +1499,9 @@ presenation but also because they may be inferred from the context.
   $}
   \noLine
   \UnaryInfC{$%
-        \typing{\Contract}{\Msg} %
-  \quad \typing{b}{\behaviourtype{}(C, S)}
-  \quad \typing{f}{\Option{\Contract \to \Bool}}%
+        \typing{b}{\behaviourtype{k}}
+  \quad \typing{f}{\Option{\msgtype{k} \to \Bool}}%
+  \quad \typing{o}{\EngineStatus{\msgtype{k}}}%
   $}
   \noLine
   \UnaryInfC{$%
@@ -1510,7 +1510,7 @@ presenation but also because they may be inferred from the context.
         \equal{%
           \typing{
             \config{\new}
-            }{\Cfg(C)}%
+            }{\configtype{k}}%
         }{%
           \configval%
             {\pi}
@@ -1521,7 +1521,7 @@ presenation but also because they may be inferred from the context.
 \noLine
 \UnaryInfC{$%
 \equal{%
-          \typing{\localenv{\new}}{\Env(S)}
+          \typing{\localenv{\new}}{\envtype{k}}
       }{
         \localenvval%
           {s}
@@ -1534,7 +1534,7 @@ $}
     \engine{\new}
   }{
     \engineval%
-      {\Contract} %
+      {\msgtype{k}} %
       {b} %
       {\ready{f}} %
       {\config{\new}} %
@@ -1555,12 +1555,12 @@ $}
   \opstep%
     { \SystemState  %
     , \node{i}
-    , j
+    , k % the index of the engine type
     , \pi  % the parent of the engine
     , \iota % the address of the engine
     , b  % the behaviour of the engine
     , f % the filter function
-    , m  % the operational mode of the engine
+    , o  % the operational mode of the engine
     , c % the configuration of the engine
     , s % the local environment of the engine
     }
@@ -1575,43 +1575,37 @@ $}
 \end{prooftree}
 \end{definition}
 
-\begin{remark}\label{remark:generic-engine-spawn} The rule
-\sruleref{EngineSpawn} takes place in the context of a node $\node{i}$ and
-system's state. With that set, we provide all the data required to instantiate an
-engine of any kind, whether it is a processing engine or a mailbox engine.
-\end{remark}
+The rule \sruleref{EngineSpawn} used by the system to create a new engine is
+applied within the context of a node $\node{i}$ and the system's state, denoted
+as $\SystemState$.  The rule requires several parameters to ensure the correct
+initialisation of the engine. These parameters include the following.
 
-% \begin{remark}\label{remark:processing-engine-spawn}
-% The rule \sruleref{ProcessingEngineSpawn} takes place in the context of a node
-% $\node{i}$. When defining a processing engine $\engine{\mathsf{new}}$, the
-% system also creates a mailbox engine on the same node, $\mailbox{\mathsf{new}}$.
-% While the only parameters required by this rule are the processing engine
-% parameters (configuration and environment) for $\engine{\mathsf{new}}$, one
-% could customize the mailbox parameters, such as its behaviour
-% $\behaviourtype{\mathsf{new}}$, to enable specialised message routing or
-% priority-based message organisation. However, for simplicity, we use a uniform
-% mailbox behaviour across all mailbox engines.
-% \end{remark}
-
-% The terms $\interface{\mailboxOfname}$, $\behaviour{\mailboxOfname}$, and
-% $\environment{\mailboxOfname}$ refer to the message interface, behaviour, and
-% environment of the mailbox engine, respectively. These follow the specifications
-% outlined in \Cref{def:mailbox-engine}, and default values are used when specific
-% values are not provided.
-% % TODO: it may seem the function to get mailbox address needs to be defined
-% % in the node-specific operations.
-
-\begin{comment}
-We could think of adding rules for removing nodes and engine types. However,
-one question just arises to me: how to handle broken references to those
-engines that are removed?
-\end{comment}
+\begin{itemize}
+  \item $k$: The index of the engine type, which determines the specific type of
+  engine to be instantiated.
+  \item $\pi$: The parent of the engine, indicating the hierarchical
+  relationship within the system, which can be used to state a
+  supervisor-subordinate relationship between engines.
+  \item $\iota$: an identifier for the engine, which is used for message routing
+  and identification within the system. It is expected to be unique within the
+  node, at least.
+  \item $b$: The behaviour of the engine, defining how the engine processes
+  messages and interacts with other components.
+  \item $f$: The filter function, which is used to determine which messages the
+  engine can handle.
+  \item $o$: The operational mode of the engine, specifying whether the engine
+  is a processing engine or a mailbox engine.
+  \item $c$: The configuration of the engine, containing metadata and settings
+  necessary for the engine's operation.
+  \item $s$: The local environment of the engine, which includes the engine's
+  state and any local resources it may use.
+\end{itemize}
 
 \subsection{Engine garbage collector}\label{sec:engine-termination}
 
 To prevent \emph{zombie} engine instances---engines in the $\terminated$ state
-that could violate liveness and safety guarantees---we need to remove them from
-the system. This is accomplished using the \sruleref{Clean} rule.
+that could violate liveness and safety guarantees---the system needs to remove
+them from the system. This is accomplished using the \sruleref{Clean} rule.
 
 \begin{definition}[\srule{Clean}]\label{rule:s-Clean}
 \hspace{-1.5em}
@@ -1639,14 +1633,15 @@ $}
 \end{prooftree}
 \end{definition}
 
-\begin{remark}
-Notice how the \sruleref{Clean} rule does not remove the engine's mailbox.
-Even when removing the processing engine, the mailbox is kept in the system
-receiving messages, but not being processed. This ensures that messages are not
-lost.
+Notice how the \sruleref{Clean} rule does not remove the engine's mailbox. This
+means that even when the processing engine is removed from the system, its
+corresponding mailbox engine remains. The mailbox engine continues to receive
+messages without being processed. This design choice ensures that no messages
+are lost during the removal of a processing engine.
+
 %Also, the mailbox can be reused for future engine instances? as it is a matter
 %of changing the engine's configuration.
-\end{remark}
+
 
 \subsection{Message-passing mechanism}\label{sec:message-passing-mechanism}
 
@@ -1865,7 +1860,7 @@ from its mailbox, formalised via, first the judgment
 \end{equation}
 that is, processing the message $v$ within the context of a busy engine $p$,
 results in an effect $E$, and second, a more fine-grained judgment
-of the former to introduce the guarded action used to produce the effect.
+of the former 
 
 \begin{equation}\label{eq:guarded-action-eval}
   \guardevalmsgstep%
@@ -1877,8 +1872,9 @@ of the former to introduce the guarded action used to produce the effect.
   ,
 \end{equation}
 %
-states that in the context of engine $p$, the guarded action%
-$\langle g, a \rangle$ produces the effect $E$ when processing the message $v$.
+to introduce the guarded action used to produce the effect, and states that in
+the context of engine $p$, the guarded action $\langle g, a \rangle$ produces
+the effect $E$ when processing the message $v$.
 
 \begin{definition}[\brule{GuardedActionEval}]\label{rule:b-GuardedActionEval}
 \hspace{-1.5em}
@@ -2094,7 +2090,7 @@ $}
         {
           \environment{p} , s
         }{
-          \envtype{p}{S}
+          \envtype{p}
         }%
 $}
 \UnaryInfC{$%
@@ -2150,6 +2146,7 @@ $}
   \end{prooftree}
   \end{definition}
 
+% TODO: this needs to be fixed
 \begin{definition}[\erule{Spawn}]\label{rule:e-Spawn}
 \hspace{-1.5em}
 \begin{prooftree}
@@ -2173,7 +2170,7 @@ $}
 \noLine
 \UnaryInfC{$%
       \typing{S}{\U}%
-\quad \typing{s}{\envtype{j}{S}}% %FIXME: ENV? which
+\quad \typing{s}{\envtype{j}}% %FIXME: ENV? which
 $}
 \UnaryInfC{$%
   \effectevalstep%
@@ -2277,8 +2274,8 @@ the judgment
   {\SystemState'}
 \end{equation}
 reads as with system state $\SystemState$, when engine $p$ processes the message $m$,
-it produces a new system state $\SystemState'$. This rule aims to coordinate three
-critical aspects:
+it produces a new system state $\SystemState'$. This rule aims to coordinate 
+critical aspects such as:
 \begin{enumerate*}[label=(\roman*)]
   \item effect generation from message processing, and
   \item engine state transitions from \textsf{busy} to \textsf{ready} after successful execution.
@@ -2345,7 +2342,7 @@ $}
 \end{prooftree}
 \end{definition}
 
-\subsection{System state transition rules}
+\subsection{System state transition rules}\label{sec:system-state-transition-rules}
 
 The inference rules from previous sections collectively govern system state
 transitions. We establish the state transition type by showing that system-level
@@ -2417,24 +2414,28 @@ allow infinite accumulation of dormant engines.
 
 \section{Concluding remarks}\label{sec:related}
 
-The Engine Model~\cite{art-engines}, which serves as our focus within the Actor
-model paradigm, shares conceptual ground with Erlang's process-oriented
-architecture and similar Actor model implementations that treat actors as
-processes ---entities we refer to as
-\emph{engines} in our framework.
+The Engine Model~\cite{art-engines}, which we examine within the Actor model
+paradigm, shares fundamental characteristics with established frameworks. Our
+model resembles Erlang's process-oriented architecture, where we conceptualise
+actors as processes, referred to as \emph{engines} in our framework. We also draw from
+Actor-as-object models~\cite{taxonomy-of-actor-models} by incorporating fixed
+message interfaces that clearly define which messages an actor can process.
+Furthermore, our engine's behaviour structure---organized as a collection of
+guarded actions that function as message handlers---parallels patterns commonly
+found in event-driven systems~\cite{dupont:tel-04165215}.
 
-Fundamentally, engines represent processes augmented with additional structural
-components but not particularly crucial to the main design proposed here. In this
-paper, we proposed a mailboxes-as-actor approach that naturally extends to any
-Actor-like model that shares a process-oriented
-paradigm~\cite{taxonomy-of-actor-models}.
+While engines are essentially processes enhanced with additional structural
+components, these enhancements themselves are not the main contribution of this
+paper. The central contribution of this paper is our mailboxes-as-actor
+approach, which can be seamlessly integrated into any Actor-like model or system
+that follows a process-oriented paradigm such as Erlang and Elixir.
 
-\paragraph{Related work}
-The Kilim framework~\cite{kilim-framework} aligns with the mailbox decoupling goal
-of this paper. It achieves this separation through specialised queues.
-However, this implementation treats mailboxes as passive data structures
-rather than first-class actors. This limitation persists across most Actor model
-implementations like Agha's Classic Actor Model~\cite{foundation97agha}, and
+\paragraph{Mailbox-as-actor related work}
+The Kilim framework~\cite{kilim-framework} aligns with the mailbox decoupling
+goal of this paper. It achieves this separation through specialised queues.
+However, this implementation treats mailboxes as passive data structures rather
+than first-class actors. This limitation persists across most Actor model
+implementations like Agha's Model~\cite{foundation97agha}, and
 SALSA~\cite{taxonomy-of-actor-models}, where mailboxes typically function as
 internal components with limited exposed functionality beyond basic queue
 operations, or like Erlang, where mailbox interaction remains a low-level system
@@ -2508,16 +2509,17 @@ complete system for reliable asynchronous communication with proper resource
 management.
 
 \paragraph{Future work}
-As mentioned in \Cref{sec:related}, we plan to implement a prototype in Elixir
-leveraging its Erlang-compatible actor model support on the BEAM virtual
-machine.%
-% The prototype source code is available in the Anoma Foundation's public
-% repository at \url{https://github.com/anoma/engine}.
+
+Building on the foundation established in \Cref{sec:related}, our formal model
+provides sufficient theoretical groundwork for practical implementation. We plan
+to develop a prototype using Elixir, which offers an ideal environment for this
+work due to its robust actor model implementation and seamless integration with
+Erlang's runtime system.
 
 \section{Acknowledgements}
 
-This work was inspired by discussions  with Jeremy Ornelas and Christophe De
-Troyer.
+We would like to express our gratitude to Jeremy Ornelas and Christophe De
+Troyer, whose insightful discussions inspired the development of this work.
 
 \bibliography{art.bib,ref.bib}
 \appendix
