@@ -1187,7 +1187,7 @@ $\typing{l_{\mathsf{kv}}}{\envtype{\mathsf{kv}}}$ is defined in
     \engineval%
       {\msgtype{\mathsf{kv}}}%
       {\hyperref[eq:keyvalue-engine-behaviour]{\behaviour{\mathsf{kv}}}}%
-      {\ready{\none}}%
+      {\ready{\lambda \ignore . \mathsf{tt}}}%
       {\langle \none, \process, \ccon{ReadWrite} \rangle}%
       {\hyperref[eq:keyvalue-store-engine-initial-local-state]{\langle l_{\mathsf{kv}}, \ignore \rangle}}
     }
@@ -1196,19 +1196,22 @@ $\typing{l_{\mathsf{kv}}}{\envtype{\mathsf{kv}}}$ is defined in
 \end{equation}
 
 \end{example}
-
 \subsection{Mailbox Engines}\label{sec:mailbox-engines}
 
-As previously discussed in \Cref{def:engine-mode}, our system includes two types
-of engines: \emph{processing engines} and \emph{mailbox engines}. Users can
-explicitly create only processing engines. When a processing engine is
-instantiated, the system automatically creates a corresponding mailbox engine,
-as explained in \Cref{sec:creation-rules}. However, users can specify the
-behaviour of the mailbox engine at the time of the processing engine's creation.
+As established in \Cref{def:engine-mode}, our system includes two engine types,
+processing engines and mailbox engines. The system automatically generates
+mailbox engines when a processing engine is instantiated (detailed in
+\Cref{sec:creation-rules}). Though users cannot directly create mailbox engines,
+they can provide custom configuration (but not parent reference), environment, and
+behaviour for the mailbox at the moment of processing engine creation. This allows
+modification of the default mailbox setup, which otherwise functions as a normal
+first-in-first-out (FIFO) queue structure.
 
-Recall that a processing engine is identified by having its operational mode set
-to $\process$ in its configuration's mode field, while a mailbox engine is
-identified by having its operational mode set to $\mail$.
+% TODO: make completely clear that the mailbox engine is pre-configured with a
+% fixed message interface and a queue-like local state structure. And how
+% exactly the at engine creation the mailbox engine can be configured.
+% OR it's like you have two engines instances, and before starting the operation
+% we tie the two engines together somehow.
 
 \begin{figure}
   \centering
@@ -1255,6 +1258,7 @@ implements a message store with:
   % for verification, one might want to add proof that the operations
   % actually insert/delete the element from the structure
   \end{itemize}
+\end{equation}
 \end{itemize}
 \end{definition}
 
