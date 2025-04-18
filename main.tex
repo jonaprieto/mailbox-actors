@@ -98,13 +98,13 @@ and its associated explicit message-passing mechanism, formally specifying the
 system's design of a variant of Erlang~\cite{formal-semantics-erlang}. This
 formal specification provides sufficient grounding to implement a system from
 scratch or as a library on top of a compatible system/platform such as Erlang,
-and to formalize and prove key system properties such as liveness guarantees and
+and to formalise and prove key system properties such as liveness guarantees and
 correctness under concurrent message processing.
 
 \section{Notation}\label{sec:notation}
 
 We use an informal type-theoretic notation. For example, a term $x$ of type $A$
-is denoted with $\typing{x}{A}$. Capital letters or capitalized words are used
+is denoted with $\typing{x}{A}$. Capital letters or capitalised words are used
 for types, and lowercase letters or lowercase words are used for terms. There is
 a universe of types $\U$, so if $A$ is a type, then $\typing{A}{\U}$. We also
 work with inductive types presented in the following form.
@@ -150,7 +150,7 @@ The disjoint union of $A_1, \dots, A_n$ is denoted with $A_1 \oplus \cdots \oplu
 % \oplus A_n$ from $A_i$ for all $i \in \{1, \dots, n\}$.
 
 A function $f$ that takes an argument $a$ of type $A$ and returns a value of
-type $B$ is denoted with $f : A \to B$ and application is denoted with $f(a)$.
+type $B$ is denoted with $f : A \to B$, and application is denoted with $f(a)$.
 We also use the notation $f[a \mapsto c]$ to define a new function that is
 similar to $f$ except that the output of $f$ is replaced by $c$ when the input
 is $a$, if $a$ is in the domain of $f$. Otherwise, we extend $f$ accordingly. We
@@ -160,10 +160,8 @@ from $\mathcal{N}$ by replacing the element $a$ with $c$, if $a$ is a valid
 element of $\mathcal{N}$. Otherwise, we extend $\mathcal{N}$ accordingly.
 Finally, we use (\ignore) to omit terms that are not important or can be
 inferred from the context. For example, $\langle \ignore, a, b, \ignore \rangle$
-is a tuple where the first and last elements are irrelevant to the discussion so
+is a tuple where the first and last elements are irrelevant to the discussion, so
 the second and third elements are the only ones that matter.
-
-
 
 \section{Model}\label{sec:model}
 
@@ -185,7 +183,7 @@ in~\Cref{def:engine}.
   conforms to its message interface $\msgtype{e}$ and producing an effect by
   evaluating its behaviour $\behaviour{e}$ in the context of its internal state,
   the configuration $\config{e}$, and the execution environment $\environment{e}$.
-  The dashed line means that in a future step, these components may change. The
+  The dashed line indicates that these components may change in a future step. The
   behaviour $\behaviour{e}$ consists of guarded actions
   $\langle g_1, a_1 \rangle, \langle g_2, a_2 \rangle$, and $\langle g_2, a_3
   \rangle$. }
@@ -301,7 +299,7 @@ types, message types are fixed once the system is defined.
 
 \subsection{Addresses}\label{sec:addresses-and-names}
 
-The system requires a way to uniquely identify each engine. This is achieved by
+The system requires a way to identify each engine uniquely. This is achieved by
 combining the host node's identifier with a local engine identifier that is
 unique within that node. For simplicity, we use natural numbers to represent
 both the node and engine identifiers.
@@ -342,11 +340,14 @@ For example, $\Bool$, $\N$, or $\List{\N}$ could be message types.
 The \textbf{message interface} of an engine $p$ is a sum type where its type
 constructors, called \textbf{message tags}, wrap a message type 
 %with a given semantic meaning
-that the engine can process.\footnote{Each message tag typically carries a name that describes the purpose or content of the message, very much like a method name in object oriented systems.}
+that the engine can process.\ footnote {Each message tag typically carries a 
+name that describes the purpose or content of the message, very much like a 
+«method name in object-oriented systems.}
 \end{definition}
 
 As our running example, we will consider the engine type $\mathsf{kv}$ that
-can process messages of type $\msgtype{\mathsf{kv}}$ in \eqref{eq:message-interface-example}. The complete
+can process messages of type $\msgtype{\mathsf{kv}}$ in 
+\eqref{eq:message-interface-example}. The complete
 engine type $\mathsf{kv}$ would be defined later, once all required constructs are
 presented.
 
@@ -378,7 +379,7 @@ modify or query its memory. The message type $\Key\times\Value$ that $\msg{Put}$
 wraps encodes a key-value pair, representing the data to be stored. The message
 type $\Key$ that $\msg{Get}$ and $\msg{Delete}$ wrap represents the key to retrieve
 or remove. The message tag $\msg{Result}$ wraps an optional value, representing
-the result of a query operation which may or may not find a value for the requested
+the result of a query operation, which may or may not find a value for the requested
 key.
 \end{example}
 
@@ -538,7 +539,7 @@ The \textbf{operational mode} of an engine is of type $\EngineMode$,
 \end{equation}
 \end{definition}
 
-The operational mode of an engine cannot change after engine creation. In fact,
+The operational mode of an engine cannot be changed after it is created. In fact,
 this mode is opaque to the engine itself and is defined and handled by the
 system. The system's message-passing mechanism treats engines differently based
 on their operational mode. In short, \process{} engines do not receive messages
@@ -1262,24 +1263,11 @@ reception. This separation, opaque to message-sending engines, of message
 storage from processing logic allows for independent scaling of message ingestion
 and core computation. It also improves system resilience by buffering incoming
 messages during high load periods, preventing message loss when processing
-engines are busy, and enabling advanced message prioritization and filtering
+engines are busy, and enabling advanced message prioritisation and filtering
 strategies. The mailbox engine acts as a mediator, implementing custom delivery
-policies via their behaviour while allowing the processing engine to focus on
+policies via its behaviour while allowing the processing engine to focus on
 its core computational tasks.
 
-
-% \begin{figure}
-% % TODO: missing TikZ figure  
-% \caption{%
-%   Architectural representation of a processing engine and its dedicated mailbox engine.
-%   The processing engine on the right, represented by a dashed box, contains its configuration, status, state, and environment.
-%   The mailbox engine on the left, represented by a solid box, has similar components but is pre-configured with a fixed
-%   message interface and a queue-like local state structure. The bidirectional link
-%   between them represents their communication channel, enabling the processing engine
-%   to retrieve messages from its mailbox when ready to process them.
-% }
-% \label{fig:engine-components}
-% \end{figure}
 
 \subsection{Nodes}\label{sec:nodes}
 
@@ -1321,7 +1309,7 @@ For convenience, given a node with identifier $n_i$, we have the following notat
 % %TODO: introduce a forward reference to the related op. rules
 % \end{remark}
 \subsection{System}\label{sec:system}%
-The system is a set of interacting components called engines residing in nodes.
+The system is a set of interacting components, called engines, that reside in nodes.
 Each engine is of a type from a fixed collection of types that remain constant
 throughout the system's lifetime. These include message interfaces,
 $\msgtype{i}$, engine configuration types, $\configtype{i}$, engine environment
@@ -1391,7 +1379,7 @@ messages are eventually delivered.%, see \Cref{lem:message-delivery}.
 \end{remark}
 
 In particular, the system's state component $\SetOfPlugins$ consists of the
-primitives that the system requires operating correctly. For example, at the
+primitives that the system requires to operate correctly. For example, at the
 engine creation step, we need a service to generate unique identifiers. The
 following functions are therefore included in $\SetOfPlugins$.
 
@@ -1696,7 +1684,7 @@ interface specification, and it is the only way to add a message to $\SetOfMessa
 % of an engine found in the destination of a message is
 % always an mailbox.
 
-Now, with a message in-transit, the system needs to deliver it to the target engine's
+Now, with a message in transit, the system needs to deliver it to the target engine's
 mailbox. This is done via the \mruleref{Enqueue} rule.
 
 \begin{definition}[\mrule{Enqueue}]\label{rule:m-Enqueue}
@@ -1850,7 +1838,7 @@ that they perform locally to process messages.
 This subsection formalises the evaluation mechanism for
 guarded actions that govern engine responses to messages. Specifically, the
 following rules define the process by which an engine $p$ consumes a message $v$
-from its mailbox, formalised via, first the judgment
+from its mailbox, formalised via, first, the judgment
 
 \begin{equation}\label{eq:judgement}
 \evalstep%
@@ -1961,10 +1949,10 @@ $}
 \paragraph{Guard selection strategy}
 Behaviours consist of a set of guarded actions. Execution of this behaviour
 requires a strategy to select which guarded action to execute. For the sake of
-simplicity, we assume that the strategy is deterministic, and that the engine
+simplicity, we assume that the strategy is deterministic and that the engine
 runs an action only if it is the only one that matches the message. Again, other
 guard selection strategies may cause unintended behaviour, and the study of which
-strategies are valid, and their semantics is out of scope of this paper.
+strategies are valid, and their semantics is out of the scope of this paper.
 
 \begin{definition}[\brule{GuardStrategy}]\label{rule:b-GuardStrategy}
 \hspace{-1.5em}
@@ -2024,7 +2012,7 @@ unexpected behaviour that a different guard strategy could refine.
 
 \subsection{Effect execution}\label{sec:effect-execution}
 
-With rules how to get the effect resulting from processing a message, we now
+With the rules on how to get the effect resulting from processing a message, we now
 need to state how the system evolves when an effect is executed.
 
 Given a system state $\SystemState$, an effect $E$ and a new system state
@@ -2039,7 +2027,7 @@ $\SystemState'$, we write
 
 to state that when the effect $E$ is executed in the system state
 $\SystemState$, it produces the new system state $\SystemState'$. As the effect
-$E$ takes many forms, this judgment is defined by case analysis on the effect
+$E$ takes many forms. This judgment is defined by case analysis on the effect
 $E$, as shown in the following definitions.
 
 
@@ -2441,15 +2429,15 @@ model resembles Erlang's process-oriented architecture, where we conceptualise
 actors as processes, referred to as \emph{engines} in our framework. We also draw from
 Actor-as-object models~\cite{taxonomy-of-actor-models} by incorporating fixed
 message interfaces that clearly define which messages an actor can process.
-Furthermore, our engine's behaviour structure---organized as a collection of
+Furthermore, our engine's behaviour structure---organised as a collection of
 guarded actions that function as message handlers---parallels patterns commonly
 found in event-driven systems~\cite{dupont:tel-04165215}.
 
 While engines are essentially processes enhanced with additional structural
 components, these enhancements themselves are not the main contribution of this
-paper. The central contribution of this paper is our mailboxes-as-actor
+paper. The central contribution of this paper is our mailboxes-as-actors
 approach, which can be seamlessly integrated into any Actor-like model or system
-that follows a process-oriented paradigm such as Erlang and Elixir.
+that follows a process-oriented paradigm, such as Erlang and Elixir.
 
 \paragraph{Mailbox-as-actor related work}
 The Kilim framework~\cite{kilim-framework} aligns with the mailbox decoupling
@@ -2466,7 +2454,7 @@ In short, by promoting mailboxes to opaque first-class actors, we combine
 Kilim's structural separation with Erlang's process-oriented operational
 transparency, plus the ability to implement custom mailbox behaviours.
 These mailbox engines act as \emph{secretaries} ---intelligent brokers that can
-filter content, prioritize messages, delay delivery, or debug issues through
+filter content, prioritise messages, delay delivery, or debug issues through
 configurable rules.
 
 \paragraph{Multiple mailboxes per processing actor}
@@ -2491,7 +2479,7 @@ even in the presence of timeouts for practical implementations.
 \paragraph{Practical implementations}
 While several systems implement related concepts, no existing implementations
 fully adopt the mailbox-as-actor design. Actor frameworks like Kilim for
-Java~\cite{kilim-framework} demonstrate partial alignment by decoupling
+Java~\cite{kilim-framework} demonstrates partial alignment by decoupling
 mailboxes from actors ---treating them as object/work-queues where actors pull
 messages when ready to process them. We identify analogous approaches in the
 JavaScript ecosystem, such as the WeChaty library employed in the industrial chatbot
@@ -2501,7 +2489,7 @@ lies in formally promoting mailboxes to first-class citizens, actors, within the
 model itself, rather than treating them as implementation details or external
 components.
 
-\paragraph{Rules as way to guide implementation}
+\paragraph{Rules as a way to guide implementation}
 The operational semantics given in \Cref{sec:semantics} can be seen as a way to
 guide the implementation of the \say{mailbox-as-an-actor} approach, described in this
 paper. We presented the rules in such a way that they should be easy to reason about and
@@ -2510,7 +2498,7 @@ implement.
 The system-level rules are given in \Cref{sec:creation-rules}. In this section,
 we described how the system grows from the initial empty state, with the addition
 of nodes, engines, and later on messages in \Cref{sec:message-passing-mechanism}. We
-cover other rules such as \sruleref{Clean} as a garbage-collector for engines,
+cover other rules, such as \sruleref{Clean} as a garbage-collector for engines,
 however, we did not cover rules for on-demand engine or node
 deletion/disconnection. This can be seen as an extension of the model.
 
