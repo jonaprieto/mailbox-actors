@@ -290,13 +290,6 @@ types, message types are fixed once the system is defined.
   engine types or message types is a topic for future work.
 \end{remark}
 
-% \begin{itemize}
-%   \item Addresses and names in \Cref{sec:addresses-and-names}
-%   \item Message structure in \Cref{sec:message-structure}
-%   \item Engine components in \Cref{sec:engine-components}
-%   \item Execution directives in \Cref{sec:execution-directives}
-% \end{itemize}
-
 \subsection{Addresses}\label{sec:addresses-and-names}
 
 The system requires a way to identify each engine uniquely. This is achieved by
@@ -313,16 +306,7 @@ $\Address$ where:
     \item $\iota$ is the engine's unique identifier within the node.
 \end{itemize}
 
-
-% \begin{notation}\label{notation:address-notation}%
-% If $t$ is an address, to reference the engine with that
-% address, we use the notation $\engine{t}$. In case of nodes, we use the notation
-% $\node{i}$ to refer to the node with identifier $i$.
-% \end{notation}
 \end{definition}
-
-% We define projection functions $\mathsf{node}(a)$ and $\uid{a}$ to
-% extract the respective components of an address $a$.
 
 \subsection{Message structure}\label{sec:message-structure}
 
@@ -338,11 +322,11 @@ For example, $\Bool$, $\N$, or $\List{\N}$ could be message types.
 
 \begin{definition}[Message Interface]\label{def:message-interface}%
 The \textbf{message interface} of an engine $p$ is a sum type where its type
-constructors, called \textbf{message tags}, wrap a message type 
+constructors, called \textbf{message tags}, wrap a message type
 %with a given semantic meaning
-that the engine can process.\ footnote {Each message tag typically carries a 
-name that describes the purpose or content of the message, very much like a 
-«method name in object-oriented systems.}
+that the engine can process.\footnote{Each message tag typically carries a name
+that describes the purpose or content of the message, very much like a method
+name in object-oriented systems.}
 \end{definition}
 
 As our running example, we will consider the engine type $\mathsf{kv}$ that
@@ -562,8 +546,8 @@ The type family of engine configurations is denoted with $\Cfg$, where
 \defequal{
   \Cfg(C)
 }{
-         \Option{\Address} 
-  \times \EngineMode 
+         \Option{\Address}
+  \times \EngineMode
   \times C
 }\,.
 \end{equation}
@@ -802,7 +786,7 @@ $\returntype$ is a function of type
 \end{definition}
 Together, a guard and an action induce a mapping of type $\In{i} \to
 \Out{i}$ that takes in a message, engine configuration, and environment,
-and outputs the effect to execute when the guard is satisfied. 
+and outputs the effect to execute when the guard is satisfied.
 
 \begin{definition}[Guarded Action]\label{def:guarded-action}%
 Given a guard $\guard{i}$ and an action $\action{i}$ of an engine of type
@@ -817,7 +801,7 @@ of the guard and action, as specified in \eqref{eq:composite-guard-action-operat
   \lambda \langle m, c, s \rangle .
     \mathsf{case}\ \guard{i}(m)\ \mathsf{of}\ \{ \\
      &\quad \some{r} \Rightarrow \action{i}(r, \langle m, c, s \rangle); \\
-     &\quad \none \Rightarrow \noop 
+     &\quad \none \Rightarrow \noop
   \}
   \,.
   }
@@ -834,7 +818,7 @@ of a behaviour captures.
 \begin{definition}[Engine Behaviour]\label{def:engine-behaviour}%
 A \textbf{behaviour} for an engine of type $\enginetype{i}$ is defined as
 a collection of guarded actions, of type $\behaviourtype{i}$, where each
-guarded action is a function from $\In{i}$ to $\Out{i}$. 
+guarded action is a function from $\In{i}$ to $\Out{i}$.
 
 \begin{equation}
 \defequal{
@@ -900,10 +884,10 @@ allowing us to write back the result directly.
   &\defequal{
     a_{\mathsf{get}}
   }{
-    \lambda 
+    \lambda
       \langle
-        k, 
-        \langle m, \ignore, \langle \mathsf{st}, \mathsf{cnt} \rangle \rangle 
+        k,
+        \langle m, \ignore, \langle \mathsf{st}, \mathsf{cnt} \rangle \rangle
       \rangle .
     \chain{\\
     &\quad  \update{%
@@ -967,11 +951,11 @@ the sender.
   &\defequal{
     a_{\mathsf{put}}
   }{
-    \lambda 
+    \lambda
       \langle
-        \langle k, v \rangle, 
+        \langle k, v \rangle,
         \langle m, \ignore, \langle \mathsf{st}, \mathsf{cnt} \rangle \rangle
-      \rangle 
+      \rangle
     .\\
     &\quad \chain{\\
     &\quad \quad      \update{%
@@ -1078,7 +1062,7 @@ by the following set of guarded actions.
 
 \begin{remark}[Evolving Behaviours]\label{rem:fixed-behaviour}%
 Although the idea of changing an engine's behaviour is not forbidden, it is not
-presented here. %supported. 
+presented here. %supported.
 By design, the behaviours of engines are fixed at the time of their creation and
 cannot be changed during the engine's lifetime. However, the model can be
 extended by adding a primitive for this operation. In essence, the process of
@@ -1129,7 +1113,7 @@ language~\cite{dijkstra-guarded-commands}.
 
   Engine types are indexed by $i$ using a finite set of indices.
   The type family $\enginetype{}$ which maps each index $i$ to an engine type,
-  then is defined as 
+  then is defined as
   \begin{equation}\label{eq:engine-type-definition}
     \begin{aligned}
     \defequal{
@@ -1142,7 +1126,7 @@ language~\cite{dijkstra-guarded-commands}.
     }
     \,.
     \end{aligned}
-  \end{equation} 
+  \end{equation}
 In line with the notation used for $\Cfg_{i}$ and $\Env_{i}$, we denote
 the actual value of the type $\enginetype{}$ at index $i$ as $\enginetype{i}$.
 
@@ -1269,6 +1253,19 @@ policies via its behaviour while allowing the processing engine to focus on
 its core computational tasks.
 
 
+% \begin{figure}
+% % TODO: missing TikZ figure
+% \caption{%
+%   Architectural representation of a processing engine and its dedicated mailbox engine.
+%   The processing engine on the right, represented by a dashed box, contains its configuration, status, state, and environment.
+%   The mailbox engine on the left, represented by a solid box, has similar components but is pre-configured with a fixed
+%   message interface and a queue-like local state structure. The bidirectional link
+%   between them represents their communication channel, enabling the processing engine
+%   to retrieve messages from its mailbox when ready to process them.
+% }
+% \label{fig:engine-components}
+% \end{figure}
+
 \subsection{Nodes}\label{sec:nodes}
 
 Having previously introduced the system $\SystemState$, which comprises a set of nodes%
@@ -1385,7 +1382,7 @@ following functions are therefore included in $\SetOfPlugins$.
 
 \begin{itemize}
 \item \freshidname{} is the system function that when called, generates a unique
-identifier. 
+identifier.
 % \item $\mathsf{freshName}$ is the function that
 % generates a fresh name for an engine.
 \item $\typing{\mailboxOfname}{\Address \to \Address}$ is the system function
@@ -1417,7 +1414,7 @@ system state $\kappa$ is represented as $(\SetOfNodes, \SetOfMessages,
 \SetOfPlugins)$. Here, $\SetOfNodes$ is the set of system nodes, $\enginemap$
 maps engine addresses to instances, and $\SetOfEngines$ is the set of engine
 instances. The function $\alpha$ maps engine instances to addresses, and
-$\SetOfMessages$ contains all in-transit messages. 
+$\SetOfMessages$ contains all in-transit messages.
 
 For each engine type $k$, the system defines a set of standard types:
 configuration types $\configtype{k}$, environment types $\envtype{k}$, behaviour
@@ -1468,7 +1465,7 @@ a given processing engine denoted by $\mailboxOfname$.
 This section explains the rules for creating and initializing engines within the
 system. The process includes setting up both the processing engine and its
 mailbox engine, ensuring that each engine is properly configured and ready to
-operate. 
+operate.
 
 \begin{definition}[\srule{EngineSpawn}]\label{rule:s-EngineSpawn}
   \hspace{-1.5em}
@@ -1532,7 +1529,7 @@ $}
 $}
   \noLine
   \UnaryInfC{$%
-  \quad \typing{\loc{\mathsf{id}_i}{\iota}}{\Address} 
+  \quad \typing{\loc{\mathsf{id}_i}{\iota}}{\Address}
   \quad \equal{%
           \enginemap'
         }{
@@ -1849,7 +1846,7 @@ from its mailbox, formalised via, first, the judgment
 \end{equation}
 that is, processing the message $v$ within the context of a busy engine $p$,
 results in an effect $E$, and second, a more fine-grained judgment
-of the former 
+of the former
 
 \begin{equation}\label{eq:guarded-action-eval}
   \guardevalmsgstep%
@@ -2160,7 +2157,7 @@ $}
 \UnaryInfC{$%
       \typing{S}{\U}%
 \quad \typing{s}{\envtype{j}}% %FIXME: ENV? which
-\quad 
+\quad
 \opstep%
     { \SystemState  %
     , \node{i}
@@ -2283,7 +2280,7 @@ the judgment
   {\SystemState'}
 \end{equation}
 reads as with system state $\SystemState$, when engine $p$ processes the message $m$,
-it produces a new system state $\SystemState'$. This rule aims to coordinate 
+it produces a new system state $\SystemState'$. This rule aims to coordinate
 critical aspects such as:
 \begin{enumerate*}[label=(\roman*)]
   \item effect generation from message processing, and
