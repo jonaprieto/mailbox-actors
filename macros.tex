@@ -59,12 +59,12 @@
 \newcommand{\behaviourtype}[1]{\hyperref[def:engine-behaviour]{\ctype{\ensuremath{\mathsf{EBeh}}}}_{#1}}
 
 \newcommand{\EngineStatusref}{\hyperref[def:engine-status]{\ctype{\ensuremath{\mathsf{EStatus}}}}}
-\newcommand{\EngineStatus}[1]{\ensuremath{\EngineStatusref(#1)}}
-\newcommand{\ready}[1]{\ccon{Ready}(#1)}
+\newcommand{\EngineStatus}[1]{\ensuremath{\EngineStatusref(\ensuremath{#1})}}
+\newcommand{\ready}[1]{\ccon{Ready}(\ensuremath{#1})}
 
 \usepackage{xspace}
 
-\newcommand{\busy}[1]{\ccon{Busy}(#1)}
+\newcommand{\busy}[1]{\ccon{Busy}(\ensuremath{#1})}
 \newcommand{\terminated}[0]{\ccon{Terminated}}
 
 \newcommand{\EngineMode}{\hyperref[def:engine-mode]{\ctype{\ensuremath{\mathsf{EMode}}}}}

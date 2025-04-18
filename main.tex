@@ -443,7 +443,7 @@ operational state within its lifecycle as shown in \Cref{fig:engine-status}.
 \begin{aligned}
 \typedef%
   {\EngineStatus{M}}%
-  {    &\quad \ready{\Option{M \to \Bool}} \\%
+  {    &\quad \ready{M \to \Bool} \\%
   \mid & \quad \busy{M} \\%
   \mid & \quad \terminated  \, .
   }
@@ -462,31 +462,32 @@ operational state within its lifecycle as shown in \Cref{fig:engine-status}.
 	\arrow[from=2-3, to=2-1, bend left]
 \end{tikzcd}\]%
 \caption{The engine life cycle: every engine starts in $\ready{f}$ state waiting
-for a message where $f$ is an optional predicate that communicates which
-messages the engine is interested in processing. Once it reacts to a message
-$m$, it changes to \busy{m}. Then, depending on its logic, the engine may either
-return to \ready{g} with another optional predicate $g$ or \terminated{}, meaning
-the engine will not process any more messages.}
+for a message where $f$ is a predicate that communicates which messages the
+engine is interested in processing. Once it reacts to a message $m$, it changes to
+\busy{m}. Then, depending on its logic, the engine may either return to \ready{g}
+with another predicate $g$ or \terminated{}, meaning the engine will not process
+any more messages.}
 \label{fig:engine-status}
 \end{figure}
 \end{definition}
-An engine in the $\ready{f}$ state can process messages. The optional predicate
-$f$ specifies which message types the engine wants to receive. When no predicate
-is provided, that is \none, all messages pass through by default. This is
-equivalent to having a predicate that always returns $\mathsf{tt}$. At
-creation time, unless otherwise specified, an engine is in the \ready{\none}
-state, meaning it accepts all messages by default.
+
+When an engine is in the $\ready{f}$ state, it is available to process incoming
+messages. The predicate $f$ acts as a filter, determining which message types
+the engine will accept. By default, when an engine is first created, it starts
+in the \ready{\lambda x.\mathsf{tt}} state, meaning it initially accepts all
+message unless configured otherwise.
 
 After creation, the engine may transition to the \busy{m} state, where it is
 actively processing message $m$, or to the \terminated{} state, where it stops
 processing messages and is removed from the system in the next step.
+
 \begin{example}\label{ex:engine-status-example}%
   A key-value store engine as in \Cref{ex:keyvalue-engine} may start in the
-  \ready{\some{\mathsf{f}}} state, where $\mathsf{f}$ is the filter that rejects
-  \msg{Delete} messages, as shown in \eqref{eq:engine-status-example}. This allows the
-  store to be safely populated before any deletion operations are permitted. Once
-  the store is populated, the filter can be updated, for example, to \none{} so
-  that all messages are accepted.
+  \ready{\mathsf{f}} state, where $\mathsf{f}$ is the filter that rejects
+  \msg{Delete} messages, as shown in \eqref{eq:engine-status-example}. This
+  allows the store to be safely populated before any deletion operations are
+  permitted. Once the store is populated, the filter can be updated, for
+  example, to $\lambda m.\mathsf{tt}$ so that all messages are accepted.
   \begin{equation}\label{eq:engine-status-example}
     \defequal{%
       \mathsf{f}
@@ -704,7 +705,7 @@ issuing engine requests the system to execute.
   } & &%
         \text{(create a child engine of type $\enginetype{j}$)} \\
 \, \mid & \quad \mfilter{%
-                  \Option{\msgtype{i} \to \Bool}
+                  {\msgtype{i} \to \Bool}
               }& &%
         \text{(replace its mailbox filter)} \\
 \, \mid & \quad \terminate & &%
@@ -1059,17 +1060,34 @@ by the following set of guarded actions.
   \end{aligned}
 \end{equation}
 \end{example}
-
 \begin{remark}[Evolving Behaviours]\label{rem:fixed-behaviour}%
-Although the idea of changing an engine's behaviour is not forbidden, it is not
-presented here. %supported.
-By design, the behaviours of engines are fixed at the time of their creation and
-cannot be changed during the engine's lifetime. However, the model can be
-extended by adding a primitive for this operation. In essence, the process of
-changing an engine's behaviour is equivalent to destroying the existing engine
-and creating a new one with the new behaviour. The system must ensure that the
-new engine, of the same type, is created with the same configuration and
-environment, and can receive the same messages as the existing engine.
+In our current model, engine behaviours are fixed at creation time and remain
+unchanged throughout the engine's lifetime. While we do not explicitly forbid
+behaviour modification, we have not presented it as a feature in this work.
+
+However, one could extend the model to support dynamic behaviour changes by
+adding appropriate primitives to the effect system defined in
+\eqref{eq:effects}. For example, as part of extending the model, we could introduce
+a new effect, $\ccon{ChangeBehaviour}$, and modify the existing $\ccon{Spawn}$ effect
+as follows:
+\begin{equation}
+  \begin{aligned}
+  \typedef{
+    \effecttype{i}
+  }{
+    &\,\,\, \cdots \\
+    & \mid \ccon{ChangeBehaviour}(\behaviourtype{i}) \\
+    & \mid \ccon{Spawn}(\Sigma_{(j : \N)}\, (\configtype{j} \times \envtype{j} \times \behaviourtype{j}))
+  }
+  \,.
+  \end{aligned}
+\end{equation}
+
+Conceptually, changing an engine's behaviour is equivalent to replacing the
+existing engine with a new one that has the updated behaviour. For this to work
+properly, the system must ensure that the new engine maintains the same type,
+configuration, and environment as its predecessor, while preserving its ability
+to process the same message types.
 \end{remark}
 
 \begin{remark}\label{rem:turing-completeness}%
