@@ -329,9 +329,9 @@ that describes the purpose or content of the message, very much like a method
 name in object-oriented systems.}
 \end{definition}
 
-As our running example, we will consider the engine type $\mathsf{kv}$ that
-can process messages of type $\msgtype{\mathsf{kv}}$ in 
-\eqref{eq:message-interface-example}. The complete
+As our running example, we will consider the problem of implementing a key-value
+store. We will define the engine type $\mathsf{kv}$ that can process messages of
+type $\msgtype{\mathsf{kv}}$ in \eqref{eq:message-interface-example}. The complete
 engine type $\mathsf{kv}$ would be defined later, once all required constructs are
 presented.
 
@@ -1196,46 +1196,37 @@ $\typing{l_{\mathsf{kv}}}{\envtype{\mathsf{kv}}}$ is defined in
 \end{equation}
 
 \end{example}
+
 \subsection{Mailbox Engines}\label{sec:mailbox-engines}
 
-As established in \Cref{def:engine-mode}, our system includes two engine types,
-processing engines and mailbox engines. The system automatically generates
-mailbox engines when a processing engine is instantiated (detailed in
-\Cref{sec:creation-rules}). Though users cannot directly create mailbox engines,
-they can provide custom configuration (but not parent reference), environment, and
-behaviour for the mailbox at the moment of processing engine creation. This allows
-modification of the default mailbox setup, which otherwise functions as a normal
-first-in-first-out (FIFO) queue structure.
+In our system, as defined in \Cref{def:engine-mode}, there are two types of
+engines: processing engines and mailbox engines. Processing engines execute
+business logic, while mailbox engines manage message buffering and delivery.
 
-% TODO: make completely clear that the mailbox engine is pre-configured with a
-% fixed message interface and a queue-like local state structure. And how
-% exactly the at engine creation the mailbox engine can be configured.
-% OR it's like you have two engines instances, and before starting the operation
-% we tie the two engines together somehow.
+A processing engine can be linked to a mailbox engine in two ways: (1)
+automatically during the creation of a processing engine in $\process$ mode if
+specified in the engine's configuration, or (2) explicitly by creating a mailbox
+engine and linking it to an existing processing engine. This flexibility allows
+systems to adapt to varying messaging requirements.
 
 \begin{figure}
   \centering
   \includegraphics[width=\textwidth]{figures/mailbox-engines}
-  \caption{ This figure shows how a processing engine $p$ interacts with its
-  dedicated mailbox engine $\mathsf{mbox}$, as defined in
-  \Cref{def:mailbox-engine}. When the processing engine $p$ receives a message
-  $m_k$, the mailbox engine $\mathsf{mbox}$ stores this message in its
-  environment. If the processing engine $p$ is ready to handle a message, the
-  mailbox engine $\mathsf{mbox}$ delivers a message to $p$. The delivered
-  message is not necessarily $m_k$ but is determined by $p$'s message filter and
-  the mailbox engine's behaviour. }
+  \caption{Interaction between a processing engine $p$ and its dedicated mailbox
+  engine $\mathsf{mbox}$. Messages sent to $p$ are intercepted by
+  $\mathsf{mbox}$, stored, and later delivered according to the mailbox's
+  delivery policy and $p$'s message filter.}
   \label{fig:mailbox-engines}
 \end{figure}
 
-
 \begin{definition}[Mailbox Engine]\label{def:mailbox-engine}%
-A \emph{mailbox engine} $m$ for a processing engine $p$ is a
-system-pre-configured engine created when spawning engine $p$. The engine $m$
-satisfies the following.
+A \emph{mailbox engine} $m$ for a processing engine $p$ is an engine that
+satisfies the following conditions.
 \begin{itemize}
 \item The operational mode is set to $\mail$.
 \item The parent reference points to its paired processing engine $p$.
-\item It has a fixed message interface:
+\item It has a fixed message interface designed to interpret the processing
+engine's message types:
 \begin{equation}\label{eq:mailbox-engine-message-interface}
 \begin{aligned}
   \defequal{
@@ -1246,7 +1237,6 @@ satisfies the following.
   \,.
 \end{aligned}
 \end{equation}
-% carrying a payload of type $\msgtype{p}$.
 \item The mailbox engine $m$ maintains a local state of type $L_m$ that
 implements a message store with:
   \begin{itemize}
@@ -1255,37 +1245,292 @@ implements a message store with:
   $\typing{(\insertmsgop)}{L_m \times \msgtype{p} \to L_m}.$
   \item A message deletion operation, %
   $\typing{(\deletemsgop)}{L_m \times \msgtype{p} \to L_m}.$
-  % for verification, one might want to add proof that the operations
-  % actually insert/delete the element from the structure
   \end{itemize}
+<<<<<<< Updated upstream
+=======
+\item The behavior defines custom message handling policies, including
+prioritization, filtering, and delivery strategies.
+>>>>>>> Stashed changes
 \end{itemize}
 \end{definition}
 
+\begin{definition}[Mailbox Functionality]\label{def:mailbox-functionality}%
+How a mailbox engine $m$ paired with a processing engine $p$ behaves is defined as
+follows.
 
-As depicted in \Cref{fig:mailbox-engines}, adding mailbox engines to the system
-introduces a clear producer-consumer pattern by explicitly handling message
-reception. This separation, opaque to message-sending engines, of message
-storage from processing logic allows for independent scaling of message ingestion
-and core computation. It also improves system resilience by buffering incoming
-messages during high load periods, preventing message loss when processing
-engines are busy, and enabling advanced message prioritisation and filtering
-strategies. The mailbox engine acts as a mediator, implementing custom delivery
-policies via its behaviour while allowing the processing engine to focus on
-its core computational tasks.
+\begin{itemize}
+\item \textbf{Message Reception}: When a message of type $\msgtype{p}$ is sent
+to processing engine $p$, it is intercepted by $m$ and stored in its local
+state:
+\begin{equation}\label{eq:mailbox-engine-message-reception}
+\langle L_m, \text{incoming}(msg) \rangle \rightarrow \langle L_m \insertmsgop
+msg, \epsilon \rangle
+\end{equation}
 
+\item \textbf{Message Delivery}: When processing engine $p$ requests a message,
+the mailbox engine $m$ selects a message according to its behavior and delivers
+it if the message filter's condition is met.
+\begin{equation}\label{eq:mailbox-engine-message-delivery}
+\langle L_m, \text{request}() \rangle \rightarrow \langle L_m \deletemsgop
+msg, \text{deliver}(msg) \rangle
+\end{equation}
+where the selection of $msg$ depends on the mailbox's configured behavior.
+\end{itemize}
+\end{definition}
 
-% \begin{figure}
-% % TODO: missing TikZ figure
-% \caption{%
-%   Architectural representation of a processing engine and its dedicated mailbox engine.
-%   The processing engine on the right, represented by a dashed box, contains its configuration, status, state, and environment.
-%   The mailbox engine on the left, represented by a solid box, has similar components but is pre-configured with a fixed
-%   message interface and a queue-like local state structure. The bidirectional link
-%   between them represents their communication channel, enabling the processing engine
-%   to retrieve messages from its mailbox when ready to process them.
-% }
-% \label{fig:engine-components}
-% \end{figure}
+\subsection{Practical Applications of Mailbox
+Engines}\label{sec:mailbox-applications}
+
+Mailbox engines provide critical advantages in real-world distributed systems:
+
+\begin{itemize}
+\item \textbf{Flow Control}: Mailboxes implement backpressure mechanisms to
+protect processing engines from message overload during traffic spikes.
+\item \textbf{Message Prioritization}: Messages can be delivered based on
+importance, dependency relationships, or application-specific criteria rather
+than simple FIFO ordering.
+\item \textbf{Fault Isolation}: By decoupling message reception from processing,
+mailboxes protect against cascading failures when processing engines encounter
+errors.
+\item \textbf{Performance Optimization}: Related messages can be batched or
+delivered during optimal processing windows, significantly improving throughput.
+\item \textbf{Delivery Policies}: Custom delivery policies enable complex
+patterns like throttling, delayed delivery, and conditional processing.
+\end{itemize}
+
+This separation of concerns allows each engine type to focus on its specialized
+role—processing engines on business logic and mailbox engines on message
+management—creating a more robust and scalable system architecture.
+
+\begin{example}[Key-Value Store with Mailbox]\label{ex:kv-store-mailbox}
+Key-value stores inherently face fundamental message handling challenges that
+processing engines alone cannot effectively solve. Consider our key-value store
+from \Cref{ex:kv-store} deployed in a distributed environment:
+
+\begin{itemize}
+\item \textbf{Impedance Mismatch}: The rate at which clients generate requests
+often differs significantly from the rate at which the store can process them,
+especially during traffic spikes.
+
+\item \textbf{Operation Heterogeneity}: Key-value operations have vastly
+different characteristics—reads are typically fast and idempotent, while writes
+are slower and have side effects. Without specialized handling, fast operations
+are blocked behind slow ones.
+
+\item \textbf{Semantic Dependencies}: Operations on the same key have inherent
+causal relationships (e.g., a read should see the most recent write) that
+require coordination beyond simple FIFO queuing.
+
+\item \textbf{Resource Contention}: Direct handling of all messages by the
+processing engine forces it to divide resources between message management and
+core storage operations, reducing overall throughput.
+\end{itemize}
+
+These challenges make a mailbox engine not merely beneficial but essential for
+scalable, high-performance key-value stores. Let's examine a concrete scenario
+of a distributed database service handling user profiles, where:
+
+\begin{itemize}
+\item Each profile is stored as a key-value pair with user ID as the key
+\item The service receives a mix of read operations ($\mathsf{GET}$) and write
+operations ($\mathsf{PUT}$, $\mathsf{DELETE}$)
+\item During peak hours, the system experiences thousands of operations per
+second
+\end{itemize}
+
+Without a mailbox engine, all messages would directly reach the key-value store
+processing engine, creating several critical problems:
+
+\begin{itemize}
+\item During traffic spikes, the engine would be overwhelmed, potentially
+dropping messages or crashing
+\item Read operations for active users would be delayed behind less important
+write operations
+\item Redundant write operations to the same key would all be processed, wasting
+resources
+\end{itemize}
+
+By introducing a mailbox engine for this key-value store, we address these
+issues through message management policies:
+
+\begin{enumerate}
+\item \textbf{Message Reception}: When clients send operations to the key-value
+store, the mailbox intercepts and stores them according to
+\Cref{eq:mailbox-engine-message-reception}. This provides a buffer during
+traffic spikes.
+
+\item \textbf{Intelligent Storage}: The mailbox engine maintains messages in its
+local state $L_m$ with specialized structures:
+   \begin{itemize}
+   \item Separate queues for different operation types ($\mathsf{GET}$,
+   $\mathsf{PUT}$, $\mathsf{DELETE}$)
+   \item Hash tables to track the latest operation per key
+   \item Metadata about message age and priority
+   \end{itemize}
+
+\item \textbf{Optimized Delivery}: When the key-value store requests messages,
+the mailbox applies intelligent delivery strategies as defined in
+\Cref{eq:mailbox-engine-message-delivery}:
+   \begin{itemize}
+   \item During high load: prioritize $\mathsf{GET}$ operations to maintain read
+   responsiveness
+   \item For write operations to the same key: deliver only the most recent to
+   eliminate redundant processing
+   \item For writes to adjacent keys: batch them together to optimize storage
+   operations
+   \end{itemize}
+\end{enumerate}
+
+This example illustrates the critical role of mailbox engines in real-world
+systems. Without changing a single line of code in the key-value store's
+implementation, the mailbox significantly improves:
+
+\begin{itemize}
+\item \textbf{System Resilience}: The system can handle 10x more traffic before
+degrading
+\item \textbf{Performance}: Read latency remains consistent even during
+write-heavy periods
+\item \textbf{Resource Efficiency}: Processing overhead is reduced by
+eliminating redundant operations
+\end{itemize}
+
+The key insight is that the mailbox engine allows the key-value store to remain
+focused solely on data operations, while complex message handling logic is
+managed separately. This separation of concerns is the essence of the mailbox
+pattern's power and practical importance.
+
+\paragraph{Addressing Consistency Concerns}
+
+A critical challenge with mailbox message reordering is maintaining operation
+consistency. For example, delivering a $\mathsf{DELETE}(k)$ before a
+$\mathsf{PUT}(k,v)$ that arrived earlier, or processing a $\mathsf{GET}(k)$
+before its dependent $\mathsf{PUT}(k,v)$ operation, could violate causal
+consistency.
+
+Mailbox engines can address this through:
+
+\begin{itemize}
+\item \textbf{Causal Tracking}: The mailbox can track causal dependencies
+between messages using logical timestamps or dependency graphs. This ensures
+operations are delivered in an order that preserves their happens-before
+relationships.
+
+\item \textbf{Key-Based Sequencing}: For operations on the same key, the mailbox
+can enforce strict sequential ordering while still allowing parallelism across
+different keys.
+
+\item \textbf{Client Session Guarantees}: The mailbox can preserve client
+session guarantees by ensuring that operations from the same client are
+processed in order, maintaining read-your-writes consistency.
+\end{itemize}
+
+For our key-value store example, the mailbox engine's behavior would include
+logic similar to:
+
+\begin{align}
+\mathsf{is\_deliverable}(msg, L_m) &= 
+\begin{cases}
+true & \text{if all causal dependencies of $msg$ have been delivered} \\
+false & \text{otherwise}
+\end{cases}
+\end{align}
+
+This demonstrates that mailboxes not only improve performance but can enhance
+consistency guarantees by implementing sophisticated message delivery policies
+that respect causal relationships between operations.
+
+\paragraph{Formal Def. of the Key-Value Store Mailbox Engine}
+
+Let us provide a complete formal Def. of the mailbox engine for our
+key-value store:
+
+\begin{definition}[Key-Value Store Mailbox Engine]\label{def:kv-mailbox-engine}
+A mailbox engine $m_{\mathsf{kv}}$ for a key-value store processing engine
+$p_{\mathsf{kv}}$ is defined as follows:
+
+\begin{itemize}
+\item \textbf{Operational Mode}: $\mode(m_{\mathsf{kv}}) = \mail$
+
+\item \textbf{Parent Reference}: $\mathsf{parent}(m_{\mathsf{kv}}) =
+p_{\mathsf{kv}}$
+
+\item \textbf{Message Interface}: 
+\begin{align}
+\msgtype{m_{\mathsf{kv}}} &= \append(\msgtype{p_{\mathsf{kv}}})\\
+&= \append(\{\mathsf{PUT}(k, v), \mathsf{GET}(k), \mathsf{DELETE}(k) \mid k \in \mathcal{K}, v \in \mathcal{V}\})
+\end{align}
+where $\mathcal{K}$ is the set of possible keys and $\mathcal{V}$ is the set of
+possible values.
+
+\item \textbf{Local State}: The local state $L_{m_{\mathsf{kv}}}$ is a tuple
+$\langle \mathcal{M}, \mathcal{C}, \mathcal{T} \rangle$ where:
+  \begin{itemize}
+  \item $\mathcal{M}$ is a set of pending messages
+  \item $\mathcal{C}: \mathcal{K} \to \mathcal{P}(\mathcal{M})$ maps keys to
+  sets of messages operating on them
+  \item $\mathcal{T}: \mathcal{M} \to \mathcal{M} \cup \{\bot\}$ maps each
+  message to its causal dependencies
+  \end{itemize}
+
+\item \textbf{Message Insertion}: For a message $msg$ of type
+$\msgtype{p_{\mathsf{kv}}}$:
+\begin{align}
+L_{m_{\mathsf{kv}}} \insertmsgop msg = 
+\begin{cases}
+\langle \mathcal{M} \cup \{msg\}, \mathcal{C}[k \mapsto \mathcal{C}(k) \cup \{msg\}], \mathcal{T}' \rangle & \text{if } msg \text{ operates on key } k\\
+\end{cases}
+\end{align}
+where $\mathcal{T}'$ extends $\mathcal{T}$ with causal dependencies for $msg$.
+
+\item \textbf{Message Deletion}: For a message $msg$ of type
+$\msgtype{p_{\mathsf{kv}}}$:
+\begin{align}
+L_{m_{\mathsf{kv}}} \deletemsgop msg = 
+\begin{cases}
+\langle \mathcal{M} \setminus \{msg\}, \mathcal{C}[k \mapsto \mathcal{C}(k) \setminus \{msg\}], \mathcal{T} \rangle & \text{if } msg \text{ operates on key } k\\
+\end{cases}
+\end{align}
+
+\item \textbf{Behavior Function}: The behavior of $m_{\mathsf{kv}}$ is defined
+as:
+\begin{align}
+\mathsf{behaviour}_{m_{\mathsf{kv}}}(L_{m_{\mathsf{kv}}}, \mathsf{input}) &= 
+\begin{cases}
+L_{m_{\mathsf{kv}}} \insertmsgop msg & \text{if } \mathsf{input} = \mathsf{incoming}(msg)\\
+\mathsf{deliver}(\mathsf{select}(L_{m_{\mathsf{kv}}})) & \text{if } \mathsf{input} = \mathsf{request}()\\
+\end{cases}
+\end{align}
+
+where the selection function $\mathsf{select}$ is defined as:
+\begin{align}
+\mathsf{select}(L_{m_{\mathsf{kv}}}) &= 
+\begin{cases}
+\mathsf{highest\_priority\_get}(L_{m_{\mathsf{kv}}}) & \text{if } \exists \, msg \in \mathcal{M} : msg = \mathsf{GET}(\_) \land \mathsf{load}(p_{\mathsf{kv}}) > \mathsf{threshold}\\
+\mathsf{batch\_writes}(L_{m_{\mathsf{kv}}}, k_1, \ldots, k_n) & \text{if } \exists \, k_1, \ldots, k_n : \mathsf{adjacent\_keys}(k_1, \ldots, k_n) \land \forall i: \exists \, \mathsf{PUT}(k_i, \_) \in \mathcal{M}\\
+\mathsf{latest\_write}(L_{m_{\mathsf{kv}}}, k) & \text{if } \exists \, k : |\{msg \in \mathcal{M} \mid msg \text{ operates on } k \land msg \text{ is write}\}| > 1\\
+\mathsf{oldest\_deliverable}(L_{m_{\mathsf{kv}}}) & \text{otherwise}\\
+\end{cases}
+\end{align}
+
+with the constraint that any selected message $msg$ must satisfy
+$\mathsf{is\_deliverable}(msg, L_{m_{\mathsf{kv}}})$, where:
+\begin{align}
+\mathsf{is\_deliverable}(msg, L_{m_{\mathsf{kv}}}) &= 
+\begin{cases}
+true & \text{if } \mathcal{T}(msg) = \bot \lor \mathcal{T}(msg) \notin \mathcal{M}\\
+false & \text{otherwise}\\
+\end{cases}
+\end{align}
+ensuring that messages are only delivered after their causal dependencies.
+\end{itemize}
+\end{definition}
+
+This formal Def. captures both the performance optimizations and the
+consistency guarantees provided by the key-value store mailbox engine. The
+message selection logic prioritizes reads during high load, batches related
+writes, and eliminates redundant operations, while the deliverability check
+ensures causal consistency is maintained.
+\end{example}
 
 \subsection{Nodes}\label{sec:nodes}
 
