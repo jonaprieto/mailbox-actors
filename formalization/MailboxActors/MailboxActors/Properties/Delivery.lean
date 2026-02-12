@@ -30,7 +30,19 @@ def IsExecution (trace : Trace) : Prop :=
   ∀ n, SysStep (trace n) (trace (n + 1))
 
 /-- **Eventual Delivery**: under weak fairness, messages are eventually consumed.
-    Paper Proposition 5. -/
+    Paper Proposition 5.
+
+    **Status: blocked on placeholder rules.**  The current `mEnqueue` rule uses
+    `κ' = κ` (a placeholder), so it does not actually remove the message from the
+    in-transit list.  In fact, `mSend` is the only rule that modifies `κ.messages`
+    (by appending), while all other rules leave messages unchanged.  This makes
+    `κ.messages` monotonically non-decreasing, so the conclusion
+    `∃ k ≥ n, m ∉ (trace k).messages` is **refutable** in the current formalization.
+
+    To prove this theorem, `mEnqueue` must be updated to produce
+    `κ' = { κ with messages := κ.messages.erase m }` (or an equivalent removal),
+    and the `WeaklyFair` definition may need refinement to ensure fairness at the
+    level of individual messages rather than just operation labels. -/
 theorem eventualDelivery (trace : Trace) (m : Message) (n : Nat) :
     IsExecution trace →
     WeaklyFair trace →
