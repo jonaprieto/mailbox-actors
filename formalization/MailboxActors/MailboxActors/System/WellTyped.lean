@@ -1,0 +1,38 @@
+/-
+Copyright (c) 2026 Jonathan Prieto-Cubides. All rights reserved.
+Authors: Jonathan Prieto-Cubides
+-/
+import MailboxActors.System.State
+
+/-!
+# Well-Typed System State
+
+The well-typedness predicate used in the metatheoretic properties.
+Paper §5 (implicit).
+-/
+
+namespace MailboxActors
+
+variable [EngineSpec]
+
+/-- A system state is well-typed when:
+    1. Every message payload conforms to its target's interface.
+    2. Every processing engine has a valid paired mailbox.
+    3. All engine components are consistently typed. -/
+structure WellTypedState (κ : SystemState) : Prop where
+  /-- Every in-transit message has a payload whose engine type index matches
+      the target engine's type. -/
+  messages_typed :
+    ∀ m ∈ κ.messages,
+      ∃ se : SomeEngine,
+        κ.engineAt m.target = some se ∧ m.payload.1 = se.idx
+  /-- Every processing engine has a paired mailbox engine in the system
+      whose type index matches the processing engine's type. -/
+  mailbox_exists :
+    ∀ (addr : Address) (se : SomeEngine),
+      κ.engineAt addr = some se →
+      se.engine.mode = EngineMode.process →
+      ∃ mboxSe : SomeEngine,
+        κ.engineAt (κ.mailboxOf addr) = some mboxSe ∧ mboxSe.idx = se.idx
+
+end MailboxActors
