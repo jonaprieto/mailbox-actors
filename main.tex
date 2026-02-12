@@ -62,8 +62,8 @@ structure: it is a fully-fledged actor with its own guarded-action behaviour,
 enabling custom delivery policies, message prioritisation, and filtering
 without modifying the processing actor or the system runtime.
 
-We formalise this architecture in a predicative Martin-L\"of type theory with
-dependent types. The choice of foundation is driven by the model itself: every
+We formalise this architecture in a predicative Martin-L\"of type theory. The
+choice of foundation is driven by the model itself: every
 engine component---messages, configurations, environments, behaviours---is a
 type family indexed by a finite type of engine type indices, so a type-safe
 description of engine creation and inter-engine communication requires dependent
