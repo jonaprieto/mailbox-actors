@@ -1,13 +1,23 @@
-# MailboxActors
+# MailboxActors — Lean 4 Formalization
 
-## GitHub configuration
+Mechanized formalization of the Mailbox Actors paper.
 
-To set up your new GitHub repository, follow these steps:
+## Module structure
 
-* Under your repository name, click **Settings**.
-* In the **Actions** section of the sidebar, click "General".
-* Check the box **Allow GitHub Actions to create and approve pull requests**.
-* Click the **Pages** section of the settings sidebar.
-* In the **Source** dropdown menu, select "GitHub Actions".
+| Module | Contents |
+|---|---|
+| `Basic` | Address, EngineSpec (parametric context) |
+| `Engine.*` | Engine components (Status, Mode, Config, Env, Effect, Guard, Behaviour, Message, Mailbox) |
+| `System.*` | Node, SystemState, WellTypedState |
+| `Semantics.*` | Judgment forms and operational rules |
+| `Properties.*` | Type Preservation, Progress, Effect Determinism, Mailbox Isolation, Eventual Delivery |
+| `Examples.*` | Concrete instantiations (CausalMailbox) |
+| `PaperMapping` | Compilation-guarded mapping from paper definitions to Lean declarations |
 
-After following the steps above, you can remove this section from the README file.
+## Build
+
+```
+lake build
+```
+
+Depends on [Mathlib](https://github.com/leanprover-community/mathlib4).
