@@ -51,7 +51,14 @@ theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
       rw [hmbox] at hse'
       cases hse'
       exact hmboxMode
-  | mEnqueue => subst_vars; exact hiso
+  | mEnqueue =>
+    subst_vars
+    rename_i pre post hmsg _ _
+    intro m' hm' se hse
+    apply hiso m' _ se hse
+    rw [hmsg]
+    simp only [List.mem_append, List.mem_cons] at hm' ⊢
+    tauto
   | mDequeue => subst_vars; exact hiso
 
 end MailboxActors

@@ -161,13 +161,14 @@ inductive OpStep : SystemState → OpLabel → SystemState → Prop where
       κ' = { κ with
         messages := κ.messages ++ [⟨sender, κ.mailboxOf target, ⟨i, v⟩⟩] } →
       OpStep κ OpLabel.send κ'
-  /-- M-Enqueue: deliver a message to a ready mailbox engine. -/
-  | mEnqueue (κ κ' : SystemState) (m : Message) (mboxEng : SomeEngine) :
-      m ∈ κ.messages →
+  /-- M-Enqueue: deliver a message to a ready mailbox engine.
+      The message `m` is removed from `κ.messages`. -/
+  | mEnqueue (κ κ' : SystemState) (m : Message) (mboxEng : SomeEngine)
+      (pre post : List Message) :
+      κ.messages = pre ++ m :: post →
       κ.engineAt m.target = some mboxEng →
       mboxEng.engine.mode = EngineMode.mail →
-      -- mailbox is ready and filter accepts message
-      κ' = κ → -- placeholder: transition mailbox to Busy(w), remove m
+      κ' = { κ with messages := pre ++ post } →
       OpStep κ OpLabel.enqueue κ'
   /-- M-Dequeue: transfer a message from mailbox to processing engine. -/
   | mDequeue (κ κ' : SystemState) (procAddr : Address)

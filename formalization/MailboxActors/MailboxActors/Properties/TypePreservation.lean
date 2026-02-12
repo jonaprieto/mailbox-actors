@@ -56,8 +56,19 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
         -- nodes unchanged, so engineAt and mailboxOf are the same
         wt.mailbox_exists addr se heng hmode'
     }
-  -- ── M-Enqueue: placeholder κ' = κ ──────────────────────────────────────
-  | mEnqueue => subst_vars; exact wt
+  -- ── M-Enqueue: message removed from transit ────────────────────────────
+  | mEnqueue =>
+    subst_vars
+    rename_i pre post hmsg _ _
+    exact {
+      messages_typed := fun m' hm' => by
+        apply wt.messages_typed
+        rw [hmsg]
+        simp only [List.mem_append, List.mem_cons] at hm' ⊢
+        tauto
+      mailbox_exists := fun addr se heng hmode =>
+        wt.mailbox_exists addr se heng hmode
+    }
   -- ── M-Dequeue: placeholder κ' = κ ──────────────────────────────────────
   | mDequeue => subst_vars; exact wt
 
