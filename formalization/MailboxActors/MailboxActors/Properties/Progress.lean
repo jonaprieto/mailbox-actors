@@ -29,6 +29,29 @@ def hasPendingWork (κ : SystemState) : Prop :=
     Paper Proposition 2. -/
 theorem progress (κ : SystemState) :
     WellTypedState κ → hasPendingWork κ → ∃ κ', SysStep κ κ' := by
-  sorry
+  intro wt hp
+  rcases hp with hmsg | ⟨addr, se, heng, i, v, _, hbusy⟩ | ⟨addr, se, heng, ⟨_, hterm⟩⟩
+  · -- Case 1: messages in transit (κ.messages ≠ [])
+    match hne : κ.messages with
+    | [] => exact absurd hne hmsg
+    | m :: _ =>
+      have hm : m ∈ κ.messages := by rw [hne]; exact .head _
+      obtain ⟨mboxSe, hmbox, _⟩ := wt.messages_typed m hm
+      cases hmode : mboxSe.engine.mode with
+      | mail =>
+        exact ⟨κ, OpLabel.enqueue, OpStep.mEnqueue κ κ m mboxSe hm hmbox hmode rfl⟩
+      | process =>
+        obtain ⟨mboxSe', hmbox', _⟩ := wt.mailbox_exists m.target mboxSe hmbox hmode
+        exact ⟨κ, OpLabel.dequeue, OpStep.mDequeue κ κ m.target mboxSe mboxSe'
+          hmbox hmode hmbox' rfl⟩
+  · -- Case 2: busy engine
+    cases hmode : se.engine.mode with
+    | process =>
+      obtain ⟨mboxSe, hmbox, _⟩ := wt.mailbox_exists addr se heng hmode
+      exact ⟨κ, OpLabel.dequeue, OpStep.mDequeue κ κ addr se mboxSe heng hmode hmbox rfl⟩
+    | mail =>
+      exact ⟨_, OpLabel.node, OpStep.sNode κ _ κ.nextId rfl rfl⟩
+  · -- Case 3: terminated engine → S-Clean
+    exact ⟨κ, OpLabel.clean, OpStep.sClean κ κ 0 addr se heng ⟨rfl, hterm⟩ rfl⟩
 
 end MailboxActors
