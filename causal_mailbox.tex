@@ -1,0 +1,79 @@
+
+\begin{example}[Causal Delivery Mailbox]\label{ex:causal-mailbox}%
+  Consider a distributed publish-subscribe system in which topic messages carry
+  causal dependencies. A \emph{topic relay} engine forwards messages between
+  nodes using the default FIFO mailbox, performing only signature validation. A
+  \emph{local broker} engine delivers messages to subscribers on the same node,
+  but must respect causal order: a message may be delivered only after all
+  messages it depends on have been delivered. A first-in-first-out mailbox
+  cannot enforce this invariant because network reordering may deliver a
+  message before its dependencies arrive.
+
+  We model the system with two engine type indices:
+  $\defequal{\EngIdx}{\{ \mathsf{relay}, \mathsf{broker} \}}$.
+  Both share the message interface
+  \begin{equation}\label{eq:topic-msg}
+    \typedef{%
+      \msgtype{\mathsf{relay}}%
+    }{%
+      \msgtype{\mathsf{broker}}%
+    } \coloneqq
+      \msg{TopicMsg}(\Address, \FinSet{\mathsf{Hash}}, \mathsf{Data},
+      \mathsf{Sig})\,,
+  \end{equation}
+  where the second component records the set of message hashes on which this
+  message causally depends. We write $\mathsf{deps}(v)$ for this dependency set
+  and $\mathsf{h}(v)$ for the hash of message~$v$.
+
+  The relay engine uses the default mailbox (\Cref{def:mailbox-engine}).
+  The broker engine uses a custom mailbox with local state
+  \begin{equation}\label{eq:causal-state}
+    \typedef{%
+      L_{\mailbox{\mathsf{broker}}}%
+    }{%
+      (\mathsf{dlv} \colon \FinSet{\mathsf{Hash}})
+      \times
+      (\mathsf{pnd} \colon \Map{\mathsf{Hash}}{\msg{TopicMsg}})
+      \times
+      (\mathsf{rdy} \colon \List{\msg{TopicMsg}})
+    }\,,
+  \end{equation}
+  where $\mathsf{dlv}$ records hashes of delivered messages,
+  $\mathsf{pnd}$ buffers messages whose dependencies have not yet been met,
+  and $\mathsf{rdy}$ holds messages ready for delivery.
+
+  The broker's mailbox behaviour consists of a single guarded action
+  $\guardedactionval{\guard{c}}{\action{c}}$:
+  \begin{itemize}
+  \item The guard always matches:
+    $\guard{c}(\append(v), c, q) \coloneqq \some{v}$.
+  \item The action branches on dependency satisfaction.
+    If $\mathsf{deps}(v) \subseteq q.\mathsf{dlv}$, the message is ready
+    and a cascade check releases any pending messages whose dependencies are
+    now met:
+    \[
+      \action{c}(v, \ldots) \coloneqq
+        \chain{%
+          \update{q[\mathsf{dlv} \cup \{\mathsf{h}(v)\},\;
+                    \mathsf{rdy} \mathbin{+\!\!+} [v]]}%
+        }{%
+          \update{q[\mathsf{pnd} \setminus S,\;
+                    \mathsf{rdy} \mathbin{+\!\!+} S_{\mathsf{list}}]}%
+        }
+    \]
+    where $S = \{ w \in q.\mathsf{pnd} \mid \mathsf{deps}(w)
+    \subseteq q.\mathsf{dlv} \cup \{\mathsf{h}(v)\}\}$.
+
+    If $\mathsf{deps}(v) \not\subseteq q.\mathsf{dlv}$, the message is
+    buffered:
+    \[
+      \action{c}(v, \ldots) \coloneqq
+        \update{q[\mathsf{pnd} \cup \{\mathsf{h}(v) \mapsto v\}]}\,.
+    \]
+  \end{itemize}
+  Because there is a single guarded action, the non-overlapping guard
+  condition (\Cref{def:non-overlapping-guards}) is satisfied trivially. The
+  use of $\chain{\cdot}{\cdot}$ demonstrates that mailbox behaviours may
+  require effect sequencing to implement policies that go beyond simple
+  message storage.
+\end{example}

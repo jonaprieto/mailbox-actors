@@ -29,24 +29,15 @@
 %
 We present a formal framework for actor systems in which mailboxes are promoted
 to independent, first-class actors---native actors with their own
-configuration, behaviour, and lifecycle. In traditional actor models, mailboxes
-are opaque runtime primitives or passive data structures, limiting formal
-reasoning about message delivery policies. Our design decouples message storage
-from processing logic by automatically pairing each processing actor with a
-dedicated mailbox actor whose guarded-action behaviour governs delivery,
-filtering, and scheduling. This separation enables modular, replaceable mailbox
-implementations and independent scaling of message ingestion and processing,
-while adding no configuration burden for simple engines that need only the
-default first-in-first-out policy.
-
-We formalise the system using a predicative Martin-L\"of type theory with
-dependent types. All type families are indexed by a finite type of engine type
-indices, ensuring type-safe communication by construction. We provide a
-complete operational semantics as a labelled transition system, covering engine
-creation with automatic mailbox pairing, message passing, behaviour evaluation,
-effect execution, and engine lifecycle management. We establish type
-preservation, progress, effect determinism under non-overlapping guards, and
-mailbox isolation as metatheoretic properties.
+configuration, behaviour, and lifecycle. Each processing actor is automatically
+paired with a dedicated mailbox actor whose guarded-action behaviour governs
+delivery, filtering, and scheduling, enabling modular mailbox implementations
+while adding no burden for simple engines that need only the default
+first-in-first-out policy. We formalise the system in a predicative
+Martin-L\"of type theory with dependent types, yielding a
+correct-by-construction operational semantics as a labelled transition system.
+We establish type preservation, progress, effect determinism under
+non-overlapping guards, and mailbox isolation as metatheoretic properties.
 }
 
 

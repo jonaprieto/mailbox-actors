@@ -450,7 +450,7 @@ operation that the issuing engine requests the system to execute.
   &\effecttype{i}
 }{\\   &\quad \noop & &%
         \text{(null operation)} \\
-\, \mid & \quad \send{\Address}{\msgtype{}} & &%
+\, \mid & \quad \send{\Address}{\TotalMsg} & &%
         \text{(message dispatch)} \\
 \, \mid & \quad \update{\envtype{i}} & &%
         \text{(update environment)} \\
@@ -693,6 +693,8 @@ engine focuses on its computational tasks.
   engines evolve beyond the simple case, without requiring architectural
   changes.
 \end{remark}
+
+\input{causal_mailbox.tex}
 
 \subsection{Nodes}\label{sec:nodes}
 
@@ -1739,6 +1741,111 @@ that status is preserved. This design ensures that filters set by
 $\ccon{MFilter}$ take effect immediately, while providing a sensible default
 when no filter is specified.
 
+\subsection{Worked Example: Causal Delivery}\label{sec:causal-delivery-trace}
+
+We trace the operational semantics on the causal delivery mailbox of
+\Cref{ex:causal-mailbox}. The scenario involves a broker engine $t$ of type
+$\mathsf{broker}$ whose mailbox $\mailboxOf{\enginemap(t)}$ uses the causal
+behaviour $\guardedactionval{\guard{c}}{\action{c}}$. Three topic messages
+arrive: $m_1$ has no dependencies, $m_2$ depends on $m_3$, and $m_3$ has no
+dependencies. They arrive in order $m_1, m_2, m_3$.
+
+The initial mailbox state is
+$q_0 = (\mathsf{dlv}{=}\emptyset,\;
+         \mathsf{pnd}{=}\emptyset,\;
+         \mathsf{rdy}{=}[\,])$.
+
+\paragraph{Step 1: $m_1$ enters the system.}
+A publisher $s$ sends $m_1$ with $\mathsf{deps}(m_1) = \emptyset$. By
+\mruleref{Send}, since $\equal{\mode(t)}{\process}$ and
+$\typing{m_1}{\msgtype{\mathsf{broker}}}$, a packet
+$\msgpacket{\addr{s}}{\mailboxOf{\enginemap(t)}}{\append(m_1)}$ is added to
+$\SetOfMessages$.
+
+\paragraph{Step 2: $m_1$ is enqueued.}
+By \mruleref{Enqueue}, the mailbox $\mailboxOf{\enginemap(t)}$ transitions
+from $\ready{f}$ to $\busy{\append(m_1)}$.
+
+\paragraph{Step 3: The mailbox processes $m_1$.}
+\sruleref{Process} fires. \bruleref{GuardStrategy} selects the unique guarded
+action: $\guard{c}(\append(m_1), c, q_0) = \some{m_1}$.
+Since $\mathsf{deps}(m_1) = \emptyset \subseteq q_0.\mathsf{dlv}$, the action
+produces:
+\[
+  \chain{%
+    \update{(\mathsf{dlv} \cup \{h_1\},\; \mathsf{pnd},\;
+             \mathsf{rdy} \mathbin{+\!\!+} [m_1])}%
+  }{\noop}
+\]
+\eruleref{Chain} executes: \eruleref{Update} stores $m_1$ in the ready queue
+and records $h_1$ in the delivered set; \eruleref{Noop} is the identity.
+The mailbox returns to $\ready{\lambda\_.\mathsf{tt}}$.
+\[
+  q_1 = (\mathsf{dlv}{=}\{h_1\},\;
+         \mathsf{pnd}{=}\emptyset,\;
+         \mathsf{rdy}{=}[m_1])
+\]
+
+\paragraph{Step 4: $m_1$ is delivered.}
+By \mruleref{Dequeue}, broker $t$ transitions
+$\ready{f} \to \busy{m_1}$, retrieving $m_1$ from the mailbox's ready queue.
+
+\paragraph{Step 5: $m_2$ arrives and is buffered.}
+$m_2$ enters via \mruleref{Send} and \mruleref{Enqueue}, then
+\sruleref{Process} fires. The guard matches: $\guard{c}(\append(m_2), c, q_1)
+= \some{m_2}$. However, $\mathsf{deps}(m_2) = \{h_3\} \not\subseteq
+\{h_1\} = q_1.\mathsf{dlv}$. The action produces:
+\[
+  \update{(\mathsf{dlv}{=}\{h_1\},\;
+           \mathsf{pnd} \cup \{h_2 \mapsto m_2\},\;
+           \mathsf{rdy}{=}[\,])}
+\]
+\eruleref{Update} stores $m_2$ in the pending buffer.
+\[
+  q_2 = (\mathsf{dlv}{=}\{h_1\},\;
+         \mathsf{pnd}{=}\{h_2 \mapsto m_2\},\;
+         \mathsf{rdy}{=}[\,])
+\]
+
+\paragraph{Step 6: $m_3$ arrives and triggers a cascade.}
+$m_3$ enters via \mruleref{Send} and \mruleref{Enqueue}, then
+\sruleref{Process} fires. The guard matches. Since $\mathsf{deps}(m_3) =
+\emptyset \subseteq q_2.\mathsf{dlv}$, the action first stores $m_3$ in the
+ready queue. The cascade check inspects
+$q_2.\mathsf{pnd}$: message $m_2$ has $\mathsf{deps}(m_2) = \{h_3\}
+\subseteq \{h_1, h_3\}$, so $m_2$ is now satisfiable. The action produces:
+\[
+  \chain{%
+    \update{(\mathsf{dlv} \cup \{h_3\},\;
+             \mathsf{pnd},\;
+             \mathsf{rdy} \mathbin{+\!\!+} [m_3])}%
+  }{%
+    \update{(\mathsf{dlv} \cup \{h_3\},\;
+             \mathsf{pnd} \setminus \{h_2\},\;
+             \mathsf{rdy} \mathbin{+\!\!+} [m_3, m_2])}%
+  }
+\]
+\eruleref{Chain} sequences two \eruleref{Update} steps: the first adds $m_3$
+to the ready queue, the second moves $m_2$ from pending to ready.
+\[
+  q_3 = (\mathsf{dlv}{=}\{h_1, h_3\},\;
+         \mathsf{pnd}{=}\emptyset,\;
+         \mathsf{rdy}{=}[m_3, m_2])
+\]
+
+\paragraph{Step 7: Causal delivery.}
+Two applications of \mruleref{Dequeue} deliver $m_3$ then $m_2$ to broker
+$t$---restoring causal order despite the out-of-order arrival of $m_2$ before
+$m_3$.
+
+\medskip\noindent
+This trace exercises \mruleref{Send}, \mruleref{Enqueue}, \mruleref{Dequeue},
+\sruleref{Process}, \bruleref{GuardStrategy}, \eruleref{Update},
+\eruleref{Chain}, and \eruleref{Noop}---eight of the system's eighteen rules.
+The cascade in Step~6 illustrates why first-class mailbox actors are
+essential: a passive data structure could not conditionally release buffered
+messages upon the arrival of their dependencies.
+
 \subsection{System State Transition Rules}\label{sec:system-state-transition-rules}
 
 The inference rules above collectively govern system state transitions. Every
@@ -1918,6 +2025,19 @@ $\SetOfMessages$ and transitioning the mailbox to $\busy{m}$.
 in the mailbox's local state.
 \end{proof}
 
+\begin{remark}[Causal Delivery and Eventual Delivery]\label{rem:causal-delivery}%
+  The causal delivery mailbox of \Cref{ex:causal-mailbox} satisfies
+  \Cref{prop:eventual-delivery}: since its guard always matches, every
+  in-transit message is eventually enqueued and processed by the mailbox
+  behaviour. However, a message buffered in the pending set is not delivered
+  to the processing engine until its dependencies arrive. Guaranteeing
+  \emph{causal delivery to the processing engine} requires the additional
+  assumption that all dependency chains are finite and that every depended-upon
+  message eventually enters the system. Under this assumption and weak
+  fairness, each pending message's dependencies are eventually satisfied,
+  triggering the cascade that moves it to the ready queue.
+\end{remark}
+
 \section{Related Work}\label{sec:related-work}
 
 \paragraph{Actor Model Foundations}
@@ -2011,9 +2131,11 @@ mailboxes per processing engine are excluded to avoid race conditions and
 preserve delivery guarantees.
 
 \paragraph{Future Work}
-Several extensions are natural. First, mechanisation of the framework and its
-proofs in a proof assistant such as Agda or Coq would provide machine-checked
-guarantees. Second, a prototype implementation in Elixir---which provides a
+Several extensions are natural. First, a companion mechanisation in Lean~4
+is under development; it includes a concrete instantiation of the abstract
+framework for the causal delivery mailbox of \Cref{ex:causal-mailbox},
+validating that the parametric definitions are usable in practice.
+Second, a prototype implementation in Elixir---which provides a
 robust actor runtime through the Erlang VM---would validate the practical
 applicability. Third, dynamic engine type extension would enable open systems.
 Finally, relaxing the non-overlapping guard assumption to permit prioritised or
