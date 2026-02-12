@@ -27,12 +27,13 @@ structure WellTypedState (κ : SystemState) : Prop where
       ∃ se : SomeEngine,
         κ.engineAt m.target = some se ∧ m.payload.1 = se.idx
   /-- Every processing engine has a paired mailbox engine in the system
-      whose type index matches the processing engine's type. -/
+      whose type index matches and whose mode is `mail`. -/
   mailbox_exists :
     ∀ (addr : Address) (se : SomeEngine),
       κ.engineAt addr = some se →
       se.engine.mode = EngineMode.process →
       ∃ mboxSe : SomeEngine,
-        κ.engineAt (κ.mailboxOf addr) = some mboxSe ∧ mboxSe.idx = se.idx
+        κ.engineAt (κ.mailboxOf addr) = some mboxSe ∧ mboxSe.idx = se.idx ∧
+        mboxSe.engine.mode = EngineMode.mail
 
 end MailboxActors

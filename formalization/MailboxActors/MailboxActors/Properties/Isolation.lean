@@ -25,10 +25,35 @@ def MailboxIsolation (κ : SystemState) : Prop :=
       se.engine.mode = EngineMode.mail
 
 /-- **Mailbox Isolation**: M-Send is the only rule that creates messages,
-    and it always targets a mailbox engine.
+    and it always targets a mailbox engine.  Requires well-typedness so that
+    `mailbox_exists` guarantees the paired mailbox is in `mail` mode.
     Paper Proposition 4. -/
 theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
-    MailboxIsolation κ → OpStep κ op κ' → MailboxIsolation κ' := by
-  sorry
+    WellTypedState κ → MailboxIsolation κ → OpStep κ op κ' → MailboxIsolation κ' := by
+  intro wt hiso step
+  cases step with
+  | sNode =>
+    subst_vars
+    have key := engineAt_append_emptyNode κ
+    intro m hm se hse
+    rw [key] at hse
+    exact hiso m hm se hse
+  | sClean => subst_vars; exact hiso
+  | mSend =>
+    subst_vars
+    rename_i sender target senderEng targetEng hsender htarget hmode hidx
+    intro m hm se hse
+    rw [List.mem_append] at hm
+    rcases hm with hm | hm
+    · exact hiso m hm se hse
+    · rw [List.mem_singleton] at hm; subst hm
+      obtain ⟨mboxSe, hmbox, _, hmboxMode⟩ :=
+        wt.mailbox_exists target targetEng htarget hmode
+      have hse' : κ.engineAt (κ.mailboxOf target) = some se := hse
+      rw [hmbox] at hse'
+      cases hse'
+      exact hmboxMode
+  | mEnqueue => subst_vars; exact hiso
+  | mDequeue => subst_vars; exact hiso
 
 end MailboxActors
