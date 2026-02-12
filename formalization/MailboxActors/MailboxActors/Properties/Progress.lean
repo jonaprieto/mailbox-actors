@@ -32,12 +32,13 @@ theorem progress (κ : SystemState) :
   · -- Case 1: messages in transit (κ.messages ≠ [])
     match hne : κ.messages with
     | [] => exact absurd hne hmsg
-    | m :: _ =>
+    | m :: rest =>
       have hm : m ∈ κ.messages := by rw [hne]; exact .head _
       obtain ⟨mboxSe, hmbox, _⟩ := wt.messages_typed m hm
       cases hmode : mboxSe.engine.mode with
       | mail =>
-        exact ⟨κ, OpLabel.enqueue, OpStep.mEnqueue κ κ m mboxSe hm hmbox hmode rfl⟩
+        exact ⟨{ κ with messages := rest }, OpLabel.enqueue,
+          OpStep.mEnqueue κ _ m mboxSe [] rest hne hmbox hmode rfl⟩
       | process =>
         obtain ⟨mboxSe', hmbox', _⟩ := wt.mailbox_exists m.target mboxSe hmbox hmode
         exact ⟨κ, OpLabel.dequeue, OpStep.mDequeue κ κ m.target mboxSe mboxSe'
