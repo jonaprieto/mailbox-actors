@@ -28,22 +28,25 @@
 \newcommand{\pubabstract}{%
 %
 We present a formal framework for actor systems in which mailboxes are promoted
-to independent, first-class actors. In contrast to traditional actor models,
-where mailboxes are treated as opaque runtime primitives or passive data
-structures, our design decouples message storage from processing logic by
-assigning each processing actor a dedicated mailbox actor. This separation of
-concerns enables flexible message scheduling, modular mailbox implementations,
-and independent scaling of message ingestion and processing.
+to independent, first-class actors---native actors with their own
+configuration, behaviour, and lifecycle. In traditional actor models, mailboxes
+are opaque runtime primitives or passive data structures, limiting formal
+reasoning about message delivery policies. Our design decouples message storage
+from processing logic by automatically pairing each processing actor with a
+dedicated mailbox actor whose guarded-action behaviour governs delivery,
+filtering, and scheduling. This separation enables modular, replaceable mailbox
+implementations and independent scaling of message ingestion and processing,
+while adding no configuration burden for simple engines that need only the
+default first-in-first-out policy.
 
-We formalise the system using a predicative type theory with dependent types,
-giving precise definitions of engines---our refinement of the actor
-notion---together with their configurations, environments, behaviours, and
-effect systems. We provide a complete operational semantics expressed as a
-labelled transition system, covering engine creation, message passing, behaviour
-evaluation, effect execution, and engine lifecycle management. We establish
-several metatheoretic properties of the system, including type preservation
-under reduction, progress, effect determinism under non-overlapping guards, and
-mailbox isolation.
+We formalise the system using a predicative Martin-L\"of type theory with
+dependent types. All type families are indexed by a finite type of engine type
+indices, ensuring type-safe communication by construction. We provide a
+complete operational semantics as a labelled transition system, covering engine
+creation with automatic mailbox pairing, message passing, behaviour evaluation,
+effect execution, and engine lifecycle management. We establish type
+preservation, progress, effect determinism under non-overlapping guards, and
+mailbox isolation as metatheoretic properties.
 }
 
 

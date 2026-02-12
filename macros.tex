@@ -15,7 +15,7 @@
 \newcommand{\Map}[2]{\ensuremath{\mathsf{Map}(#1, #2)}}
 \newcommand{\equal}[2]{\ensuremath{#1 \equiv #2}}
 \newcommand{\propequal}[2]{\ensuremath{#1 = #2}}
-\newcommand{\defequal}[2]{\ensuremath{#1 :\equiv #2}}
+\newcommand{\defequal}[2]{\ensuremath{#1 \coloneqq #2}}
 \newcommand{\typing}[2]{\ensuremath{#1\colon#2}}
 \newcommand{\typedef}[2]{\ensuremath{%
 \defequal{#1}{#2}%
@@ -57,7 +57,7 @@
 \newcommand{\Msg}{\hyperref[eq:message-type-sum]{\ctype{\ensuremath{\mathsf{Msg}}}}}
 \newcommand{\msgtype}[1]{\Msg_{#1}}
 \newcommand{\payload}[1]{\ensuremath{v_{#1}}}
-\newcommand{\TotalMsg}{\ensuremath{\Sigma_{(i:\EngIdx)}\,\msgtype{i}}}
+\newcommand{\TotalMsg}{\hyperref[eq:message-type-sum]{\ctype{\ensuremath{\overline{\mathsf{Msg}}}}}}
 
 % Address type
 \newcommand{\Address}{\hyperref[def:address]{\ctype{\ensuremath{\mathsf{Addr}}}}}

@@ -45,22 +45,36 @@ This design choice has consequences for formal reasoning. When the mailbox is
 opaque, one cannot specify, at the level of the model, properties such as
 message filtering, prioritisation, or custom delivery policies. Nor can one
 reason modularly about the interaction between message storage and message
-processing.
+processing. Conversely, when the mailbox is a passive data structure
+(as in Kilim), one gains structural separation but not behavioural
+independence: the mailbox cannot react to system events, enforce delivery
+invariants, or evolve its strategy without modifications to the actor runtime.
 
-We propose promoting mailboxes to independent, first-class actors. In our
-design, each processing actor is paired with a dedicated \emph{mailbox actor}
-that manages message storage and delivery. Communication occurs through message
-passing to the mailbox actor, and the processing actor retrieves messages only
-when it is ready to handle them. This pull-based mechanism implements natural
-backpressure and enables flexible, replaceable mailbox implementations.
+We propose promoting mailboxes to independent, first-class actors---native
+actors in the system with their own configuration, behaviour, and lifecycle.
+Each processing actor is automatically paired with a dedicated \emph{mailbox
+actor} that manages message storage and delivery. Communication occurs through
+message passing to the mailbox actor, and the processing actor retrieves
+messages only when it is ready to handle them. This pull-based mechanism
+implements natural backpressure and enables flexible, replaceable mailbox
+implementations. Crucially, the mailbox actor is not a passive data
+structure: it is a fully-fledged actor with its own guarded-action behaviour,
+enabling custom delivery policies, message prioritisation, and filtering
+without modifying the processing actor or the system runtime.
 
-We formalise this architecture using a predicative type theory with dependent
-types. Our model introduces \emph{engines}---a refinement of the actor
+We formalise this architecture in a predicative Martin-L\"of type theory with
+dependent types. The choice of foundation is driven by the model itself: every
+engine component---messages, configurations, environments, behaviours---is a
+type family indexed by a finite type of engine type indices, so a type-safe
+description of engine creation and inter-engine communication requires dependent
+types to quantify over indices and pair them with their associated data.
+Alternative foundations such as set theory or rewriting logic could express the
+operational rules but would not enforce these typing invariants by construction;
+dependent types make them intrinsic, yielding definitions that are correct by
+construction and directly implementable in proof assistants such as Agda, Coq,
+or Lean. Our model introduces \emph{engines}---a refinement of the actor
 notion---structured around four components: a configuration, an execution
 environment, a message interface, and a behaviour defined by guarded actions.
-All type families are indexed by a finite type of engine type indices, yielding
-a dependently typed formulation that ensures type-safe communication by
-construction.
 
 \paragraph{Contributions}
 The contributions of this paper are threefold.
@@ -77,14 +91,14 @@ Third, we establish several metatheoretic properties of the system
 effect determinism, and mailbox isolation.
 
 \paragraph{Outline}
-\Cref{sec:type-theory} specifies the type theory used throughout.
+\Cref{sec:type-theory} fixes notation and conventions.
 \Cref{sec:model} introduces the engine model and its components, culminating in
 the definition of mailbox engines. \Cref{sec:semantics} presents the
 operational semantics. \Cref{sec:properties} states metatheoretic properties.
 \Cref{sec:related-work} discusses related work, and \Cref{sec:conclusion}
 concludes.
 
-\section{Type Theory}\label{sec:type-theory}
+\section{Notation}\label{sec:type-theory}
 
 We work in a predicative Martin-L\"of type theory with a countable hierarchy of
 universes
@@ -95,19 +109,20 @@ where $\Ui{n} : \Ui{n+1}$ for all $n \in \N$. The symbol $\U$ denotes
 $\Ui{0}$ when the universe level is not important. All constructions in this
 paper live in $\Ui{0}$ unless stated otherwise.
 
-\paragraph{Dependent function types}
+\paragraph{$\Pi$-types}
 Given a type $\typing{A}{\Ui{n}}$ and a type family
-$\typing{B}{A \to \Ui{m}}$, the dependent function type
+$\typing{B}{A \to \Ui{m}}$, the $\Pi$-type (dependent function type)
 $\Pi_{(x : A)}\, B(x)$ inhabits $\Ui{\max(n,m)}$. When $B$ does not depend on
 $x$, we write $A \to B$.
 
-\paragraph{Dependent pair types}
-Given $\typing{A}{\Ui{n}}$ and $\typing{B}{A \to \Ui{m}}$, the dependent pair
-type $\Sigma_{(x : A)}\, B(x)$ inhabits $\Ui{\max(n,m)}$. Its terms are
-denoted $\langle a, b \rangle$ where $\typing{a}{A}$ and $\typing{b}{B(a)}$.
-When $B$ does not depend on $x$, we write $A \times B$ and call its terms
-\emph{tuples}. We generalise so that $\langle a_1, \dots, a_n \rangle$ is a
-tuple of type $A_1 \times \cdots \times A_n$.
+\paragraph{$\Sigma$-types}
+Given $\typing{A}{\Ui{n}}$ and $\typing{B}{A \to \Ui{m}}$, the $\Sigma$-type
+(dependent pair type) $\Sigma_{(x : A)}\, B(x)$ inhabits $\Ui{\max(n,m)}$. Its
+terms are denoted $\langle a, b \rangle$ where $\typing{a}{A}$ and
+$\typing{b}{B(a)}$. When $B$ does not depend on $x$, we write $A \times B$ and
+call its terms \emph{tuples}. We generalise so that
+$\langle a_1, \dots, a_n \rangle$ is a tuple of type
+$A_1 \times \cdots \times A_n$.
 
 \paragraph{Inductive types}
 We use inductive type definitions in the following form:
@@ -132,10 +147,12 @@ $\typing{a}{A}$. The empty list is written $[]$ and $[a_1, \dots, a_n]$ denotes
 a list of $n$ elements.
 
 \paragraph{Equalities and notation}
-We write $\defequal{x}{y}$ for definitional equality where $x$ is defined as
-$y$, $\equal{a}{b}$ for judgmental equality, and $\propequal{a}{b}$ for
-propositional equality. A typing judgement is denoted $\typing{x}{A}$. We write
-$(\ignore)$ to omit terms that are irrelevant or inferable from context.
+We write $\defequal{x}{y}$ for definitional equality (defining $x$ to be
+$y$), $\equal{a}{b}$ for judgmental equality (holding by computation), and
+$\propequal{a}{b}$ for propositional equality (the identity type). In inference
+rules, premises use judgmental equality unless otherwise noted. A typing
+judgement is denoted $\typing{x}{A}$. We write $(\ignore)$ to omit terms that
+are irrelevant or inferable from context.
 
 \paragraph{Finite subsets and set-theoretic notation}
 Certain types in our model are equipped with decidable equality. For such types,
@@ -292,7 +309,7 @@ to $\msgtype{t}$, the message interface of the engine at address $t$. This
 dependent typing ensures that only well-formed messages can be constructed.
 
 To refer to the type of an arbitrary message within the system, we use the
-dependent sum
+$\Sigma$-type
 \begin{equation}\label{eq:message-type-sum}
   \defequal{\TotalMsg}{\Sigma_{(\typing{i}{\EngIdx})}\,\msgtype{i}}\,,
 \end{equation}
@@ -600,19 +617,21 @@ and behaviour in the tuple representation, highlighting the engine's type.
 
 As established in \Cref{def:engine-mode}, the system includes two kinds of
 engines: processing engines (mode $\process$) and mailbox engines (mode
-$\mail$). The system automatically generates a mailbox engine when a processing
-engine is spawned (\Cref{sec:creation-rules}). Users cannot directly create
-mailbox engines, though they may provide custom configuration, environment, and
-behaviour for the mailbox at the moment of processing engine creation. The
-default mailbox operates as a first-in-first-out queue.
+$\mail$). A mailbox engine is itself an engine---a native actor in the
+system---with its own configuration, environment, and behaviour. The system
+automatically creates a mailbox engine when a processing engine is spawned
+(\Cref{sec:creation-rules}). Users cannot directly create mailbox engines,
+though they may provide custom configuration, environment, and behaviour for
+the mailbox at the moment of processing engine creation. The default mailbox
+operates as a first-in-first-out queue.
 
 \begin{figure}
   \centering
   \includegraphics[width=\textwidth]{figures/mailbox-engines}
   \caption{A processing engine $p$ with its dedicated mailbox engine
-  $\mathsf{mbox}$. When a message $m_k$ is sent to $p$, the mailbox engine
-  stores it. If $p$ is ready, the mailbox delivers a message determined by
-  $p$'s filter and the mailbox's behaviour.}
+  $\mailboxOfname$. When a message $m_k$ is sent to $p$, the system routes it
+  to $\mailboxOfname$, which stores it. When $p$ is ready, the mailbox
+  delivers a message determined by $p$'s filter and the mailbox's behaviour.}
   \label{fig:mailbox-engines}
 \end{figure}
 
@@ -647,6 +666,19 @@ processing logic, opaque to sending engines, allows for independent scaling of
 message ingestion and core computation. The mailbox engine acts as a mediator
 implementing custom delivery policies via its behaviour, while the processing
 engine focuses on its computational tasks.
+
+\begin{remark}[Mailbox Overhead for Simple Engines]\label{rem:mailbox-overhead}%
+  For processing engines that require no custom delivery logic, one may ask
+  whether the mailbox indirection introduces unnecessary overhead. In our
+  design, the default mailbox is a simple first-in-first-out queue that
+  requires no configuration from the engine implementor: it is created
+  automatically, accepts all messages, and is transparent to sending engines.
+  Thus the ``cost'' for simple engines is purely in the formalism---an
+  additional engine instance exists---not in the user's modelling effort. The
+  benefit is that the system uniformly supports mailbox customisation when
+  engines evolve beyond the simple case, without requiring architectural
+  changes.
+\end{remark}
 
 \subsection{Nodes}\label{sec:nodes}
 
@@ -742,7 +774,7 @@ yields state $\SystemState'$.
 \subsection{System-level Initialisation}\label{sec:creation-rules}
 
 \begin{definition}[\srule{Node}]\label{rule:s-Node}
-\sloppy~\hfill\\[-\baselineskip]
+A new node is created with a fresh identifier and an empty engine map.
 \begin{prooftree}
 \AxiomC{$%
       \defequal{\iota}{\freshid}
@@ -870,7 +902,7 @@ Spawning a processing engine requires creating its paired mailbox engine. The
 following rule makes this coupling explicit.
 
 \begin{definition}[\srule{SpawnWithMailbox}]\label{rule:s-SpawnWithMailbox}
-\hspace{-1.5em}
+Every processing engine is paired with a dedicated mailbox engine at creation.
 \begin{prooftree}
 \AxiomC{$%
   \typing{k}{\EngIdx}
@@ -914,15 +946,15 @@ To prevent zombie engine instances---engines in the $\terminated$ state---the
 system removes them.
 
 \begin{definition}[\srule{Clean}]\label{rule:s-Clean}
-\hspace{-1.5em}
+An engine whose status is $\terminated$ is removed from the system.
 \begin{prooftree}
 \AxiomC{$%
   p \in \SetOfEngines%
 \quad %
-  \propequal{%
-    \terminated
-  }{%
+  \equal{%
     \status{p}
+  }{%
+    \terminated
   }
 $}
 \UnaryInfC{$%
@@ -959,7 +991,8 @@ non-blocking sends, mailbox isolation with eventual delivery, and explicit
 lifecycle management.
 
 \begin{definition}[\mrule{Send}]\label{rule:m-Send}
-\hspace{-1.5em}
+A message with payload $v$ conforming to the target's interface is placed in
+transit, addressed to the target engine's dedicated mailbox.
 \begin{prooftree}
 \AxiomC{$%
 \engine{s}, \engine{t} \in \SetOfEngines%
@@ -999,7 +1032,8 @@ mailbox, wrapping the payload in an $\append$ constructor. This is the only way
 to add a message to $\SetOfMessages$.
 
 \begin{definition}[\mrule{Enqueue}]\label{rule:m-Enqueue}
-\hspace{-1.5em}
+An in-transit message addressed to a mailbox engine is consumed from
+$\SetOfMessages$ and its payload is added to the mailbox's local state.
 \begin{prooftree}
 \AxiomC{$%
 \equal{%
@@ -1056,7 +1090,9 @@ $}
 \end{definition}
 
 \begin{definition}[\mrule{Dequeue}]\label{rule:m-Dequeue}
-\hspace{-1.5em}
+When a processing engine is ready and its mailbox contains a message passing
+the engine's filter, the message is removed from the mailbox and the engine
+transitions to the busy state.
 \begin{prooftree}
 \AxiomC{$
   p \in \SetOfEngines%
@@ -1082,13 +1118,13 @@ $}
     \mailboxOf{p}
   }
 \quad %
-  \propequal{%
+  \equal{%
     \mathsf{env}(\enginemap(\mailbox{p}))
   }{%
    q \cup \{v\}
   }
 \quad %
-  \propequal{f(v)}{\mathsf{tt}}
+  \equal{f(v)}{\mathsf{tt}}
 $}
 \noLine
 \UnaryInfC{$%
@@ -1131,8 +1167,8 @@ $}
 \end{definition}
 
 Note that the \mruleref{Dequeue} rule requires the filter predicate $f$ to
-accept the message $v$, that is, $\propequal{f(v)}{\mathsf{tt}}$. A message
-$v$ in the mailbox for which $\propequal{f(v)}{\mathsf{ff}}$ remains in the
+accept the message $v$, that is, $\equal{f(v)}{\mathsf{tt}}$. A message
+$v$ in the mailbox for which $\equal{f(v)}{\mathsf{ff}}$ remains in the
 mailbox until the filter is updated or the engine is terminated.
 
 \subsection{Behaviour Evaluation}\label{sec:behavior-eval-rules}
@@ -1141,7 +1177,8 @@ This subsection formalises how an engine evaluates its guarded actions in
 response to a message.
 
 \begin{definition}[\brule{GuardedActionEval}]\label{rule:b-GuardedActionEval}
-\hspace{-1.5em}
+A single guarded action is evaluated: if the guard is satisfied, the action
+is applied to produce an effect.
 \begin{prooftree}
 \AxiomC{$%
   p \in \SetOfEngines%
@@ -1166,7 +1203,7 @@ $}
     {a}
   \in \behaviour{p}
 \quad %
-  \propequal{%
+  \equal{%
     g(v, \config{p}, \localenv{p})
   }{%
     \some{r}
@@ -1184,7 +1221,7 @@ $}
 \end{definition}
 
 \begin{definition}[\brule{NoMatchingGuard}]\label{rule:b-NoMatchingGuard}
-\hspace{-1.5em}
+If a guard returns $\none$, the guarded action produces $\noop$.
 \begin{prooftree}
 \AxiomC{$%
   p \in \SetOfEngines%
@@ -1204,7 +1241,7 @@ $}
 \UnaryInfC{$%
 \guardedactionval{g}{a} \in \behaviour{p}%
 \quad %
-  \propequal{%
+  \equal{%
     g(v, \config{p}, \localenv{p})
    }{%
     \none%
@@ -1322,7 +1359,8 @@ states that executing $E$ in $\SystemState$ produces $\SystemState'$. This
 judgment is defined by case analysis on $E$.
 
 \begin{definition}[\erule{Send}]\label{rule:e-Send}
-\hspace{-1.5em}
+Executing a $\ccon{Send}$ effect dispatches a message via the \mruleref{Send}
+rule.
 \begin{prooftree}
 \AxiomC{$%
   \engine{s}, \engine{t} \in \SetOfEngines%
@@ -1360,7 +1398,8 @@ $}
 \end{definition}
 
 \begin{definition}[\erule{Update}]\label{rule:e-Update}
-\hspace{-1.5em}
+Executing an $\ccon{Update}$ effect replaces the engine's execution environment
+with the provided value.
 \begin{prooftree}
 \AxiomC{$%
       p \in \SetOfEngines%
@@ -1430,7 +1469,8 @@ $\ready{\lambda\_.\mathsf{tt}}$ in \sruleref{Process}.
 
 
 \begin{definition}[\erule{Spawn}]\label{rule:e-Spawn}
-\hspace{-1.5em}
+Executing a $\ccon{Spawn}$ effect creates a child engine via
+\sruleref{SpawnWithMailbox}, ensuring it is paired with a mailbox engine.
 \begin{prooftree}
 \AxiomC{$%
 \node{i} \in \SetOfNodes%
@@ -1462,13 +1502,11 @@ $}
     {\SystemState'}
 $}
 \end{prooftree}
-Note that the $\ccon{Spawn}$ effect invokes the
-\sruleref{SpawnWithMailbox} rule, ensuring that every new processing
-engine is automatically paired with a mailbox engine.
 \end{definition}
 
 \begin{definition}[\erule{Chain}]\label{rule:e-Chain}
-\hspace{-1.5em}
+Executing a $\ccon{Chain}$ effect sequences two sub-effects: the first is
+executed in the current state, and the second in the resulting state.
 \begin{prooftree}
 \AxiomC{$%
       p \in \SetOfEngines%
@@ -1533,7 +1571,7 @@ The \sruleref{Clean} rule subsequently removes the engine from the system.
 \end{definition}
 
 \begin{definition}[\erule{Noop}]\label{rule:e-Noop}
-  \hspace{-1.5em}
+Executing a $\noop$ effect leaves the system state unchanged.
   \begin{prooftree}
   \AxiomC{$%
         p \in \SetOfEngines%
@@ -1665,22 +1703,21 @@ summarises all rules.
   \centering
   {\small
   \begin{tabular}{@{}lp{0.68\linewidth}@{}}
-    \textbf{Category} & \textbf{Rules} \\ \hline
-    System operations &
+    \textbf{Judgment form} & \textbf{Rules} \\ \hline
+    System-level operations &
         \sruleref{Node},
         \sruleref{EngineSpawn},
         \sruleref{SpawnWithMailbox},
         \sruleref{Clean},
-        \sruleref{Process} \\[3pt]
-    Message passing &
         \mruleref{Send},
         \mruleref{Enqueue},
         \mruleref{Dequeue} \\[3pt]
     Behaviour evaluation &
+        \bruleref{GuardStrategy},
+        \bruleref{AllGuardsFail} \\[3pt]
+    Guarded action evaluation &
         \bruleref{GuardedActionEval},
-        \bruleref{NoMatchingGuard},
-        \bruleref{AllGuardsFail},
-        \bruleref{GuardStrategy} \\[3pt]
+        \bruleref{NoMatchingGuard} \\[3pt]
     Effect execution &
         \eruleref{Send},
         \eruleref{Update},
@@ -1688,10 +1725,12 @@ summarises all rules.
         \eruleref{Spawn},
         \eruleref{Chain},
         \eruleref{Terminate},
-        \eruleref{Noop}
+        \eruleref{Noop} \\[3pt]
+    Engine processing &
+        \sruleref{Process}
   \end{tabular}
   }%
-  \caption{Rules for the operational semantics, organised by domain.}
+  \caption{Rules for the operational semantics, organised by judgment form.}
   \label{fig:state-transition-rules}
 \end{figure}
 
@@ -1719,43 +1758,67 @@ $\SystemState = (\SetOfNodes, \SetOfMessages, \SetOfPlugins)$ is
 If $\sysstep{\SystemState}{\SystemState'}$ and $\SystemState$ is well-typed,
 then $\SystemState'$ is well-typed.
 \end{proposition}
-\begin{proof}[Proof sketch]
-By case analysis on the transition rule. Each rule preserves the typing
-invariants: \sruleref{EngineSpawn} creates engines with components of the
-correct type; \mruleref{Send} constructs messages with payloads conforming to
-the target's interface (by the typing premise $\typing{v}{\msgtype{t}}$);
-\mruleref{Enqueue} and \mruleref{Dequeue} preserve message types;
-\eruleref{Update} requires the new environment to have the correct type;
-\sruleref{Process} preserves the engine's type family membership.
+\begin{proof}[Proof sketch]\sloppy%
+By case analysis on the transition rule applied.
+\sruleref{Node} adds a node with an empty engine map, trivially preserving
+invariants.
+\sruleref{EngineSpawn} creates an engine with correctly typed components;
+\sruleref{SpawnWithMailbox} composes two such creations.
+For message passing: \mruleref{Send} constructs messages with payloads
+satisfying $\typing{v}{\msgtype{t}}$ by premise; \mruleref{Enqueue} preserves
+the payload type when transferring from $\SetOfMessages$ to the mailbox;
+\mruleref{Dequeue} preserves the type family when moving a message to the
+engine's busy state.
+For effect execution: \eruleref{Update} requires $\typing{s}{\envtype{p}}$;
+\eruleref{Spawn} delegates to \sruleref{SpawnWithMailbox}; \eruleref{Terminate}
+and \eruleref{MFilter} change only the status, remaining in
+$\EngineStatus{i}$; \eruleref{Chain} composes two type-preserving steps;
+\eruleref{Noop} is the identity. \sruleref{Process} evaluates the behaviour,
+executes the resulting effect, and restores the engine to $\ready{f}$ or
+preserves the status set by the effect. \sruleref{Clean} removes an engine
+without affecting others.
 \end{proof}
 
 \begin{proposition}[Progress]\label{prop:progress}
 A well-typed system state $\SystemState$ in which either
 (i)~$\SetOfMessages \neq \emptyset$, or
 (ii)~there exists an engine in state $\busy{m}$,
+or (iii)~there exists an engine in state $\terminated$,
 can take a step.
 \end{proposition}
 \begin{proof}[Proof sketch]
-If there is a message in transit, \mruleref{Enqueue} can deliver it to the
-target mailbox (the mailbox engine accepts all messages). If a processing
-engine is $\ready{f}$ and its mailbox contains a message $v$ with
-$\propequal{f(v)}{\mathsf{tt}}$, then \mruleref{Dequeue} applies. If an
-engine is $\busy{m}$, behaviour evaluation
-(\bruleref{GuardStrategy} or \bruleref{AllGuardsFail}) produces an effect,
-and \sruleref{Process} applies. In each case, at least one rule fires.
+We consider each case.
+(i)~If $\SetOfMessages \neq \emptyset$, let
+$\msgpacket{s}{t}{v} \in \SetOfMessages$. By well-typedness, $t$ is a valid
+mailbox engine address. Since $\mailboxOf{}$ maps processing engines to their
+mailboxes and the message is addressed to a mailbox, the target mailbox engine
+exists. The mailbox engine accepts all messages via its $\append$ interface
+(its filter is $\lambda\_.\mathsf{tt}$), so the premises of \mruleref{Enqueue}
+are satisfied.
+(ii)~If an engine $p$ is in state $\busy{m}$, the behaviour $\behaviour{p}$
+is a finite list of guarded actions. Each guard $g_j$ applied to the input
+either returns $\some{r}$ or $\none$. If some guard matches,
+\bruleref{GuardStrategy} applies; otherwise \bruleref{AllGuardsFail} applies.
+In either case, a judgment $\evalstep{p}{m}{E}$ is derivable, and
+\sruleref{Process} fires.
+(iii)~If an engine $p$ has status $\terminated$, then
+$\equal{\status{p}}{\terminated}$ and \sruleref{Clean} applies.
 \end{proof}
 
 \begin{proposition}[Effect Determinism]\label{prop:effect-determinism}
 Under the non-overlapping guard assumption
-(\Cref{def:non-overlapping-guards}), for any engine $p$ and message $v$, the
-judgment $\evalstep{p}{v}{E}$ determines $E$ uniquely.
+(\Cref{def:non-overlapping-guards}), for any engine $p$ in state $\busy{v}$,
+the judgment $\evalstep{p}{v}{E}$ determines $E$ uniquely.
 \end{proposition}
 \begin{proof}[Proof sketch]
-By the non-overlapping guard condition, at most one guarded action in the
-behaviour of $p$ produces a non-$\noop$ effect for any input. If exactly one
-guard matches, \bruleref{GuardStrategy} selects it uniquely. If none match,
-\bruleref{AllGuardsFail} yields $\noop$. In both cases, the effect $E$ is
-determined.
+Guards are pure functions of type $\In{i} \to \Option{\returntype}$, so each
+$g_j(v, \config{p}, \localenv{p})$ is determined. By the non-overlapping guard
+condition, for any input at most one guard $g_i$ returns $\some{r}$ while all
+others return $\none$. Thus: if exactly one guard matches,
+\bruleref{GuardStrategy} selects it uniquely and the effect is
+$a_i(r, v, \config{p}, \localenv{p})$, which is determined since actions are
+functions. If no guard matches, \bruleref{AllGuardsFail} yields $\noop$. These
+two cases are exhaustive and mutually exclusive, so $E$ is uniquely determined.
 \end{proof}
 
 \begin{proposition}[Mailbox Isolation]\label{prop:mailbox-isolation}
@@ -1773,15 +1836,22 @@ places a message directly in a processing engine's state.
 \end{proof}
 
 \begin{proposition}[Eventual Delivery]\label{prop:eventual-delivery}
-Under a fairness assumption (every applicable rule is eventually applied), if
-a message $m \in \SetOfMessages$ targets a non-terminated engine, then $m$ is
-eventually enqueued in the target's mailbox.
+Under a weak fairness assumption---every continuously applicable rule is
+eventually applied---if a message $m \in \SetOfMessages$ targets a
+non-terminated processing engine, then $m$ is eventually enqueued in the
+target's mailbox.
 \end{proposition}
 \begin{proof}[Proof sketch]
-The message $m$ in $\SetOfMessages$ is addressed to a mailbox engine. Since
-the mailbox engine is not terminated, the \mruleref{Enqueue} rule is
-applicable. Under fairness, this rule is eventually applied, consuming $m$
-from $\SetOfMessages$ and adding its payload to the mailbox's local state.
+By \mruleref{Send}, the message $m$ is addressed to the target's mailbox
+engine. The mailbox engine's status is independent of its parent processing
+engine's termination: \sruleref{Clean} removes terminated engines, but the
+mailbox engine persists until it is independently terminated
+(\Cref{rem:terminated-messages}). Since the processing engine is
+non-terminated, neither is its mailbox. Thus \mruleref{Enqueue} is applicable
+to $m$, as the mailbox engine exists and accepts all messages via the
+$\append$ interface. Under weak fairness, \mruleref{Enqueue} is eventually
+applied, consuming $m$ from $\SetOfMessages$ and adding its payload to the
+mailbox's local state.
 \end{proof}
 
 \section{Related Work}\label{sec:related-work}
@@ -1850,16 +1920,23 @@ metatheoretic properties.
 \section{Conclusion}\label{sec:conclusion}
 
 We have presented a formal framework for actor systems in which mailboxes are
-promoted to independent, first-class actors. The dependent-type-theoretic
-formulation, with all type families indexed by a finite type of engine type
-indices, ensures type-safe communication by construction and provides a
-clean parametric structure.
+promoted to independent, first-class actors---native actors with their own
+configuration, behaviour, and lifecycle. Unlike prior approaches that treat
+mailboxes as opaque primitives~\cite{formal-semantics-erlang} or passive data
+structures~\cite{kilim-framework}, our mailbox actors are fully-fledged engines
+whose guarded-action behaviours govern delivery, filtering, and scheduling.
+The dependent-type-theoretic formulation, with all type families indexed by a
+finite type of engine type indices, ensures type-safe communication by
+construction.
 
 The operational semantics cover engine creation with automatic mailbox pairing,
 asynchronous message passing through mailbox intermediaries, behaviour
 evaluation under non-overlapping guards, effect execution, and engine lifecycle
 management. We established type preservation, progress, effect determinism,
 mailbox isolation, and eventual delivery as metatheoretic properties.
+The mailbox isolation property, in particular, captures the key design
+invariant: all messages to a processing engine are mediated by its dedicated
+mailbox actor, which is guaranteed by the structure of the transition rules.
 
 \paragraph{Limitations}
 The model assumes static engine types (no dynamic type extension), static
