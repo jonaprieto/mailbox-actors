@@ -539,6 +539,16 @@ type $\In{i} \to \Out{i}$ defined by
 \end{equation}
 \end{definition}
 
+\begin{remark}[Dependent Action Type]\label{rem:dependent-action-type}%
+The action component is only invoked when the guard returns $\some{r}$.
+In a dependently-typed setting, one can refine the action type to
+$\Pi\,(x : \In{i}).\, g(x) = \some{r} \to \Out{i}$, recording
+in the type system that the action is defined only when the guard holds.
+This eliminates the need for a separate guard-match assumption in
+semantic rules such as \bruleref{GuardedActionEval}.  Our Lean~4
+formalisation employs this refinement.
+\end{remark}
+
 \begin{definition}[Engine Behaviour]\label{def:engine-behaviour}%
 A \textbf{behaviour} for an engine of type $i$ is a list of guarded actions,
 of type $\behaviourtype{i}$, where
@@ -564,11 +574,17 @@ $\guardedactionval{g_j}{a_j}, \guardedactionval{g_k}{a_k} \in b$ with $j \neq k$
 if $g_j(x) = \some{r}$ then $g_k(x) = \none$.
 \end{definition}
 
-Throughout this paper, we assume that all behaviours satisfy the non-overlapping
-guard condition. Alternative guard selection strategies---inspired, for
-instance, by Dijkstra's guarded command
-language~\cite{dijkstra-guarded-commands}---are compatible with the model but
-fall outside the scope of this work.
+\begin{definition}[Well-Formed Behaviour]\label{def:well-formed-behaviour}%
+A \textbf{well-formed behaviour} for an engine of type $i$ is a pair
+$\typing{(b, \pi)}{\behaviourtype{i} \times \mathsf{NonOverlapping}(b)}$
+consisting of a behaviour $b$ and a proof $\pi$ that $b$ has non-overlapping
+guards. Throughout this paper, all behaviours are well-formed.
+\end{definition}
+
+Alternative guard selection strategies---inspired, for instance, by
+Dijkstra's guarded command
+language~\cite{dijkstra-guarded-commands}---are compatible with the model
+but fall outside the scope of this work.
 
 \begin{remark}[Evolving Behaviours]\label{rem:fixed-behaviour}%
 In the present model, behaviours are fixed at engine creation.
@@ -587,7 +603,8 @@ typed components and the declarative nature of their behaviour.
 
 \begin{definition}[Engine Type]\label{def:engine-type}%
 For each $\typing{i}{\EngIdx}$, the \textbf{engine type} $\enginetype{i}$
-specifies a message interface and a behaviour:
+specifies a message interface and a well-formed behaviour
+(\Cref{def:well-formed-behaviour}):
   \begin{equation}\label{eq:engine-type-definition}
     \begin{aligned}
     \defequal{
@@ -1814,17 +1831,15 @@ $m_3$ enters via \mruleref{Send} and \mruleref{Enqueue}, then
 ready queue. The cascade check inspects
 $q_2.\mathsf{pnd}$: message $m_2$ has $\mathsf{deps}(m_2) = \{h_3\}
 \subseteq \{h_1, h_3\}$, so $m_2$ is now satisfiable. The action produces:
-\[
-  \chain{%
-    \update{(\mathsf{dlv} \cup \{h_3\},\;
+\begin{align*}
+  \refeffect{Chain}\bigl(\;
+    &\update{(\mathsf{dlv} \cup \{h_3\},\;
              \mathsf{pnd},\;
-             \mathsf{rdy} \mathbin{+\!\!+} [m_3])}%
-  }{%
-    \update{(\mathsf{dlv} \cup \{h_3\},\;
+             \mathsf{rdy} \mathbin{+\!\!+} [m_3])},\\
+    &\update{(\mathsf{dlv} \cup \{h_3\},\;
              \mathsf{pnd} \setminus \{h_2\},\;
-             \mathsf{rdy} \mathbin{+\!\!+} [m_3, m_2])}%
-  }
-\]
+             \mathsf{rdy} \mathbin{+\!\!+} [m_3, m_2])}\;\bigr)
+\end{align*}
 \eruleref{Chain} sequences two \eruleref{Update} steps: the first adds $m_3$
 to the ready queue, the second moves $m_2$ from pending to ready.
 \[
@@ -1971,15 +1986,15 @@ $\equal{\status{p}}{\terminated}$ and \sruleref{Clean} applies.
 \end{proof}
 
 \begin{proposition}[Effect Determinism]\label{prop:effect-determinism}
-Under the non-overlapping guard assumption
-(\Cref{def:non-overlapping-guards}), for any engine $p$ in state $\busy{v}$,
+For any engine $p$ with a well-formed behaviour
+(\Cref{def:well-formed-behaviour}) in state $\busy{v}$,
 the judgment $\evalstep{p}{v}{E}$ determines $E$ uniquely.
 \end{proposition}
 \begin{proof}[Proof sketch]
 Guards are pure functions of type $\In{i} \to \Option{\returntype}$, so each
 $g_j(v, \config{p}, \localenv{p})$ is determined. By the non-overlapping guard
-condition, for any input at most one guard $g_i$ returns $\some{r}$ while all
-others return $\none$. Thus: if exactly one guard matches,
+condition bundled in the well-formed behaviour, for any input at most one guard
+$g_i$ returns $\some{r}$ while all others return $\none$. Thus: if exactly one guard matches,
 \bruleref{GuardStrategy} selects it uniquely and the effect is
 $a_i(r, v, \config{p}, \localenv{p})$, which is determined since actions are
 functions. If no guard matches, \bruleref{AllGuardsFail} yields $\noop$. These
@@ -2115,9 +2130,10 @@ construction.
 
 The operational semantics cover engine creation with automatic mailbox pairing,
 asynchronous message passing through mailbox intermediaries, behaviour
-evaluation under non-overlapping guards, effect execution, and engine lifecycle
-management. We established type preservation, progress, effect determinism,
-mailbox isolation, and eventual delivery as metatheoretic properties.
+evaluation under well-formed behaviours with non-overlapping guards, effect
+execution, and engine lifecycle management. We established type preservation,
+progress, effect determinism, mailbox isolation, and eventual delivery as
+metatheoretic properties.
 The mailbox isolation property, in particular, captures the key design
 invariant: all messages to a processing engine are mediated by its dedicated
 mailbox actor, which is guaranteed by the structure of the transition rules.
@@ -2125,8 +2141,9 @@ mailbox actor, which is guaranteed by the structure of the transition rules.
 \paragraph{Limitations}
 The model assumes static engine types (no dynamic type extension), static
 engine allocation (no migration between nodes), and fixed behaviours (no
-runtime behaviour modification). The non-overlapping guard assumption, while
-ensuring determinism, restricts the expressiveness of behaviours. Multiple
+runtime behaviour modification). The non-overlapping guard condition, bundled
+structurally via well-formed behaviours, ensures determinism but restricts the
+expressiveness of behaviours. Multiple
 mailboxes per processing engine are excluded to avoid race conditions and
 preserve delivery guarantees.
 

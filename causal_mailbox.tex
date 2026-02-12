@@ -1,13 +1,13 @@
 
-\begin{example}[Causal Delivery Mailbox]\label{ex:causal-mailbox}%
-  Consider a distributed publish-subscribe system in which topic messages carry
-  causal dependencies. A \emph{topic relay} engine forwards messages between
-  nodes using the default FIFO mailbox, performing only signature validation. A
-  \emph{local broker} engine delivers messages to subscribers on the same node,
-  but must respect causal order: a message may be delivered only after all
-  messages it depends on have been delivered. A first-in-first-out mailbox
-  cannot enforce this invariant because network reordering may deliver a
-  message before its dependencies arrive.
+\begin{example}[Causal Delivery Mailbox]\label{ex:causal-mailbox}\sloppy%
+  Consider a distributed publish-subscribe system in which topic messages
+  carry causal dependencies. A \emph{topic relay} engine forwards messages
+  between nodes using the default FIFO mailbox, performing only signature
+  validation. A \emph{local broker} engine delivers messages to subscribers
+  on the same node, but must respect causal order: a message may only be
+  delivered after all messages it depends on have been delivered. A FIFO
+  mailbox cannot enforce this invariant because network reordering may
+  deliver a message before its dependencies arrive.
 
   We model the system with two engine type indices:
   $\defequal{\EngIdx}{\{ \mathsf{relay}, \mathsf{broker} \}}$.
@@ -30,13 +30,13 @@
   \begin{equation}\label{eq:causal-state}
     \typedef{%
       L_{\mailbox{\mathsf{broker}}}%
-    }{%
-      (\mathsf{dlv} \colon \FinSet{\mathsf{Hash}})
-      \times
-      (\mathsf{pnd} \colon \Map{\mathsf{Hash}}{\msg{TopicMsg}})
-      \times
-      (\mathsf{rdy} \colon \List{\msg{TopicMsg}})
-    }\,,
+    }{\left(\!\!
+    \begin{aligned}
+      & \mathsf{dlv} \colon \FinSet{\mathsf{Hash}},\\
+      & \mathsf{pnd} \colon \Map{\mathsf{Hash}}{\msg{TopicMsg}},\\
+      & \mathsf{rdy} \colon \List{\msg{TopicMsg}}
+    \end{aligned}
+    \!\!\right)}\,,
   \end{equation}
   where $\mathsf{dlv}$ records hashes of delivered messages,
   $\mathsf{pnd}$ buffers messages whose dependencies have not yet been met,
@@ -51,8 +51,8 @@
     If $\mathsf{deps}(v) \subseteq q.\mathsf{dlv}$, the message is ready
     and a cascade check releases any pending messages whose dependencies are
     now met:
-    \[
-      \action{c}(v, \ldots) \coloneqq
+    \begin{multline*}
+      \action{c}(v, \ldots) \coloneqq {}\\
         \chain{%
           \update{q[\mathsf{dlv} \cup \{\mathsf{h}(v)\},\;
                     \mathsf{rdy} \mathbin{+\!\!+} [v]]}%
@@ -60,7 +60,7 @@
           \update{q[\mathsf{pnd} \setminus S,\;
                     \mathsf{rdy} \mathbin{+\!\!+} S_{\mathsf{list}}]}%
         }
-    \]
+    \end{multline*}
     where $S = \{ w \in q.\mathsf{pnd} \mid \mathsf{deps}(w)
     \subseteq q.\mathsf{dlv} \cup \{\mathsf{h}(v)\}\}$.
 
