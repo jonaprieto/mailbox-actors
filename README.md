@@ -1,3 +1,6 @@
+[![LaTeX](https://github.com/anoma/ART-Mailboxes-actors/actions/workflows/latex.yml/badge.svg)](https://github.com/anoma/ART-Mailboxes-actors/actions/workflows/latex.yml)
+[![Lean 4](https://github.com/anoma/ART-Mailboxes-actors/actions/workflows/lean.yml/badge.svg)](https://github.com/anoma/ART-Mailboxes-actors/actions/workflows/lean.yml)
+
 # Mailbox Actors
 
 Formal framework for actor systems in which mailboxes are promoted to

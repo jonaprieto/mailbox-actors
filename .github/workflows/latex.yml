@@ -2,14 +2,7 @@ name: LaTeX
 
 on:
   push:
-    paths:
-      - '*.tex'
-      - '*.bib'
-      - '*.cls'
-      - '*.sty'
-      - 'figures/**'
-      - 'Makefile'
-      - 'latexmkrc'
+    branches: [main]
   pull_request:
     paths:
       - '*.tex'
