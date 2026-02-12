@@ -5,8 +5,7 @@
 
 Formal framework for actor systems in which mailboxes are promoted to
 independent, first-class actors with their own configuration, behaviour, and
-lifecycle. Formalised in predicative Martin-Lof type theory with dependent
-types.
+lifecycle. Formalised in predicative Martin-Lof type theory.
 
 - **Paper**: [`main.pdf`](main.pdf) (LaTeX, XeTeX)
 - **Lean 4 formalization**: [`formalization/MailboxActors/`](formalization/MailboxActors/)
