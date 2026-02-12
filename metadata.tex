@@ -1,0 +1,68 @@
+
+% Title
+\newcommand{\pubtitle}{Mailbox Actors}
+
+\newcommand{\pubauthA}{Jonathan Prieto-Cubides}
+\newcommand{\pubaffilA}{a}
+\newcommand{\orcidA}{0000-0002-8449-3812}
+\newcommand{\authemailA}{jonathan@heliax.dev}
+% \newcommand{\eqcontribA}{}
+
+\newcommand{\pubauthB}{Anthony Hart}
+\newcommand{\pubaffilB}{a}
+\newcommand{\orcidB}{0009-0004-4116-5538}
+\newcommand{\authemailB}{anthony@heliax.dev}
+\newcommand{\eqcontribB}{}
+
+\newcommand{\pubauthC}{Tobias Heindel}
+\newcommand{\pubaffilC}{a}
+\newcommand{\orcidC}{0000-0003-3371-8564}
+\newcommand{\authemailC}{tobias@heliax.com}
+
+% Institutions/Affiliations
+\newcommand{\pubaddrA}{Heliax AG}
+
+% Corresponding author mail
+\newcommand{\pubemail}{\authemailA}
+
+\newcommand{\pubabstract}{%
+%
+We present a formal framework for actor systems in which mailboxes are promoted
+to independent, first-class actors. In contrast to traditional actor models,
+where mailboxes are treated as opaque runtime primitives or passive data
+structures, our design decouples message storage from processing logic by
+assigning each processing actor a dedicated mailbox actor. This separation of
+concerns enables flexible message scheduling, modular mailbox implementations,
+and independent scaling of message ingestion and processing.
+
+We formalise the system using a predicative type theory with dependent types,
+giving precise definitions of engines---our refinement of the actor
+notion---together with their configurations, environments, behaviours, and
+effect systems. We provide a complete operational semantics expressed as a
+labelled transition system, covering engine creation, message passing, behaviour
+evaluation, effect execution, and engine lifecycle management. We establish
+several metatheoretic properties of the system, including type preservation
+under reduction, progress, effect determinism under non-overlapping guards, and
+mailbox isolation.
+}
+
+
+% Any keywords to be displayed under the abstract
+\keywords{
+Actor Model \sep
+Message-Passing Systems \sep
+Mailbox Actors \sep
+Operational Semantics \sep
+Dependent Types \sep
+Formal Methods
+}
+
+% Supplementary space between title/abstract and text, if needed
+% \newcommand{\pubVadj}{0pt}
+
+% ! DO NOT REMOVE OR MODIFY !
+\input{aux-preamble.tex}
+% The preprint DOI to be used as a link in the paper
+\pubdoi{10.5281/zenodo.14915469}
+% \history{(Received Month DD, YYYY; Revised Month DD, YYYY ; Published: August 21, 2023)}
+\pubdate{\today}

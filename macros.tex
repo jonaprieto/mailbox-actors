@@ -1,0 +1,255 @@
+% MACROS
+\usepackage{xcolor}
+\definecolor{darkred}{RGB}{139,0,0}
+\definecolor{darkgreen}{RGB}{0,100,0}
+\definecolor{darkorange}{RGB}{200,80,0}
+\definecolor{darkmagenta}{RGB}{139,0,139}
+
+% Type and constructor formatting
+\newcommand{\ctype}[1]{\ensuremath{\mathsf{\color{teal}{#1}}}}
+\newcommand{\ccon}[1]{\ensuremath{\mathsf{\color{darkmagenta}{#1}}}}
+\newcommand{\stype}[1]{\ensuremath{\mathsf{\color{blue}{#1}}}}
+\newcommand{\scon}[1]{\ensuremath{\mathsf{\color{darkgreen}{#1}}}}
+
+% Judgmental and equality notation
+\newcommand{\Map}[2]{\ensuremath{\mathsf{Map}(#1, #2)}}
+\newcommand{\equal}[2]{\ensuremath{#1 \equiv #2}}
+\newcommand{\propequal}[2]{\ensuremath{#1 = #2}}
+\newcommand{\defequal}[2]{\ensuremath{#1 :\equiv #2}}
+\newcommand{\typing}[2]{\ensuremath{#1\colon#2}}
+\newcommand{\typedef}[2]{\ensuremath{%
+\defequal{#1}{#2}%
+}}
+
+% Universe and base types
+\newcommand{\U}{\ensuremath{\mathfrak{U}}}
+\newcommand{\Ui}[1]{\ensuremath{\mathfrak{U}_{#1}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\Bool}{\ensuremath{\mathbf{B}}}
+\newcommand{\EmptyType}{\ensuremath{\mathbf{0}}}
+\newcommand{\Unit}{\ensuremath{\mathbf{1}}}
+\newcommand{\List}[1]{\ensuremath{\mathsf{List}(#1)}}
+\newcommand{\Fin}[1]{\ensuremath{\mathsf{Fin}(#1)}}
+
+\newcommand{\execEffect}{\ensuremath{\mathsf{eval}}}
+
+% Option/Maybe type
+\newcommand{\Option}[1]{\ensuremath{\mathsf{Maybe}(#1)}}
+\newcommand{\none}{\ensuremath{\mathsf{none}}}
+\newcommand{\some}[1]{\ensuremath{\mathsf{some}(#1)}}
+
+% Finite sets and powerset
+\newcommand{\FinSet}[1]{\ensuremath{\mathcal{P}_{\!\mathsf{fin}}(#1)}}
+
+% System-level sets
+\newcommand{\SetOfNodes}{\ensuremath{\mathcal{N}}}
+\newcommand{\SetOfEngines}{\ensuremath{\mathcal{E}}}
+\newcommand{\SetOfMessages}{\ensuremath{\mathcal{M}}}
+\newcommand{\SetOfPlugins}{\ensuremath{\Omega}}
+\newcommand{\append}{\ccon{Append}}
+
+% Engine type index
+\newcommand{\EngIdx}{\ensuremath{\mathbb{I}}}
+
+\newcommand{\Contract}{\texttt{Prt}}
+
+% Message types
+\newcommand{\Msg}{\hyperref[eq:message-type-sum]{\ctype{\ensuremath{\mathsf{Msg}}}}}
+\newcommand{\msgtype}[1]{\Msg_{#1}}
+\newcommand{\payload}[1]{\ensuremath{v_{#1}}}
+\newcommand{\TotalMsg}{\ensuremath{\Sigma_{(i:\EngIdx)}\,\msgtype{i}}}
+
+% Address type
+\newcommand{\Address}{\hyperref[def:address]{\ctype{\ensuremath{\mathsf{Addr}}}}}
+\newcommand{\AddressType}[1]{\ensuremath{\Address_{#1}}}
+
+% Environment type family
+\newcommand{\Env}{\hyperref[def:engine-environment]{\ctype{\ensuremath{\mathsf{Env}}}}}
+\newcommand{\envtype}[1]{\ensuremath{\Env_{#1}}}
+\newcommand{\behaviourtype}[1]{\hyperref[def:engine-behaviour]{\ctype{\ensuremath{\mathsf{EBeh}}}}_{#1}}
+
+% Engine status
+\newcommand{\EngineStatusref}{\hyperref[def:engine-status]{\ctype{\ensuremath{\mathsf{EStatus}}}}}
+\newcommand{\EngineStatus}[1]{\ensuremath{\EngineStatusref_{#1}}}
+\newcommand{\ready}[1]{\ccon{Ready}(\ensuremath{#1})}
+
+\usepackage{xspace}
+
+\newcommand{\busy}[1]{\ccon{Busy}(\ensuremath{#1})}
+\newcommand{\terminated}[0]{\ccon{Terminated}}
+
+% Engine mode
+\newcommand{\EngineMode}{\hyperref[def:engine-mode]{\ctype{\ensuremath{\mathsf{EMode}}}}}
+\newcommand{\mode}{\ensuremath{\mathsf{mode}}}
+\newcommand{\process}{\ccon{Process}\xspace}
+\newcommand{\mail}{\ccon{Mail}\xspace}
+
+% Mailbox operations
+\newcommand{\mailbox}[1]{\ensuremath{m_{#1}}}
+\newcommand{\insertmsgop}{\ensuremath{\cup}}
+\newcommand{\insertmsg}[2]{%
+#1 \cup #2
+}
+\newcommand{\deletemsgop}{\ensuremath{\backslash}}
+\newcommand{\deletemsg}[2]{%
+#1 \backslash #2
+}
+
+%% For operational semantics
+
+% System state and components
+\newcommand{\SystemState}{\kappa}
+\newcommand{\systemval}[3]{
+    \ensuremath{%
+        \langle
+            #1,  % nodes
+            #2,  % in-transit messages
+            #3%  % services
+        \rangle%
+    }%
+}
+
+\newcommand{\engines}{\SetOfEngines}
+\newcommand{\nodes}{\SetOfNodes}
+\newcommand{\nodeval}[3]{%
+\ensuremath{%
+\langle%
+    #1, % id
+    #2, % \enginemap_i,
+    #3  % \plugins_i
+\rangle%
+}}
+
+
+\newcommand{\messages}{\SetOfMessages}
+\newcommand{\plugins}{\omega}
+\newcommand{\enginemap}{\epsilon}
+
+\newcommand{\uid}[1]{\ensuremath{\mathsf{uid}(#1)}}
+\newcommand{\loc}[2]{\ensuremath{ \langle #1, #2 \rangle}}
+
+\newcommand{\In}[1]{\hyperref[eq:guard-type-in]{\ensuremath{\mathsf{In}}}_{#1}}
+\newcommand{\Out}[1]{\hyperref[eq:action-type-out]{\ensuremath{\mathsf{Out}}}_{#1}}
+
+% Engine components
+\newcommand{\node}[1]{\ensuremath{n_{#1}}}
+
+\newcommand{\engine}[1]{\ensuremath{e_{#1}}}
+\newcommand{\engineval}[5]{%
+\ensuremath{%
+\langle
+    #1, %interface
+    #2, %behaviour
+    #3, %mode
+    #4, %config
+    #5 %localenviron
+\rangle %
+}%
+}
+\newcommand{\procengine}[1]{\ensuremath{p_{#1}}}
+\newcommand{\interface}[1]{\ensuremath{i_{#1}}}
+\newcommand{\behaviour}[1]{\ensuremath{b_{#1}}}
+
+% Configuration type family
+\newcommand{\Cfg}{\hyperref[def:engine-configuration]{\ctype{\ensuremath{\mathsf{Cfg}}}}}
+\newcommand{\configtype}[1]{\ensuremath{\Cfg_{#1}}}
+\newcommand{\config}[1]{\ensuremath{\mathsf{cfg}_{#1}}}
+\newcommand{\configval}[3]{\ensuremath{\langle #1 , #2 , #3 \rangle}}
+
+\newcommand{\localenvproj}[1]{\ensuremath{\mathsf{env}(#1)}}
+\newcommand{\localenv}[1]{\ensuremath{\mathsf{env}_{#1}}}
+\newcommand{\environment}[1]{\localenv{#1}}
+\newcommand{\localenvval}[2]{\ensuremath{\langle #1, #2 \rangle}}
+
+\newcommand{\Eng}{\ensuremath{\ctype{\mathsf{Eng}}}}
+\newcommand{\enginetype}[1]{\ensuremath{\Eng_{#1}}}
+\newcommand{\self}{\ensuremath{\textsc{self}}\xspace}
+\newcommand{\new}{\ensuremath{\mathsf{new}}}
+
+% Message handling
+\newcommand{\ignore}{\ensuremath{\_}}
+
+\newcommand{\addr}[1]{\ensuremath{\alpha(#1)}}
+\newcommand{\mailboxOfname}{\ensuremath{\mathsf{mbox}}}
+\newcommand{\mailboxOf}[1]{\ensuremath{\mailboxOfname(#1)}}
+\newcommand{\Name}{\ensuremath{\mathsf{Name}}}
+
+\newcommand{\msg}[1]{\ensuremath{\mathsf{\color{violet}{#1}}}}
+\newcommand{\msgpacket}[3]{%
+    \ensuremath{%
+       ({\color{teal}{#1}}%
+       \triangleright_{#3}%
+       {\color{violet}{#2}})
+    }%
+}
+\newcommand{\sender}[1]{\ensuremath{\mathsf{sender}(#1)}}
+\newcommand{\target}[1]{\ensuremath{\mathsf{target}(#1)}}
+
+% Effects
+\newcommand{\effectsym}{E}
+\newcommand{\effect}{\hyperref[def:effects]{\ctype{\ensuremath{\mathsf{Effect}}}}\xspace}
+\newcommand{\effecttype}[1]{\ensuremath{\effect_{#1}}}
+
+\newcommand{\refeffect}[1]{\hyperref[eq:effects]{\ccon{#1}}}
+\newcommand{\send}[2]{\refeffect{Send}(#1, #2)}
+\newcommand{\update}[1]{\refeffect{Update}(#1)}
+\newcommand{\spawn}[1]{\refeffect{Spawn}(#1)}
+\newcommand{\mfilter}[1]{\refeffect{MFilter}(#1)}
+\newcommand{\chain}[2]{\refeffect{Chain}(#1, #2)}
+\newcommand{\terminate}{\refeffect{Terminate}}
+\newcommand{\noop}{\refeffect{Noop}}
+
+% Common functions
+\newcommand{\freshidname}{\ensuremath{\mathsf{freshId}}}
+\newcommand{\freshid}{\ensuremath{\freshidname}()}
+\newcommand{\status}[1]{\ensuremath{\mathsf{status}(#1)}}
+
+% Judgment forms
+\newcommand{\stepsymbol}{\ensuremath{\rightsquigarrow}}
+\newcommand{\sysstep}[2]{#1 \stepsymbol #2}
+\newcommand{\opstep}[3]{#1 \stepsymbol_{\mathsf{#2}} #3}
+\newcommand{\processstep}[4]{\ensuremath{#1, #2, #3 \stepsymbol_{\process} #4}}
+\newcommand{\sendstep}[4]{\ensuremath{#1, #2, #3 \stepsymbol_{\mathsf{send}} #4}}
+
+\newcommand{\evalstep}[3]{#1 \vdash #2 \downarrow #3}
+
+\newcommand{\effectevalstep}[3]{#1 \vdash #2 \stepsymbol #3}
+
+\newcommand{\guardevalmsgstep}[5]{#1, \langle #2, #3 \rangle \vdash #4 \downarrow #5}
+\newcommand{\guardevalstep}[4]{#1, \langle #2, #3 \rangle \vdash #4}
+
+
+% Rule references
+\newcommand{\srule}[1]{\textsc{s\mbox{-}#1}}
+\newcommand{\mrule}[1]{\textsc{M\mbox{-}#1}}
+\newcommand{\brule}[1]{\textsc{B\mbox{-}#1}}
+\newcommand{\erule}[1]{\textsc{E\mbox{-}#1}}
+
+% Cref references for different rule types
+\newcommand{\sruleref}[1]{\hyperref[rule:s-#1]{\srule{#1}}}
+\newcommand{\mruleref}[1]{\hyperref[rule:m-#1]{\mrule{#1}}}
+\newcommand{\bruleref}[1]{\hyperref[rule:b-#1]{\brule{#1}}}
+\newcommand{\eruleref}[1]{\hyperref[rule:e-#1]{\erule{#1}}}
+
+% Guard and actions
+\newcommand{\guard}[1]{g_{#1}}
+\newcommand{\action}[1]{a_{#1}}
+\newcommand{\returntype}{R}
+\newcommand{\guardedaction}[1]{%
+\ensuremath{%
+    \langle %
+      \guard{#1} %
+    , \action{#1} %
+    \rangle %
+}}
+
+\newcommand{\guardedactionval}[2]{%
+\ensuremath{%
+    \langle %
+      #1 %
+    , #2 %
+    \rangle %
+}}
+
+%% DSL notation
+\newcommand{\letin}[2]{\ensuremath{\mathsf{let}\ \defequal{#1}{#2}}}

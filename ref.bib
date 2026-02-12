@@ -1,0 +1,703 @@
+@inproceedings{backpressure,
+  author={Tassiulas, L. and Ephremides, A.},
+  booktitle={29th IEEE Conference on Decision and Control}, 
+  title={Stability properties of constrained queueing systems and scheduling policies for maximum throughput in multihop radio networks}, 
+  year={1990},
+  volume={},
+  number={},
+  pages={2130-2132 vol.4},
+  keywords={Stability;Throughput;Network servers;Spread spectrum communication;Radio network;Educational institutions;Packet radio networks;Stochastic processes;Control systems;State-space methods},
+  doi={10.1109/CDC.1990.204000}}
+
+@misc{wechaty,
+  author={Huan Li},
+  title={Wechaty Actor Model, Powered by XState, Mailbox, and CQRS},
+  year={2025},
+  url={https://github.com/wechaty/actor},
+}
+
+
+@article{erlang-2010,
+  author    = {Joe Armstrong},
+  title     = {Erlang},
+  journal   = {Communications of the ACM},
+  volume    = {53},
+  number    = {9},
+  year      = {2010},
+  pages     = {68-75},
+  ee        = {http://doi.acm.org/10.1145/1810891.1810910},
+  bibsource = {DBLP, http://dblp.uni-trier.de}
+}
+
+@InProceedings{ITreesECOOP23,
+  author =	{Silver, Lucas and He, Paul and Cecchetti, Ethan and Hirsch, Andrew K. and Zdancewic, Steve},
+  title =	{{Semantics for Noninterference with Interaction Trees}},
+  booktitle =	{37th European Conference on Object-Oriented Programming (ECOOP 2023)},
+  pages =	{29:1--29:29},
+  series =	{Leibniz International Proceedings in Informatics (LIPIcs)},
+  ISBN =	{978-3-95977-281-5},
+  ISSN =	{1868-8969},
+  year =	{2023},
+  volume =	{263},
+  editor =	{Ali, Karim and Salvaneschi, Guido},
+  publisher =	{Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r Informatik},
+  address =	{Dagstuhl, Germany},
+  URL =		{https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ECOOP.2023.29},
+  URN =		{urn:nbn:de:0030-drops-182227},
+  doi =		{10.4230/LIPIcs.ECOOP.2023.29},
+  annote =	{Keywords: verification, information-flow, denotational semantics, monads}
+}
+
+@article{Fowler_2024,
+   title={Behavioural Types for Heterogeneous Systems (Position Paper)},
+   volume={401},
+   ISSN={2075-2180},
+   url={http://dx.doi.org/10.4204/EPTCS.401.4},
+   DOI={10.4204/eptcs.401.4},
+   journal={Electronic Proceedings in Theoretical Computer Science},
+   publisher={Open Publishing Association},
+   author={Fowler, Simon and Haller, Philipp and Kuhn, Roland and Lindley, Sam and Scalas, Alceste and Vasconcelos, Vasco T.},
+   year={2024},
+   month=apr, pages={37–48} }
+
+
+@inproceedings{10.1145/2491956.2462184,
+author = {Desai, Ankush and Gupta, Vivek and Jackson, Ethan and Qadeer, Shaz and Rajamani, Sriram and Zufferey, Damien},
+title = {P: safe asynchronous event-driven programming},
+year = {2013},
+isbn = {9781450320146},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2491956.2462184},
+doi = {10.1145/2491956.2462184},
+abstract = {We describe the design and implementation of P, a domain-specific language to write asynchronous event driven code. P allows the programmer to specify the system as a collection of interacting state machines, which communicate with each other using events. P unifies modeling and programming into one activity for the programmer. Not only can a P program be compiled into executable code, but it can also be tested using model checking techniques. P allows the programmer to specify the environment, used to "close" the system during testing, as nondeterministic ghost machines. Ghost machines are erased during compilation to executable code; a type system ensures that the erasure is semantics preserving.The P language is designed so that a P program can be checked for responsiveness---the ability to handle every event in a timely manner. By default, a machine needs to handle every event that arrives in every state. But handling every event in every state is impractical. The language provides a notion of deferred events where the programmer can annotate when she wants to delay processing an event. The default safety checker looks for presence of unhandled events. The language also provides default liveness checks that an event cannot be potentially deferred forever.P was used to implement and verify the core of the USB device driver stack that ships with Microsoft Windows 8. The resulting driver is more reliable and performs better than its prior incarnation (which did not use P); we have more confidence in the robustness of its design due to the language abstractions and verification provided by P.},
+booktitle = {Proceedings of the 34th ACM SIGPLAN Conference on Programming Language Design and Implementation},
+pages = {321–332},
+numpages = {12},
+keywords = {device driver, domain-specific language, event-driven programming, state machine, systematic testing, verification},
+location = {Seattle, Washington, USA},
+series = {PLDI '13}
+}
+
+
+
+@article{foundation97agha,
+author = {Agha, Gul A. and Mason, Ian A. and Smith, Scott F. and Talcott, Carolyn L.},
+title = {A foundation for actor computation},
+year = {1997},
+issue_date = {January 1997},
+publisher = {Cambridge University Press},
+address = {USA},
+volume = {7},
+number = {1},
+issn = {0956-7968},
+url = {https://doi.org/10.1017/S095679689700261X},
+doi = {10.1017/S095679689700261X},
+abstract = {We present an actor language which is an extension of a simple functional language, and provide an operational semantics for this extension. Actor configurations represent open distributed systems, by which we mean that the specification of an actor system explicitly takes into account the interface with external components. We study the composability of such systems. We define and study various notions of testing equivalence on actor expressions and configurations. The model we develop provides fairness. An important result is that the three forms of equivalence, namely, convex, must, and may equivalences, collapse to two in the presence of fairness. We further develop methods for proving laws of equivalence and provide example proofs to illustrate our methodology.},
+journal = {J. Funct. Program.},
+month = jan,
+pages = {1–72},
+numpages = {72}
+}
+
+@article{gurevich2000sequential,
+  title={Sequential abstract-state machines capture sequential algorithms},
+  author={Gurevich, Yuri},
+  journal={ACM Transactions on Computational Logic (TOCL)},
+  volume={1},
+  number={1},
+  pages={77--111},
+  year={2000},
+  publisher={ACM New York, NY, USA}
+}
+
+@article{ art-engines,
+    author    = { Heindel, Tobias and Prieto-Cubides, Jonathan and Hart, Anthony },
+    title     = { {Dynamic Effective Timed Communication Systems} },
+    journal   = { Anoma Research Topics },
+    month     = { Mar },
+    year      = { 2025 },
+    publisher = { Zenodo },
+    version   = { March 06, 2025 },
+    doi       = { 10.5281/zenodo.14984148 },
+    url       = { https://doi.org/10.5281/zenodo.14984147 }
+}
+
+@inproceedings{kilim-framework,
+  abstract = {This paper describes Kilim, a framework that employs a
+	combination of techniques to help create robust, massively concurrent systems
+  in mainstream languages such as Java: (i) ultra-lightweight,
+  cooperatively-scheduled threads (actors), (ii) a message-passing framework (no
+  shared memory, no locks) and (iii) isolation-aware messaging.},
+  address = {Berlin, Heidelberg},
+	author = {Srinivasan, Sriram and Mycroft, Alan},
+	booktitle = {ECOOP 2008 -- Object-Oriented Programming},
+	editor = {Vitek, Jan},
+	isbn = {978-3-540-70592-5},
+	pages = {104--128},
+	publisher = {Springer Berlin Heidelberg},
+	title = {Kilim: Isolation-Typed Actors for Java},
+	year = {2008}
+}
+
+
+@phdthesis{dupont:tel-04165215,
+  title = {{Correct-by-Construction Design of Hybrid Systems Based on Refinement and Proof}},
+  author = {Dupont, Guillaume},
+  year = 2021,
+  month = Jan,
+  number = {2021INPT0001},
+  url = {https://theses.hal.science/tel-04165215},
+  school = {{Institut National Polytechnique de Toulouse - INPT}},
+  keywords = {Cyber physical systems ; Proof ; Refinement ; Correct by construction ; Formal methods ; Syst{`e}mes cyber physiques ; Preuve ; Raffinement ; Correct par construction ; M{'e}thodes formelles},
+  type = {Theses},
+  pdf = {https://theses.hal.science/tel-04165215/file/DUPONT_Guillaume.pdf},
+  hal_id = {tel-04165215},
+  hal_version = {v1}
+}
+
+
+@article{formal-semantics-erlang,
+  author = {Bereczky, P{\'e}ter and Horp{\'a}csi, D{\'a}niel and Thompson, Simon},
+  doi = {10.3390/computers13110276},
+  issn = {2073-431X},
+  journal = {Computers},
+  number = {11},
+  title = {Program Equivalence in the Erlang Actor Model},
+  url = {https://www.mdpi.com/2073-431X/13/11/276},
+  volume = {13},
+  year = {2024}
+}
+
+@inproceedings{taxonomy-of-actor-models,
+author = {De Koster, Joeri and Van Cutsem, Tom and De Meuter, Wolfgang},
+title = {43 years of actors: a taxonomy of actor models and their key properties},
+year = {2016},
+isbn = {9781450346399},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3001886.3001890},
+doi = {10.1145/3001886.3001890},
+abstract = {The Actor Model is a message passing concurrency model that was originally proposed by Hewitt et al. in 1973. It is now 43 years later and since then researchers have explored a plethora of variations on this model. This paper presents a history of the Actor Model throughout those years. The goal of this paper is not to provide an exhaustive overview of every actor system in existence but rather to give an overview of some of the exemplar languages and libraries that influenced the design and rationale of other actor systems throughout those years. This paper therefore shows that most actor systems can be roughly classified into four families, namely: Classic Actors, Active Objects, Processes and Communicating Event-Loops. This paper also defines the Isolated Turn Principle as a unifying principle across those four families. Additionally this paper lists some of the key properties along which actor systems can be evaluated and formulates some general insights about the design and rationale of the different actor families across those dimensions.},
+booktitle = {Proceedings of the 6th International Workshop on Programming Based on Actors, Agents, and Decentralized Control},
+pages = {31–40},
+numpages = {10},
+keywords = {Concurrency, Actor Model},
+location = {Amsterdam, Netherlands},
+series = {AGERE 2016}
+}
+
+@book{hercog2020communication,
+  title={Communication protocols: principles, methods and specifications},
+  author={Hercog, Drago},
+  year={2020},
+  publisher={Springer Nature}
+}
+@article{Xia_2019,
+   title={Interaction trees: representing recursive and impure programs in Coq},
+   volume={4},
+   ISSN={2475-1421},
+   url={http://dx.doi.org/10.1145/3371119},
+   DOI={10.1145/3371119},
+   number={POPL},
+   journal={Proceedings of the ACM on Programming Languages},
+   publisher={Association for Computing Machinery (ACM)},
+   author={Xia, Li-yao and Zakowski, Yannick and He, Paul and Hur, Chung-Kil and Malecha, Gregory and Pierce, Benjamin C. and Zdancewic, Steve},
+   year={2019},
+   month=dec, pages={1–32} }
+
+                  
+@article{ElixirST23journal,
+title = {ElixirST: A session-based type system for Elixir modules},
+journal = {Journal of Logical and Algebraic Methods in Programming},
+volume = {135},
+pages = {100891},
+year = {2023},
+issn = {2352-2208},
+doi = {https://doi.org/10.1016/j.jlamp.2023.100891},
+url = {https://www.sciencedirect.com/science/article/pii/S2352220823000457},
+author = {Adrian Francalanza and Gerard Tabone},
+keywords = {Session types, Type systems, Elixir, Functional programming},
+abstract = {This paper investigates the adaptation of session types to provide behavioural information about Elixir modules. We devise a type system, called ElixirST, which statically determines whether functions in an Elixir module observe their endpoint specifications, expressed as session types; a corresponding tool automating this typechecking has also been constructed. In this paper we also formally validate this type system. An LTS-based operational semantics for the language fragment supported by the type system is developed, modelling its runtime behaviour when interacting with the module client. This operational semantics is then used to prove a form of session fidelity and progress for ElixirST.}
+}
+
+@inproceedings{STelixir2021agere,
+author = {Tabone, Gerard and Francalanza, Adrian},
+title = {Session types in Elixir},
+year = {2021},
+isbn = {9781450391047},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3486601.3486708},
+doi = {10.1145/3486601.3486708},
+abstract = {This paper proposes an adaptation of session types to provide behavioural information about public functions in Elixir modules. We formalise typechecking rules for the main constructs of the language. This allows us to statically determine whether a function implementation observes its session endpoint specification. Based on this type system, we then construct a tool that automates typechecking for Elixir modules.},
+booktitle = {Proceedings of the 11th ACM SIGPLAN International Workshop on Programming Based on Actors, Agents, and Decentralized Control},
+pages = {12–23},
+numpages = {12},
+keywords = {Elixir, concurrency, functional programming, session types},
+location = {Chicago, IL, USA},
+series = {AGERE 2021}
+}
+
+@misc{comp-func-enc-math,
+   title = {Computable Function},
+   howpublished = {\url{http://encyclopediaofmath.org/index.php?title=Computable_function&oldid=41830}},
+   note = {retrieved 11 Nov. 2024}
+}
+@comment{comp-func-enc-math,
+author       =  {{European Mathematical Society}},
+title        = {{Cauchy inequality}},
+booktitle    =  {{Encyclopedia of Mathematics}},
+howpublished =  {\url{http://encyclopediaofmath.org/index.php?title=Computable_function&oldid=41830}},
+month        = feb,
+year         =  {2021},
+publisher    =  {EMS Press}
+}
+@inbook{Moore1956,
+url = {https://doi.org/10.1515/9781400882618-006},
+title = {Gedanken-Experiments on Sequential Machines},
+booktitle = {Automata Studies},
+author = {Edward F.\ Moore},
+editor = {C.\ E.\ Shannon and J.\ McCarthy},
+publisher = {Princeton University Press},
+address = {Princeton},
+pages = {129--154},
+doi = {doi:10.1515/9781400882618-006},
+isbn = {9781400882618},
+year = {1956},
+lastchecked = {2024-11-19}
+}
+@article{Aceto_2011,
+   title={Modelling and Simulation of Asynchronous Real-Time Systems using Timed Rebeca},
+   volume={58},
+   ISSN={2075-2180},
+   url={http://dx.doi.org/10.4204/EPTCS.58.1},
+   DOI={10.4204/eptcs.58.1},
+   journal={Electronic Proceedings in Theoretical Computer Science},
+   publisher={Open Publishing Association},
+   author={Aceto, Luca and Cimini, Matteo and Ingolfsdottir, Anna and Reynisson, Arni Hermann and Sigurdarson, Steinar Hugi and Sirjani, Marjan},
+   year={2011},
+   month=jul, pages={1–19} }
+
+@article{brand1983cfsm,
+  title={On communicating finite-state machines},
+  author={Brand, Daniel and Zafiropulo, Pitro},
+  journal={Journal of the ACM},
+  volume={30},
+  number={2},
+  pages={323--342},
+  year={1983},
+  publisher={ACM New York, NY, USA}
+}
+
+
+@InProceedings{10.1007/978-3-030-50029-0_6,
+author="Barbanera, Franco
+and Lanese, Ivan
+and Tuosto, Emilio",
+editor="Bliudze, Simon
+and Bocchi, Laura",
+title="Choreography Automata",
+booktitle="Coordination Models and Languages",
+year="2020",
+publisher="Springer International Publishing",
+address="Cham",
+pages="86--106",
+abstract="Automata models are well-established in many areas of computer science and are supported by a wealth of theoretical results including a wide range of algorithms and techniques to specify and analyse systems. We introduce choreography automata for the choreographic modelling of communicating systems. The projection of a choreography automaton yields a system of communicating finite-state machines. We consider both the standard asynchronous semantics of communicating systems and a synchronous variant of it. For both, the projections of well-formed automata are proved to be live as well as lock- and deadlock-free.",
+isbn="978-3-030-50029-0"
+}
+
+
+@misc{gheri2023hybridmultipartysessiontypes,
+      title={Hybrid Multiparty Session Types -- Full Version}, 
+      author={Lorenzo Gheri and Nobuko Yoshida},
+      year={2023},
+      eprint={2302.01979},
+      archivePrefix={arXiv},
+      primaryClass={cs.PL},
+      url={https://arxiv.org/abs/2302.01979}, 
+}
+
+
+@InProceedings{10.1007/978-3-030-25540-4_6,
+author="Lange, Julien
+and Yoshida, Nobuko",
+editor="Dillig, Isil
+and Tasiran, Serdar",
+title="Verifying Asynchronous Interactions via Communicating Session Automata",
+booktitle="Computer Aided Verification",
+year="2019",
+publisher="Springer International Publishing",
+address="Cham",
+pages="97--117",
+abstract="This paper proposes a sound procedure to verify properties of communicating session automata (csa), i.e., communicating automata that include multiparty session types. We introduce a new asynchronous compatibility property for csa, called k-multiparty compatibility (k-mc), which is a strict superset of the synchronous multiparty compatibility used in theories and tools based on session types. It is decomposed into two bounded properties: (i) a condition called k-safety which guarantees that, within the bound, all sent messages can be received and each automaton can make a move; and (ii) a condition called k-exhaustivity which guarantees that all k-reachable send actions can be fired within the bound. We show that k-exhaustivity implies existential boundedness, and soundly and completely characterises systems where each automaton behaves equivalently under bounds greater than or equal to k. We show that checking k-mc is pspace-complete, and demonstrate its scalability empirically over large systems (using partial order reduction).",
+isbn="978-3-030-25540-4"
+}
+
+
+@article{kick2004modularity,
+  title={Modularity of behaviours for mathematical operational semantics},
+  author={Kick, Marco and Power, John},
+  journal={Electronic Notes in Theoretical Computer Science},
+  volume={106},
+  pages={185--200},
+  year={2004},
+  publisher={Elsevier}
+}
+
+
+
+@Inbook{Bruni2021choregraphies,
+author="Bruni, Alessandro
+and Carbone, Marco
+and Giustolisi, Rosario
+and M{\"o}dersheim, Sebastian
+and Sch{\"u}rmann, Carsten",
+editor="Dougherty, Daniel
+and Meseguer, Jos{\'e}
+and M{\"o}dersheim, Sebastian Alexander
+and Rowe, Paul",
+title="Security Protocols as Choreographies",
+bookTitle="Protocols, Strands, and Logic: Essays Dedicated to Joshua Guttman on the Occasion of his 66.66th Birthday",
+year="2021",
+publisher="Springer International Publishing",
+address="Cham",
+pages="98--111",
+abstract="A choreography gives a description of how endpoints in a concurrent systems should exchange messages during its execution. In this paper, we informally introduce a choreographic language for describing security protocols and a property language for expressing non-trivial security properties of such protocols. We motivate this work using the envelope protocol [2] as an example, which ensures auditable transfers by means of a TPM, that guarantees that the issuer of a message always learns whether such message has been opened or not. We then take an implementation of the TPM formulated as an API and discuss how such implementation and the usage of the TPM in the protocol can be related. Finally, we illustrate how the protocol and property descriptions can be translated into multiset rewrite rules and metric first order logic respectively, in order to check if auditable transfer holds.",
+isbn="978-3-030-91631-2",
+doi="10.1007/978-3-030-91631-2_5",
+url="https://doi.org/10.1007/978-3-030-91631-2_5"
+}
+
+@inproceedings{honda2008mpst,
+  title={Multiparty asynchronous session types},
+  author={Honda, Kohei and Yoshida, Nobuko and Carbone, Marco},
+  booktitle={Proceedings of the 35th annual ACM SIGPLAN-SIGACT symposium on Principles of programming languages},
+  pages={273--284},
+  year={2008}
+}
+
+@book{montesi2023choreographies,
+  title={Introduction to Choreographies},
+  author={Montesi, Fabrizio},
+  year={2023},
+  publisher={Cambridge University Press}
+}
+
+
+@inproceedings{Hewitt2006,
+  title     = {What Is Commitment? Physical, Organizational, and Social (Revised)},
+  author    = {Hewitt, Carl},
+  year      = 2007,
+  publisher = {Springer Berlin Heidelberg},
+  address   = {Berlin, Heidelberg},
+  pages     = {293--307},
+  isbn      = {978-3-540-74459-7}
+}
+
+@phdthesis{clinger1981,
+  title     = {Foundations of Actor Semantics},
+  author    = {William Douglas Clinger},
+  year      = 1981,
+  url       = {https://dspace.mit.edu/handle/1721.1/6935},
+  school    = {Massachusetts Institute of Technology (MIT)}
+}
+
+@inproceedings{Hewitt1973,
+  title     = {A Universal Modular Actor Formalism for Artificial Intelligence},
+  author    = {Carl Hewitt and Peter Bishop and Richard Steiger},
+  year      = 1973,
+  location  = {San Francisco, CA, USA},
+  publisher = {Morgan Kaufmann Publishers Inc.},
+  pages     = {235--245}
+}
+
+@book{Scott1976,
+  title     = {Toward a Mathematical Semantics for Computer Languages},
+  author    = {Dana Scott and Christopher Strachey},
+  year      = 1976,
+  publisher = {Prentice-Hall}
+}
+
+@book{Agha1986,
+  title     = {Actors: A Model of Concurrent Computation in Distributed Systems},
+  author    = {Gul A. Agha},
+  year      = 1986,
+  publisher = {MIT Press},
+  isbn      = {0-262-01092-5}
+}
+
+@article{agha-overview-actor-languages,
+  title     = {An overview of actor languages},
+  author    = {Agha, Gul},
+  year      = 1986,
+  month     = {jun},
+  journal   = {SIGPLAN Not.},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  volume    = 21,
+  number    = 10,
+  pages     = {58–67},
+  doi       = {10.1145/323648.323743},
+  url       = {https://doi.org/10.1145/323648.323743},
+  issue_date = {Oct. 1986}
+}
+
+@article{erlang,
+  title     = {The development of Erlang},
+  author    = {Armstrong, Joe},
+  year      = 1997,
+  month     = {aug},
+  journal   = {SIGPLAN Not.},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  volume    = 32,
+  number    = 8,
+  pages     = {196–203},
+  doi       = {10.1145/258949.258967},
+  url       = {https://doi.org/10.1145/258949.258967}
+}
+
+@book{milner-concurrency,
+  title     = {Communication and Concurrency},
+  author    = {Milner, R.},
+  year      = 1989,
+  publisher = {Prentice-Hall, Inc.},
+  address   = {USA},
+  isbn      = {0131149849}
+}
+
+@article{behavioural-timed-systems,
+  title     = {{Behavioural equivalences for timed systems}},
+  author    = {Tomasz Brengos and Marco Peressotti},
+  year      = 2019,
+  month     = Feb,
+  journal   = {{Logical Methods in Computer Science}},
+  volume    = {{Volume 15, Issue 1}},
+  doi       = {10.23638/LMCS-15(1:17)2019},
+  url       = {https://lmcs.episciences.org/5220}
+}
+
+@inproceedings{actario,
+  title     = {Actario: A framework for reasoning about actor systems},
+  author    = {Yasutake, Shohei and Watanabe, Takuo},
+  year      = 2015
+}
+
+@article{Talcott1998,
+  title     = {Composable Semantic Models for Actor Theories},
+  author    = {Talcott,  Carolyn L.},
+  year      = 1998,
+  journal   = {Higher Order Symbolic Computation},
+  publisher = {Springer Science and Business Media LLC},
+  volume    = 11,
+  number    = 3,
+  pages     = {281–343},
+  doi       = {10.1023/a:1010042915896},
+  url       = {http://dx.doi.org/10.1023/A:1010042915896}
+}
+
+@article{lamport-global-states,
+  title     = {Distributed snapshots: determining global states of distributed systems},
+  author    = {Chandy, K. Mani and Lamport, Leslie},
+  year      = 1985,
+  month     = {feb},
+  journal   = {ACM Transactions on Computer Systems},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  volume    = 3,
+  number    = 1,
+  pages     = {63–75},
+  doi       = {10.1145/214451.214456},
+  url       = {https://doi.org/10.1145/214451.214456},
+  issue_date = {Feb. 1985}
+}
+
+@inproceedings{selectors-actors-2014,
+  title     = {Selectors: Actors with Multiple Guarded Mailboxes},
+  author    = {Imam,  Shams M. and Sarkar,  Vivek},
+  year      = 2014,
+  month     = oct,
+  publisher = {ACM},
+  series    = {SPLASH '14},
+  doi       = {10.1145/2687357.2687360},
+  url       = {http://dx.doi.org/10.1145/2687357.2687360},
+  collection = {SPLASH '14}
+}
+
+@article{special-delivery-mailbox-types-2023,
+  title     = {Special Delivery: Programming with Mailbox Types},
+  author    = {Fowler,  Simon and Attard,  Duncan Paul and Sowul,  Franciszek and Gay,  Simon J. and Trinder,  Phil},
+  year      = 2023,
+  month     = aug,
+  journal   = {Proceedings of the ACM on Programming Languages},
+  publisher = {Association for Computing Machinery (ACM)},
+  volume    = 7,
+  number    = {ICFP},
+  pages     = {78–107},
+  doi       = {10.1145/3607832},
+  url       = {http://dx.doi.org/10.1145/3607832}
+}
+
+@article{there-is-no-now,
+  title     = {There is No Now: Problems with simultaneity in distributed systems},
+  author    = {Sheehy, Justin},
+  year      = 2015,
+  month     = {mar},
+  journal   = {Queue},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  volume    = 13,
+  number    = 3,
+  pages     = {20–27},
+  doi       = {10.1145/2742694.2745385},
+  url       = {https://doi.org/10.1145/2742694.2745385}
+}
+
+@article{why-local-clocks-are-easy,
+  title     = {Why Logical Clocks are Easy: Sometimes all you need is the right language.},
+  author    = {Baquero, Carlos and Pregui\c{c}a, Nuno},
+  year      = 2016,
+  month     = {feb},
+  journal   = {Queue},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  volume    = 14,
+  number    = 1,
+  pages     = {53–69},
+  doi       = {10.1145/2898442.2917756},
+  url       = {https://doi.org/10.1145/2898442.2917756}
+}
+
+@article{10.1145/359545.359563,
+  title     = {Time, clocks, and the ordering of events in a distributed system},
+  author    = {Lamport, Leslie},
+  year      = 1978,
+  month     = {jul},
+  journal   = {Commun. ACM},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  volume    = 21,
+  number    = 7,
+  pages     = {558–565},
+  doi       = {10.1145/359545.359563},
+  url       = {https://doi.org/10.1145/359545.359563},
+  issue_date = {July 1978},
+}
+
+
+@inproceedings{abcl1OOPSALA86,
+author = {Yonezawa, Akinori and Briot, Jean-Pierre and Shibayama, Etsuya},
+title = {Object-oriented concurrent programming in ABCL/1},
+year = {1986},
+isbn = {0897912047},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/28697.28722},
+doi = {10.1145/28697.28722},
+abstract = {An object-oriented computation model is presented which is designed for modelling and describing a wide variety of concurrent systems. In this model, three types of message passing are incorporated. An overview of a programming language called ABCL/1, whose semantics faithfully reflects this computation model, is also presented. Using ABCL/1, a simple scheme of distributed problem solving is illustrated. Furthermore, we discuss the reply destination mechanism and its applications. A distributed “same fringe” algorithm is presented as an illustration of both the reply destination mechanism and the future type message passing which is one of the three message passing types in our computation model.},
+booktitle = {Conference Proceedings on Object-Oriented Programming Systems, Languages and Applications},
+pages = {258–268},
+numpages = {11},
+location = {Portland, Oregon, USA},
+series = {OOPSLA '86}
+}
+
+
+
+
+@book{DBLP:books/daglib/0016361,
+  author       = {Robert I. Soare},
+  title        = {Recursively enumerable sets and degrees - a study of computable functions
+                  and computability generated sets},
+  series       = {Perspectives in mathematical logic},
+  publisher    = {Springer},
+  year         = {1987},
+  isbn         = {978-3-540-15299-6},
+  timestamp    = {Fri, 12 Jul 2019 14:39:18 +0200},
+  biburl       = {https://dblp.org/rec/books/daglib/0016361.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+
+
+@phdthesis{DBLP:phd/dnb/Stutz24,
+  author       = {Felix Stutz},
+  title        = {Implementability of Asynchronous Communication Protocols - The Power
+                  of Choice},
+  school       = {Kaiserslautern University of Technology, Germany},
+  year         = {2024},
+  url          = {https://kluedo.ub.rptu.de/frontdoor/index/index/docId/8077},
+  urn          = {urn:nbn:de:hbz:386-kluedo-80778},
+  timestamp    = {Wed, 10 Jul 2024 21:08:49 +0200},
+  biburl       = {https://dblp.org/rec/phd/dnb/Stutz24.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+
+
+@article{rsmTutorialScheider90,
+author = {Schneider, Fred B.},
+title = {Implementing fault-tolerant services using the state machine approach: a tutorial},
+year = {1990},
+issue_date = {Dec. 1990},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {22},
+number = {4},
+issn = {0360-0300},
+url = {https://doi.org/10.1145/98163.98167},
+doi = {10.1145/98163.98167},
+abstract = {The state machine approach is a general method for implementing fault-tolerant services in distributed systems. This paper reviews the approach and describes protocols for two different failure models—Byzantine and fail stop. Systems reconfiguration techniques for removing faulty components and integrating repaired components are also discussed.},
+journal = {ACM Comput. Surv.},
+month = dec,
+pages = {299–319},
+numpages = {21}
+}
+
+@inproceedings{10.1145/592849.592858,
+author = {Armstrong, Joe},
+title = {Getting Erlang to talk to the outside world},
+year = {2002},
+isbn = {1581135920},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/592849.592858},
+doi = {10.1145/592849.592858},
+abstract = {How should Erlang talk to the outside world? --- this question becomes interesting if we want to build distributed applications where Erlang is one of a number of communicating components.We assume these components interact by exchanging messages --- at this level of abstraction, details of programming language, operating system and host architecture are irrelevant. What is important is the ease with which we can construct such systems, and the precision with which we can isolate faulty components in such a system. Also of importance is the efficiency (both in terms of CPU and bandwidth requirements) with which we can send and receive messages in the system.One widely adopted solution to this problem involves the XML family of standards (XML, XML-schemas, SOAP and WSDL) --- we argue that this is inefficient and overly complex and propose basing our system on a simpler binary scheme called UBF (Universal Binary Format). The UBF scheme has the expressive power of the XML set of standards --- but is considerably simpler.UBF has been prototyped in Erlang --- the entire scheme (equivalent in semantic power to the XML series of standards) was implemented in a mere 1100 lines of Erlang. UBF encoding of terms is also shown to be more space efficient than the existing "Erlang term format". For example, UBF encoded parse trees of Erlang programs are on average about 60\% of the size of the equivalent ETS format encoding which is used in the open source Erlang distribution.},
+booktitle = {Proceedings of the 2002 ACM SIGPLAN Workshop on Erlang},
+pages = {64–72},
+numpages = {9},
+location = {Pittsburgh, Pennsylvania},
+series = {ERLANG '02}
+}
+                  
+
+@book{MauwVelink93,
+editor = {Mauw, S. and Veltink, G. J.},
+title = {Algebraic specification of communication protocols},
+year = {1993},
+isbn = {0521418836},
+publisher = {Cambridge University Press},
+address = {USA}
+}
+
+@article{dijkstra-guarded-commands,
+author = {Dijkstra, Edsger W.},
+title = {Guarded commands, nondeterminacy and formal derivation of programs},
+year = {1975},
+issue_date = {Aug. 1975},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {18},
+number = {8},
+issn = {0001-0782},
+url = {https://doi.org/10.1145/360933.360975},
+doi = {10.1145/360933.360975},
+abstract = {So-called “guarded commands” are introduced as a building block for alternative and repetitive constructs that allow nondeterministic program components for which at least the activity evoked, but possibly even the final state, is not necessarily uniquely determined by the initial state. For the formal derivation of programs expressed in terms of these constructs, a calculus will be be shown.},
+journal = {Commun. ACM},
+month = aug,
+pages = {453–457},
+numpages = {5},
+keywords = {termination, sequencing primitives, repetition, programming methodology, programming languages, programming language semantics, program semantics, nondeterminancy, derivation of programs, correctness proof, case-construction}
+}

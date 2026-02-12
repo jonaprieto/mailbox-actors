@@ -1,0 +1,205 @@
+\begin{example}[Ticker Engine]\label{ex:ticker-engine}%
+    Let us define a simple ticker engine that processes increment and count
+    messages. This example demonstrates basic state management and actor
+    spawning with a continuation pattern.
+    
+    First, we define the message interface for the ticker engine:
+    
+    \begin{equation}\label{eq:ticker-message-interface}
+    \begin{aligned}
+    \typedef%
+    {
+      \msgtype{\mathsf{ticker}}
+    }{    &  \msg{Increment}() \\
+    \mid &  \msg{Count}() \\
+    \mid &  \msg{CountResponse}(\N)
+    }\,,
+    \end{aligned}
+    \end{equation}
+    
+    where:
+    \begin{itemize}
+        \item $\msg{Increment}()$ increments the internal counter
+        \item $\msg{Count}()$ requests the current counter value
+        \item $\msg{CountResponse}(value)$ returns the current counter value
+    \end{itemize}
+    
+    The configuration type for the ticker engine:
+    
+    \begin{equation}\label{eq:ticker-configuration}
+    \begin{aligned}
+    \typedef{%
+      \ctype{C}_{\mathsf{ticker}}
+    }{    &  \ccon{Standard}(\N) 
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    where the natural number parameter specifies the starting value for the
+    ticker.
+    
+    The environment type is quite simple and just tracks the ticker's count:
+    
+    \begin{equation}\label{eq:ticker-environment}
+    \begin{aligned}
+    \typedef{%
+      \ctype{L}_{\mathsf{ticker}}
+    }{    &  \ccon{TickerState}(\N)
+    }\,,
+    \end{aligned}
+    \end{equation}
+    
+    where:
+    \begin{itemize}
+        \item $\ccon{TickerState}$ tracks the current count value
+    \end{itemize}
+    
+    The guard for processing increment messages:
+    
+    \begin{equation}\label{eq:ticker-increment-guard}
+    \begin{aligned}
+    &\typing{
+      g_{\mathsf{increment}}
+    }{
+      \In{\mathsf{ticker}}
+        \to
+      \Option{\Unit}
+    }\,. \\
+    &\defequal{
+      g_{\mathsf{increment}}
+    }{
+      \lambda \langle m, \ignore, \ignore \rangle .
+      \mathsf{case}\ m\ \mathsf{of}\ \{ \\
+    &  \msg{Increment}() \Rightarrow \some{()}; \\
+    &  \ignore \Rightarrow \none \\
+    &\}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The corresponding action increments the counter and spawns a new ticker when
+    reaching 100:
+    
+    \begin{equation}\label{eq:ticker-increment-action}
+    \begin{aligned}
+    &\typing{
+      a_{\mathsf{increment}}
+    }{
+      \Unit \times \In{\mathsf{ticker}}
+        \to \Out{\mathsf{ticker}}
+    }\,. \\
+    &\defequal{
+      a_{\mathsf{increment}}
+    }{
+      \lambda \langle \ignore, \langle \mathsf{sender}, \ignore, \langle \mathsf{count} \rangle \rangle \rangle . \\
+    &  \chain{ \\
+    &    \mathsf{let}\ newCount = \mathsf{count} + 1 \\
+    &    \update{\langle newCount \rangle} \\
+    &    \mathsf{if}\ newCount \div 100 = 0 \land newCount > 0\ \mathsf{then} \\
+    &      \chain{ \\
+    &        \spawn{ \\
+    &          \configval{%
+                \some{\self}%
+              }{%
+                \mathsf{ticker}%
+              }{%
+                \ccon{Standard}(newCount)%
+              }%
+            }{%
+              \localenvval{%
+                \ccon{TickerState}(newCount)%
+              }{%
+                [(\self, \ignore)]%
+              }%
+            }%
+          }{ \\
+    &        \send{\mathsf{sender}}{\msg{CountResponse}(newCount)} \\
+    &        } \\
+    &    } \\
+    &  \}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The guard for processing count messages:
+    
+    \begin{equation}\label{eq:ticker-count-guard}
+    \begin{aligned}
+    &\typing{
+      g_{\mathsf{count}}
+    }{
+      \In{\mathsf{ticker}}
+        \to
+      \Option{\Unit}
+    }\,. \\
+    &\defequal{
+      g_{\mathsf{count}}
+    }{
+      \lambda \langle m, \ignore, \ignore \rangle .
+      \mathsf{case}\ m\ \mathsf{of}\ \{ \\
+    &  \msg{Count}() \Rightarrow \some{()}; \\
+    &  \ignore \Rightarrow \none \\
+    &\}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The corresponding action returns the current count:
+    
+    \begin{equation}\label{eq:ticker-count-action}
+    \begin{aligned}
+    &\typing{
+      a_{\mathsf{count}}
+    }{
+      \Unit \times \In{\mathsf{ticker}}
+        \to \Out{\mathsf{ticker}}
+    }\,. \\
+    &\defequal{
+      a_{\mathsf{count}}
+    }{
+      \lambda \langle \ignore, \langle \mathsf{sender}, \ignore, \langle \mathsf{count} \rangle \rangle \rangle . \\
+    &  \send{\mathsf{sender}}{\msg{CountResponse}(\mathsf{count})}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    The initialization action for the ticker:
+    
+    \begin{equation}\label{eq:ticker-init-action}
+    \begin{aligned}
+    &\typing{
+      a_{\mathsf{init}}
+    }{
+      \In{\mathsf{ticker}}
+        \to \Out{\mathsf{ticker}}
+    }\,. \\
+    &\defequal{
+      a_{\mathsf{init}}
+    }{
+      \lambda \langle \ignore, \ccon{Standard}(startValue), \langle \mathsf{count} \rangle \rangle . \\
+    &  \update{\langle startValue \rangle}
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    Finally, we define the complete behaviour of the ticker engine:
+    
+    \begin{equation}\label{eq:ticker-behaviour}
+    \begin{aligned}
+    \defequal{
+      \typing{\behaviour{\mathsf{ticker}}}{\behaviourtype{\mathsf{ticker}}}
+    }{
+      [ a_{\mathsf{init}}
+      , g_{\mathsf{increment}} \odot a_{\mathsf{increment}}
+      , g_{\mathsf{count}} \odot a_{\mathsf{count}}
+      ]
+    }\,.
+    \end{aligned}
+    \end{equation}
+    
+    This example demonstrates a simple stateful actor that can spawn
+    continuations of itself. When the count reaches multiples of 100, the ticker
+    spawns a new ticker to continue counting from the current value. This
+    pattern could be useful for processes that need to be periodically refreshed
+    or migrated to maintain system health.
+\end{example} 
