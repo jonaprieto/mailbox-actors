@@ -657,8 +657,22 @@ system-configured engine satisfying:
   \item $\typing{(\deletemsgop)}{L_m \times \msgtype{i} \to L_m}$ for
   message deletion.
   \end{itemize}
+\item The default behaviour $b_m$ consists of a single guarded action
+  $\guardedactionval{g_m}{a_m}$ where:
+  \begin{itemize}
+  \item $g_m(\append(v), c, q) \coloneqq \some{v}$\,: the guard always
+  matches, extracting the payload $v$ from the $\append$ wrapper.
+  \item $a_m(v, \append(v), c, q) \coloneqq \update{q \cup \{v\}}$\,: the
+  action stores the payload in the message store via an $\ccon{Update}$ effect.
+  \end{itemize}
 \end{itemize}
 \end{definition}
+
+Since the mailbox engine is a native actor, it processes incoming messages
+through its behaviour via \sruleref{Process}, just as any other engine.
+The \mruleref{Enqueue} rule transitions the mailbox engine from $\ready{f}$ to
+$\busy{w}$, after which the behaviour evaluates the message and produces an
+effect---by default, storing the payload in the message store.
 
 As depicted in \Cref{fig:mailbox-engines}, adding mailbox engines introduces a
 clear producer-consumer pattern. The separation of message storage from
@@ -804,10 +818,13 @@ $}
 
 \subsection{Engine Creation}\label{sec:engine-creation-rules}
 
+\sloppy
 Engine creation involves setting up both the processing engine and its
-dedicated mailbox engine. The following rule creates an individual engine.
+dedicated mailbox engine. The following auxiliary rule creates an individual
+engine; it is not a top-level system transition but is invoked by
+\sruleref{SpawnWithMailbox}.
 
-\begin{definition}[\srule{EngineSpawn}]\label{rule:s-EngineSpawn}
+\begin{definition}[\srule{EngineSpawn} (auxiliary)]\label{rule:s-EngineSpawn}
   \hspace{-1.5em}
   \begin{prooftree}
   \AxiomC{$%
@@ -946,10 +963,12 @@ To prevent zombie engine instances---engines in the $\terminated$ state---the
 system removes them.
 
 \begin{definition}[\srule{Clean}]\label{rule:s-Clean}
-An engine whose status is $\terminated$ is removed from the system.
+An engine whose status is $\terminated$ is removed from its node's engine map.
 \begin{prooftree}
 \AxiomC{$%
-  p \in \SetOfEngines%
+  \node{i} \in \SetOfNodes
+\quad %
+  p \in \SetOfEngines_i%
 \quad %
   \equal{%
     \status{p}
@@ -962,7 +981,7 @@ $}
   {\SystemState}%
   {clean}%
   {%
-    ( \SetOfNodes \setminus \{p\}%
+    ( \SetOfNodes[\enginemap_i \mapsto \enginemap_i \setminus \{p\}]%
     , \SetOfMessages%
     , \SetOfPlugins%
     )
@@ -991,14 +1010,19 @@ non-blocking sends, mailbox isolation with eventual delivery, and explicit
 lifecycle management.
 
 \begin{definition}[\mrule{Send}]\label{rule:m-Send}
-A message with payload $v$ conforming to the target's interface is placed in
-transit, addressed to the target engine's dedicated mailbox.
+A message with payload $v$ conforming to the target's interface is wrapped
+in the $\append$ constructor and placed in transit, addressed to the target
+engine's dedicated mailbox.
 \begin{prooftree}
 \AxiomC{$%
 \engine{s}, \engine{t} \in \SetOfEngines%
 \quad %
-  \typing{v}{\msgtype{t}}%
+  \equal{\mode(\engine{t})}{\process}%
 \quad %
+  \typing{v}{\msgtype{t}}%
+$}
+\noLine
+\UnaryInfC{$%
   \equal{%
     \SystemState
   }{%
@@ -1018,7 +1042,7 @@ $}
         \msgpacket%
           {\alpha(\engine{s})}
           {\mailboxOf{\enginemap(\engine{t})}}
-          {v}
+          {\append(v)}
       \}%
     , \SetOfPlugins%
     )
@@ -1033,54 +1057,52 @@ to add a message to $\SetOfMessages$.
 
 \begin{definition}[\mrule{Enqueue}]\label{rule:m-Enqueue}
 An in-transit message addressed to a mailbox engine is consumed from
-$\SetOfMessages$ and its payload is added to the mailbox's local state.
+$\SetOfMessages$, transitioning the mailbox engine from $\ready{f}$ to
+$\busy{w}$. The mailbox engine then processes the message through its
+behaviour via \sruleref{Process}.
 \begin{prooftree}
 \AxiomC{$%
-\equal{%
-  m
-}{%
-  \msgpacket%
-    {\ignore}
-    {\mailbox{t}}
-    {\append(v)}
-} \in \SetOfMessages
-\quad %
   \equal{%
-    q
+    m
   }{%
-    \mathsf{env}(\enginemap(\mailbox{t}))
-  }%
+    \msgpacket%
+      {\ignore}
+      {\mailbox{t}}
+      {w}
+  } \in \SetOfMessages
+\quad %
+  \mailbox{t} \in \SetOfEngines
 $}
-%
 \noLine
-\UnaryInfC{$
-\equal{%
-  \eta
-}{%
-  \mathsf{fst}(\mailbox{t})
-}
-\quad %
+\UnaryInfC{$%
   \equal{%
-    \enginemap'
+    \mailbox{t}
   }{%
-    \enginemap[%
-      \mailbox{t}
-        \mapsto%
-      \engineval%
-        {\ignore}
-        {\ignore}
-        {\ignore}
-        {\ignore}
-        {q \cup \{v\}}
-    ]%
+    \engineval%
+      {\ignore}
+      {\ignore}
+      {\ready{f}}
+      {\ignore}
+      {\ignore}
   }
+\quad %
+  \equal{f(w)}{\mathsf{tt}}
 $}
 \UnaryInfC{$%
 \opstep%
   {\SystemState}
   {enqueue}
   {%
-    ( \SetOfNodes[ \enginemap_\eta \mapsto \enginemap' ]
+    ( \SetOfNodes[
+        \enginemap(\mailbox{t})
+          \mapsto
+        \engineval%
+          {\ignore}
+          {\ignore}
+          {\busy{w}}
+          {\ignore}
+          {\ignore}
+      ]
     , \SetOfMessages \setminus \{m\}
     , \SetOfPlugins%
     )
@@ -1348,6 +1370,9 @@ $}
   {\noop}
 $}
 \end{prooftree}
+When $\behaviour{p}$ is the empty list, the universal quantifier in
+\bruleref{AllGuardsFail} is vacuously satisfied, so the rule produces
+$\evalstep{p}{v}{\noop}$.
 \end{definition}
 
 \subsection{Effect Execution}\label{sec:effect-execution}
@@ -1365,18 +1390,17 @@ rule.
 \AxiomC{$%
   \engine{s}, \engine{t} \in \SetOfEngines%
 \quad %
-  \equal%
-    {
-      l_{t}
-    }{%
-      \alpha(\engine{t})
-    }
+  \equal{l_{t}}{\alpha(\engine{t})}
+\quad %
+  \typing{v}{\msgtype{s}}
+\quad \typing{m}{\msgtype{t}}
 $}
 \noLine
 \UnaryInfC{$%
-      \typing{v}{\msgtype{s}}
-\quad \typing{m}{\msgtype{t}}
-\quad %
+  \vdots
+$}
+\noLine
+\UnaryInfC{$%
      \evalstep%
         {\engine{s}}
         {v}
@@ -1435,9 +1459,14 @@ $}
   \hspace{-1.5em}
   \begin{prooftree}
   \AxiomC{$%
-  \quad p \in \SetOfEngines%
+  p \in \SetOfEngines%
   \quad \typing{f}{\msgtype{p} \to \Bool}%
-  \quad \evalstep%
+  $}
+  \noLine
+  \UnaryInfC{$\vdots$}
+  \noLine
+  \UnaryInfC{$%
+  \evalstep%
             {p}
             {v}
             {\mfilter{f}}%
@@ -1513,6 +1542,8 @@ executed in the current state, and the second in the resulting state.
 \quad \typing{v}{\msgtype{p}}%
 $}
 \noLine
+\UnaryInfC{$\vdots$}
+\noLine
 \UnaryInfC{$%
      \evalstep%
         {p}
@@ -1542,7 +1573,12 @@ $}
 \AxiomC{$%
       p \in \SetOfEngines%
 \quad \typing{v}{\msgtype{p}}%
-\quad \evalstep%
+$}
+\noLine
+\UnaryInfC{$\vdots$}
+\noLine
+\UnaryInfC{$%
+\evalstep%
           {p}
           {v}
           {\terminate}%
@@ -1576,7 +1612,12 @@ Executing a $\noop$ effect leaves the system state unchanged.
   \AxiomC{$%
         p \in \SetOfEngines%
   \quad \typing{v}{\msgtype{p}}%
-  \quad \evalstep%
+  $}
+  \noLine
+  \UnaryInfC{$\vdots$}
+  \noLine
+  \UnaryInfC{$%
+  \evalstep%
           {p}
           {v}
           {\noop}
@@ -1706,7 +1747,6 @@ summarises all rules.
     \textbf{Judgment form} & \textbf{Rules} \\ \hline
     System-level operations &
         \sruleref{Node},
-        \sruleref{EngineSpawn},
         \sruleref{SpawnWithMailbox},
         \sruleref{Clean},
         \mruleref{Send},
@@ -1765,10 +1805,11 @@ invariants.
 \sruleref{EngineSpawn} creates an engine with correctly typed components;
 \sruleref{SpawnWithMailbox} composes two such creations.
 For message passing: \mruleref{Send} constructs messages with payloads
-satisfying $\typing{v}{\msgtype{t}}$ by premise; \mruleref{Enqueue} preserves
-the payload type when transferring from $\SetOfMessages$ to the mailbox;
+satisfying $\typing{v}{\msgtype{t}}$ by premise, wrapping in $\append$;
+\mruleref{Enqueue} preserves the message type when transitioning the mailbox
+engine to $\busy{w}$, where $w$ has type $\msgtype{m}$;
 \mruleref{Dequeue} preserves the type family when moving a message to the
-engine's busy state.
+processing engine's busy state.
 For effect execution: \eruleref{Update} requires $\typing{s}{\envtype{p}}$;
 \eruleref{Spawn} delegates to \sruleref{SpawnWithMailbox}; \eruleref{Terminate}
 and \eruleref{MFilter} change only the status, remaining in
@@ -1789,12 +1830,13 @@ can take a step.
 \begin{proof}[Proof sketch]
 We consider each case.
 (i)~If $\SetOfMessages \neq \emptyset$, let
-$\msgpacket{s}{t}{v} \in \SetOfMessages$. By well-typedness, $t$ is a valid
+$\msgpacket{s}{t}{w} \in \SetOfMessages$. By well-typedness, $t$ is a valid
 mailbox engine address. Since $\mailboxOf{}$ maps processing engines to their
 mailboxes and the message is addressed to a mailbox, the target mailbox engine
-exists. The mailbox engine accepts all messages via its $\append$ interface
-(its filter is $\lambda\_.\mathsf{tt}$), so the premises of \mruleref{Enqueue}
-are satisfied.
+exists. If the mailbox engine is in state $\ready{f}$, then since $f$ is
+$\lambda\_.\mathsf{tt}$ by default, the premises of \mruleref{Enqueue} are
+satisfied. If the mailbox engine is $\busy{\ignore}$, then case~(ii) applies
+to it and \sruleref{Process} fires, returning it to $\ready{\ignore}$.
 (ii)~If an engine $p$ is in state $\busy{m}$, the behaviour $\behaviour{p}$
 is a finite list of guarded actions. Each guard $g_j$ applied to the input
 either returns $\some{r}$ or $\none$. If some guard matches,
@@ -1826,13 +1868,15 @@ A processing engine never directly receives a message from $\SetOfMessages$.
 All messages are mediated by the corresponding mailbox engine.
 \end{proposition}
 \begin{proof}[Proof sketch]
-By inspection of the \mruleref{Send} rule, every message sent to a processing
-engine $\engine{t}$ is redirected to $\mailboxOf{\enginemap(\engine{t})}$,
-the target's mailbox. The \mruleref{Enqueue} rule delivers messages only to
-mailbox engines (identified by mode $\mail$). The \mruleref{Dequeue} rule is
-the sole mechanism by which a processing engine transitions from $\ready{f}$
-to $\busy{v}$, and it reads from the paired mailbox engine. Hence, no rule
-places a message directly in a processing engine's state.
+By inspection of the \mruleref{Send} rule: its premise
+$\equal{\mode(\engine{t})}{\process}$ restricts the target to a processing
+engine, and its conclusion redirects the message to
+$\mailboxOf{\enginemap(\engine{t})}$. The \mruleref{Enqueue} rule delivers
+messages only to mailbox engines by transitioning them to $\busy{w}$. The
+\mruleref{Dequeue} rule is the sole mechanism by which a processing engine
+transitions from $\ready{f}$ to $\busy{v}$, and it reads from the paired
+mailbox engine. Hence, no rule places a message directly in a processing
+engine's state.
 \end{proof}
 
 \begin{proposition}[Eventual Delivery]\label{prop:eventual-delivery}
@@ -1847,11 +1891,15 @@ engine. The mailbox engine's status is independent of its parent processing
 engine's termination: \sruleref{Clean} removes terminated engines, but the
 mailbox engine persists until it is independently terminated
 (\Cref{rem:terminated-messages}). Since the processing engine is
-non-terminated, neither is its mailbox. Thus \mruleref{Enqueue} is applicable
-to $m$, as the mailbox engine exists and accepts all messages via the
-$\append$ interface. Under weak fairness, \mruleref{Enqueue} is eventually
-applied, consuming $m$ from $\SetOfMessages$ and adding its payload to the
-mailbox's local state.
+non-terminated, neither is its mailbox. The mailbox engine accepts all messages
+(its filter is $\lambda\_.\mathsf{tt}$), so \mruleref{Enqueue} is applicable
+whenever the mailbox is in state $\ready{\ignore}$. If the mailbox is
+$\busy{\ignore}$, weak fairness ensures \sruleref{Process} eventually fires,
+returning it to $\ready{\ignore}$. Thus \mruleref{Enqueue} is eventually
+applicable and, under weak fairness, eventually applied---consuming $m$ from
+$\SetOfMessages$ and transitioning the mailbox to $\busy{m}$.
+\sruleref{Process} then evaluates the mailbox behaviour, storing the payload
+in the mailbox's local state.
 \end{proof}
 
 \section{Related Work}\label{sec:related-work}
