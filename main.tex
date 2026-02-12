@@ -950,12 +950,16 @@ Every processing engine is paired with a dedicated mailbox engine at creation.
   \defequal{\iota_m}{\freshid}
 $}
 \noLine
+\UnaryInfC{$\vdots$}
+\noLine
 \UnaryInfC{$%
   \opstep%
     {\SystemState, \node{i}, k, \pi, \iota_p, b_k, f, \process, c, s}
     {spawn}
     {\SystemState_1}
 $}
+\noLine
+\UnaryInfC{$\vdots$}
 \noLine
 \UnaryInfC{$%
   \opstep%
@@ -1552,6 +1556,8 @@ $}
   \typing{b}{\behaviourtype{j}}
 $}
 \noLine
+\UnaryInfC{$\vdots$}
+\noLine
 \UnaryInfC{$%
   \opstep%
     {\SystemState, \node{i}, j, \some{\alpha(p)}, \iota, b,
@@ -1689,6 +1695,8 @@ and the engine's return to the ready state.
           {\localenv{p}}
       }
 $}
+\noLine
+\UnaryInfC{$\vdots$}
 \noLine
 \UnaryInfC{$%
       \evalstep%
