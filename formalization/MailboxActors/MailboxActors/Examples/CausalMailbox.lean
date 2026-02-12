@@ -10,8 +10,6 @@ import Mathlib.Data.Finset.Basic
 /-!
 # Example: Causal Delivery Mailbox for Pub/Sub
 
-Paper Example (Causal Delivery Mailbox), §3.6 and §4.9.
-
 A concrete instantiation of `EngineSpec` for a distributed pub/sub system
 with two engine types — a topic relay (FIFO mailbox) and a local broker
 (causal-delivery mailbox). The broker's mailbox buffers messages whose
@@ -43,8 +41,7 @@ instance : Fintype PubSubIdx where
 /-- Simplified hash type for message identification. -/
 abbrev MsgHash := Nat
 
-/-- A pub/sub topic message with causal dependency metadata.
-    Corresponds to paper equation (eq:topic-msg). -/
+/-- A pub/sub topic message with causal dependency metadata. -/
 structure TopicMsg where
   publisher : Address
   deps      : Finset MsgHash    -- hashes of causal predecessors
@@ -74,8 +71,7 @@ structure BrokerConfig where
 structure RelayState where
   processed : Finset MsgHash
 
-/-- Causal delivery mailbox state.
-    Corresponds to paper equation (eq:causal-state). -/
+/-- Causal delivery mailbox state. -/
 structure CausalState where
   delivered : Finset MsgHash           -- hashes of delivered messages
   pending   : List (MsgHash × TopicMsg) -- buffered messages with unmet deps
@@ -133,8 +129,7 @@ def removeCascaded (pending : List (MsgHash × TopicMsg))
     (delivered : Finset MsgHash) : List (MsgHash × TopicMsg) :=
   pending.filter (fun (_, m) => !dependenciesMet m delivered)
 
-/-- The causal broker guard: always matches (extracts the payload).
-    Mirrors the paper's `g_c(Append(v), c, q) ≔ some(v)`. -/
+/-- The causal broker guard: always matches (extracts the payload). -/
 def causalGuard : GuardInput PubSubIdx.broker → Bool :=
   fun _ => true
 
@@ -142,11 +137,11 @@ def causalGuard : GuardInput PubSubIdx.broker → Bool :=
     - Dependencies met: store in ready, record hash, cascade pending.
     - Dependencies not met: buffer in pending.
 
-    Uses `Effect.chain` for the cascade, matching the paper trace (§4.9). -/
-def causalAction : GuardInput PubSubIdx.broker → Effect PubSubIdx.broker :=
-  fun inp =>
-    let msg : TopicMsg := inp.msg
-    let q : CausalState := inp.env.localState
+    Uses `Effect.chain` for the cascade. -/
+def causalAction (inp : GuardInput PubSubIdx.broker) (_ : causalGuard inp = true) :
+    Effect PubSubIdx.broker :=
+  let msg : TopicMsg := inp.msg
+  let q : CausalState := inp.env.localState
     if dependenciesMet msg q.delivered then
       -- Dependencies satisfied: deliver and cascade
       let newDelivered := q.delivered ∪ {msg.msgHash}
@@ -180,18 +175,19 @@ def causalAction : GuardInput PubSubIdx.broker → Effect PubSubIdx.broker :=
 def causalGuardedAction : GuardedAction PubSubIdx.broker :=
   { guard := causalGuard, action := causalAction }
 
-/-- Behaviour for the causal delivery mailbox: a single guarded action. -/
-def causalBehaviour : Behaviour PubSubIdx.broker :=
+/-- The underlying action list for the causal delivery mailbox. -/
+def causalActions : Behaviour PubSubIdx.broker :=
   [causalGuardedAction]
 
--- ============================================================================
--- § Properties
--- ============================================================================
-
-/-- The causal behaviour has non-overlapping guards (trivially, since
-    there is exactly one guard). Paper Definition 15. -/
-theorem causalNonOverlapping : NonOverlappingGuards causalBehaviour := by
+/-- Non-overlapping guards hold trivially (single guard). -/
+private theorem causalNonOverlapping : NonOverlappingGuards causalActions := by
   intro inp
-  simp [causalBehaviour, causalGuardedAction, causalGuard]
+  simp [causalActions, causalGuardedAction, causalGuard]
+
+/-- Well-formed behaviour for the causal delivery mailbox: a single
+    guarded action bundled with its non-overlapping proof. -/
+def causalBehaviour : WellFormedBehaviour PubSubIdx.broker :=
+  { actions := causalActions
+    nonOverlapping := causalNonOverlapping }
 
 end MailboxActors.Examples.CausalMailbox

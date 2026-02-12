@@ -8,8 +8,8 @@ import MailboxActors.Semantics.Judgment
 /-!
 # Effect Determinism
 
-Under non-overlapping guards, behaviour evaluation is deterministic.
-Paper Proposition 3.
+Behaviour evaluation is deterministic.  Non-overlapping guards are
+guaranteed by `WellFormedBehaviour`, so no explicit hypothesis is needed.
 -/
 
 namespace MailboxActors
@@ -22,26 +22,27 @@ private lemma guardEvalStep_det {i : EngineSpec.EngIdx} {p : Engine i}
     {ga : GuardedAction i} {v : EngineSpec.MsgType i} {E₁ E₂ : Effect i}
     (h₁ : GuardEvalStep i p ga v E₁) (h₂ : GuardEvalStep i p ga v E₂) : E₁ = E₂ := by
   cases h₁ with
-  | guardMatch inp₁ _ hinp₁ hg₁ =>
+  | guardMatch inp₁ _ _ hinp₁ =>
     subst hinp₁
     cases h₂ with
-    | guardMatch inp₂ _ hinp₂ _ => subst hinp₂; rfl
+    | guardMatch inp₂ _ _ hinp₂ => subst hinp₂; rfl
     | guardFail inp₂ _ hinp₂ hg₂ => subst hinp₂; simp_all
   | guardFail inp₁ _ hinp₁ hg₁ =>
     subst hinp₁
     cases h₂ with
-    | guardMatch inp₂ _ hinp₂ hg₂ => subst hinp₂; simp_all
+    | guardMatch inp₂ _ _ hinp₂ => subst hinp₂; simp_all
     | guardFail inp₂ _ hinp₂ _ => rfl
 
-/-- **Effect Determinism**: under non-overlapping guards, the effect is unique.
-    Paper Proposition 3. -/
+/-- **Effect Determinism**: the effect is unique.
+
+    Non-overlapping guards are guaranteed structurally by
+    `WellFormedBehaviour`, so no explicit hypothesis is needed. -/
 theorem effectDeterminism (i : EngineSpec.EngIdx)
     (p : Engine i) (v : EngineSpec.MsgType i) (E₁ E₂ : Effect i) :
-    NonOverlappingGuards p.behaviour →
     EvalStep i p v E₁ →
     EvalStep i p v E₂ →
     E₁ = E₂ := by
-  intro _ h₁ h₂
+  intro h₁ h₂
   cases h₁ with
   | guardStrategy ga₁ _ _ hga₁mem hge₁ hne₁ hall₁ =>
     cases h₂ with

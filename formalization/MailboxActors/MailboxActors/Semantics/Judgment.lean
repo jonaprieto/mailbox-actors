@@ -8,7 +8,7 @@ import MailboxActors.System.State
 # Judgment Forms
 
 The five judgment forms of the operational semantics, each defined as an
-inductive proposition.  Paper §4.2.
+inductive proposition.
 
 1. `OpStep`        — system-level operations
 2. `EvalStep`      — behaviour evaluation
@@ -22,7 +22,7 @@ namespace MailboxActors
 variable [EngineSpec]
 
 -- ============================================================================
--- § Guarded Action Evaluation  (Paper Judgment Form 3)
+-- § Guarded Action Evaluation
 -- ============================================================================
 
 /-- `GuardEvalStep i p ga v E` :  in the context of engine `p` of type `i`,
@@ -31,16 +31,13 @@ variable [EngineSpec]
     Rules: B-GuardedActionEval, B-NoMatchingGuard. -/
 inductive GuardEvalStep (i : EngineSpec.EngIdx) :
     Engine i → GuardedAction i → EngineSpec.MsgType i → Effect i → Prop where
-  /-- B-GuardedActionEval: guard matches, action fires.
-      Paper Definition 25. -/
+  /-- B-GuardedActionEval: guard matches, action fires. -/
   | guardMatch (p : Engine i) (ga : GuardedAction i) (v : EngineSpec.MsgType i)
-      (inp : GuardInput i) :
+      (inp : GuardInput i) (h : ga.guard inp = true) :
       p.status = EngineStatus.busy v →
       inp = ⟨v, p.config, p.env⟩ →
-      ga.guard inp = true →
-      GuardEvalStep i p ga v (ga.action inp)
-  /-- B-NoMatchingGuard: guard fails, produce `noop`.
-      Paper Definition 26. -/
+      GuardEvalStep i p ga v (ga.action inp h)
+  /-- B-NoMatchingGuard: guard fails, produce `noop`. -/
   | guardFail (p : Engine i) (ga : GuardedAction i) (v : EngineSpec.MsgType i)
       (inp : GuardInput i) :
       p.status = EngineStatus.busy v →
@@ -49,7 +46,7 @@ inductive GuardEvalStep (i : EngineSpec.EngIdx) :
       GuardEvalStep i p ga v Effect.noop
 
 -- ============================================================================
--- § Behaviour Evaluation  (Paper Judgment Form 2)
+-- § Behaviour Evaluation
 -- ============================================================================
 
 /-- `EvalStep i p v E` : engine `p` of type `i`, processing message `v`,
@@ -58,27 +55,25 @@ inductive GuardEvalStep (i : EngineSpec.EngIdx) :
     Rules: B-GuardStrategy, B-AllGuardsFail. -/
 inductive EvalStep (i : EngineSpec.EngIdx) :
     Engine i → EngineSpec.MsgType i → Effect i → Prop where
-  /-- B-GuardStrategy: exactly one guard matches.
-      Paper Definition 28. -/
+  /-- B-GuardStrategy: exactly one guard matches. -/
   | guardStrategy (p : Engine i) (v : EngineSpec.MsgType i)
       (ga : GuardedAction i) (E : Effect i) :
       p.status = EngineStatus.busy v →
-      ga ∈ p.behaviour →
+      ga ∈ p.behaviour.actions →
       GuardEvalStep i p ga v E →
       E ≠ Effect.noop →
-      (∀ ga' ∈ p.behaviour, ga' ≠ ga →
+      (∀ ga' ∈ p.behaviour.actions, ga' ≠ ga →
         GuardEvalStep i p ga' v Effect.noop) →
       EvalStep i p v E
-  /-- B-AllGuardsFail: no guard matches, produce `noop`.
-      Paper Definition 29. -/
+  /-- B-AllGuardsFail: no guard matches, produce `noop`. -/
   | allGuardsFail (p : Engine i) (v : EngineSpec.MsgType i) :
       p.status = EngineStatus.busy v →
-      (∀ ga ∈ p.behaviour,
+      (∀ ga ∈ p.behaviour.actions,
         GuardEvalStep i p ga v Effect.noop) →
       EvalStep i p v Effect.noop
 
 -- ============================================================================
--- § Effect Execution  (Paper Judgment Form 4)
+-- § Effect Execution
 -- ============================================================================
 
 /-- `EffectEvalStep κ E κ'` : executing effect `E` in state `κ` produces `κ'`.
@@ -86,11 +81,10 @@ inductive EvalStep (i : EngineSpec.EngIdx) :
     Rules: E-Send, E-Update, E-MFilter, E-Spawn, E-Chain, E-Terminate, E-Noop. -/
 inductive EffectEvalStep :
     SystemState → (i : EngineSpec.EngIdx) → Effect i → SystemState → Prop where
-  /-- E-Noop: no change.  Paper Definition 39. -/
+  /-- E-Noop: no change. -/
   | noop (κ : SystemState) (i : EngineSpec.EngIdx) :
       EffectEvalStep κ i Effect.noop κ
-  /-- E-Terminate: set engine status to `terminated`.
-      Paper Definition 37. -/
+  /-- E-Terminate: set engine status to `terminated`. -/
   | terminate (κ κ' : SystemState) (i : EngineSpec.EngIdx)
       (addr : Address) (p : Engine i) (v : EngineSpec.MsgType i) :
       κ.engineAt addr = some ⟨i, p⟩ →
@@ -99,8 +93,7 @@ inductive EffectEvalStep :
       -- κ' is κ with engine at addr updated to terminated status
       κ' = κ → -- placeholder: real update omitted for now
       EffectEvalStep κ i Effect.terminate κ'
-  /-- E-Update: replace engine environment.
-      Paper Definition 31. -/
+  /-- E-Update: replace engine environment. -/
   | update (κ κ' : SystemState) (i : EngineSpec.EngIdx)
       (addr : Address) (p : Engine i) (v : EngineSpec.MsgType i)
       (newEnv : EngineEnv i) :
@@ -108,8 +101,7 @@ inductive EffectEvalStep :
       EvalStep i p v (Effect.update newEnv) →
       κ' = κ → -- placeholder
       EffectEvalStep κ i (Effect.update newEnv) κ'
-  /-- E-MFilter: transition engine to `ready` with new filter.
-      Paper Definition 32. -/
+  /-- E-MFilter: transition engine to `ready` with new filter. -/
   | mfilter (κ κ' : SystemState) (i : EngineSpec.EngIdx)
       (addr : Address) (p : Engine i) (v : EngineSpec.MsgType i)
       (f : EngineSpec.MsgType i → Bool) :
@@ -117,8 +109,7 @@ inductive EffectEvalStep :
       EvalStep i p v (Effect.mfilter f) →
       κ' = κ → -- placeholder
       EffectEvalStep κ i (Effect.mfilter f) κ'
-  /-- E-Chain: sequence two effects.
-      Paper Definition 36. -/
+  /-- E-Chain: sequence two effects. -/
   | chain (κ κ' κ'' : SystemState) (i : EngineSpec.EngIdx)
       (e₁ e₂ : Effect i) :
       EffectEvalStep κ i e₁ κ' →
@@ -126,7 +117,7 @@ inductive EffectEvalStep :
       EffectEvalStep κ i (Effect.chain e₁ e₂) κ''
 
 -- ============================================================================
--- § System-Level Operations  (Paper Judgment Form 1)
+-- § System-Level Operations
 -- ============================================================================
 
 /-- Labels for system-level operations. -/
@@ -145,22 +136,21 @@ inductive OpLabel where
 
     This combines all system-level, message-passing, and processing rules. -/
 inductive OpStep : SystemState → OpLabel → SystemState → Prop where
-  /-- S-Node: create a new node.  Paper Definition 21. -/
+  /-- S-Node: create a new node. -/
   | sNode (κ κ' : SystemState) (newId : Nat) :
       κ.nextId = newId →
       κ' = { κ with
         nodes := κ.nodes ++ [{ id := newId, engines := [] : Node }],
         nextId := newId + 1 } →
       OpStep κ OpLabel.node κ'
-  /-- S-Clean: remove a terminated engine.  Paper Definition 24. -/
+  /-- S-Clean: remove a terminated engine. -/
   | sClean (κ κ' : SystemState) (nodeIdx : Nat) (addr : Address)
       (se : SomeEngine) :
       κ.engineAt addr = some se →
       (∃ _ : se.idx = se.idx, se.engine.status = EngineStatus.terminated) →
       κ' = κ → -- placeholder: remove engine from node's engine map
       OpStep κ OpLabel.clean κ'
-  /-- M-Send: place a message in transit to the target's mailbox.
-      Paper Definition 30. -/
+  /-- M-Send: place a message in transit to the target's mailbox. -/
   | mSend (κ κ' : SystemState) (sender target : Address)
       (i : EngineSpec.EngIdx) (v : EngineSpec.MsgType i)
       (senderEng targetEng : SomeEngine) :
@@ -171,8 +161,7 @@ inductive OpStep : SystemState → OpLabel → SystemState → Prop where
       κ' = { κ with
         messages := κ.messages ++ [⟨sender, κ.mailboxOf target, ⟨i, v⟩⟩] } →
       OpStep κ OpLabel.send κ'
-  /-- M-Enqueue: deliver a message to a ready mailbox engine.
-      Paper Definition 31. -/
+  /-- M-Enqueue: deliver a message to a ready mailbox engine. -/
   | mEnqueue (κ κ' : SystemState) (m : Message) (mboxEng : SomeEngine) :
       m ∈ κ.messages →
       κ.engineAt m.target = some mboxEng →
@@ -180,8 +169,7 @@ inductive OpStep : SystemState → OpLabel → SystemState → Prop where
       -- mailbox is ready and filter accepts message
       κ' = κ → -- placeholder: transition mailbox to Busy(w), remove m
       OpStep κ OpLabel.enqueue κ'
-  /-- M-Dequeue: transfer a message from mailbox to processing engine.
-      Paper Definition 32. -/
+  /-- M-Dequeue: transfer a message from mailbox to processing engine. -/
   | mDequeue (κ κ' : SystemState) (procAddr : Address)
       (procEng mboxEng : SomeEngine) :
       κ.engineAt procAddr = some procEng →
@@ -192,11 +180,11 @@ inductive OpStep : SystemState → OpLabel → SystemState → Prop where
       OpStep κ OpLabel.dequeue κ'
 
 -- ============================================================================
--- § Engine Processing  (Paper Judgment Form 5)
+-- § Engine Processing
 -- ============================================================================
 
 /-- `ProcessStep κ addr i v κ'` : engine at `addr` of type `i` processes
-    message `v`, yielding new state `κ'`.  Paper Definition 40 (S-Process). -/
+    message `v`, yielding new state `κ'`. -/
 inductive ProcessStep :
     SystemState → Address → (i : EngineSpec.EngIdx) →
     EngineSpec.MsgType i → SystemState → Prop where

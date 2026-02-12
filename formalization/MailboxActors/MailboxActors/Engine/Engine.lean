@@ -9,18 +9,18 @@ import MailboxActors.Engine.Behaviour
 
 /-!
 # Engine
-
-Paper Definitions 16–17.
 -/
 
 namespace MailboxActors
 
 variable [EngineSpec]
 
-/-- An engine of type `i` is a 5-tuple matching the paper's
-    `⟨Msg_i, b, o, c, s⟩`.  Paper Definition 17. -/
+/-- An engine of type `i` is a 5-tuple `⟨Msg_i, b, o, c, s⟩`.
+
+    The behaviour field uses `WellFormedBehaviour`, bundling the guard list
+    with a proof of non-overlapping guards. -/
 structure Engine (i : EngineSpec.EngIdx) where
-  behaviour : Behaviour i
+  behaviour : WellFormedBehaviour i
   status : EngineStatus i
   config : EngineConfig i
   env : EngineEnv i
