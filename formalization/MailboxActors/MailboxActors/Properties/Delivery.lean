@@ -10,7 +10,6 @@ import MailboxActors.Semantics.Judgment
 
 Under a weak fairness assumption, every in-transit message addressed to a
 non-terminated processing engine is eventually enqueued in its mailbox.
-Paper Proposition 5.
 -/
 
 namespace MailboxActors
@@ -30,7 +29,6 @@ def IsExecution (trace : Trace) : Prop :=
   ∀ n, SysStep (trace n) (trace (n + 1))
 
 /-- **Eventual Delivery**: under weak fairness, messages are eventually consumed.
-    Paper Proposition 5.
 
     **Status: blocked on placeholder rules.**  The current `mEnqueue` rule uses
     `κ' = κ` (a placeholder), so it does not actually remove the message from the

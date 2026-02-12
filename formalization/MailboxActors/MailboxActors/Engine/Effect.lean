@@ -7,8 +7,6 @@ import MailboxActors.Engine.Env
 
 /-!
 # Effect System
-
-Paper Definition 10.
 -/
 
 namespace MailboxActors

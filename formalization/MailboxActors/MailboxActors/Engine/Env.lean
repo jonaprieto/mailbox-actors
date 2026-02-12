@@ -6,8 +6,6 @@ import MailboxActors.Basic
 
 /-!
 # Execution Environment
-
-Paper Definition 9.
 -/
 
 namespace MailboxActors

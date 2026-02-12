@@ -10,7 +10,6 @@ import MailboxActors.Semantics.Judgment
 
 Processing engines never directly receive messages from the message set.
 All messages are mediated by the corresponding mailbox engine.
-Paper Proposition 4.
 -/
 
 namespace MailboxActors
@@ -26,8 +25,7 @@ def MailboxIsolation (κ : SystemState) : Prop :=
 
 /-- **Mailbox Isolation**: M-Send is the only rule that creates messages,
     and it always targets a mailbox engine.  Requires well-typedness so that
-    `mailbox_exists` guarantees the paired mailbox is in `mail` mode.
-    Paper Proposition 4. -/
+    `mailbox_exists` guarantees the paired mailbox is in `mail` mode. -/
 theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
     WellTypedState κ → MailboxIsolation κ → OpStep κ op κ' → MailboxIsolation κ' := by
   intro wt hiso step

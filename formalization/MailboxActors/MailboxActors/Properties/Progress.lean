@@ -9,7 +9,6 @@ import MailboxActors.Semantics.Judgment
 # Progress
 
 A well-typed system state with pending work can always take a step.
-Paper Proposition 2.
 -/
 
 namespace MailboxActors
@@ -25,8 +24,7 @@ def hasPendingWork (κ : SystemState) : Prop :=
   (∃ addr se, κ.engineAt addr = some se ∧
     ∃ (_ : se.idx = se.idx), se.engine.status = EngineStatus.terminated)
 
-/-- **Progress**: a well-typed state with pending work can step.
-    Paper Proposition 2. -/
+/-- **Progress**: a well-typed state with pending work can step. -/
 theorem progress (κ : SystemState) :
     WellTypedState κ → hasPendingWork κ → ∃ κ', SysStep κ κ' := by
   intro wt hp

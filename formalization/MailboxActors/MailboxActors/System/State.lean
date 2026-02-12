@@ -7,15 +7,13 @@ import MailboxActors.Engine.Message
 
 /-!
 # System State
-
-Paper Definition 20 and §3.7.
 -/
 
 namespace MailboxActors
 
 variable [EngineSpec]
 
-/-- System state `κ = (N, M, Ω)`.  Paper §3.7. -/
+/-- System state `κ = (N, M, Ω)`. -/
 structure SystemState where
   nodes : List Node
   messages : List Message

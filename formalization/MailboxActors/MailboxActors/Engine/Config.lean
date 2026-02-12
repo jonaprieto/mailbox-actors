@@ -7,8 +7,6 @@ import MailboxActors.Engine.Mode
 
 /-!
 # Engine Configuration
-
-Paper Definition 8.
 -/
 
 namespace MailboxActors

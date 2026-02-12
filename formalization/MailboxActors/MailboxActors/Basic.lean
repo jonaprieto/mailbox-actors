@@ -9,10 +9,6 @@ import Mathlib.Data.Fintype.Basic
 
 The engine type index `EngIdx`, addresses, and the indexed type families
 that parameterise the entire formalization.
-
-## References
-
-- Paper §2 (Notation), Definition 1 (Engine Type Index), Definition 2 (Address)
 -/
 
 namespace MailboxActors
@@ -21,8 +17,7 @@ namespace MailboxActors
 -- § Address
 -- ============================================================================
 
-/-- An address identifies an engine as a `(nodeId, engineId)` pair.
-    Paper Definition 2. -/
+/-- An address identifies an engine as a `(nodeId, engineId)` pair. -/
 structure Address where
   nodeId : Nat
   engineId : Nat
@@ -33,7 +28,7 @@ structure Address where
 -- ============================================================================
 
 /-- The system is parametric over a finite type of engine indices and
-    associated type families.  Paper Definition 1 and §3. -/
+    associated type families. -/
 class EngineSpec where
   /-- Finite type of engine type indices (`𝕀`). -/
   EngIdx : Type

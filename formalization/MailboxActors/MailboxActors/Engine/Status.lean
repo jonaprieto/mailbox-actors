@@ -6,8 +6,6 @@ import MailboxActors.Basic
 
 /-!
 # Engine Lifecycle Status
-
-Paper Definition 6.
 -/
 
 namespace MailboxActors

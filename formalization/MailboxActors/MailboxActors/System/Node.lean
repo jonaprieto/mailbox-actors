@@ -6,8 +6,6 @@ import MailboxActors.Engine.Engine
 
 /-!
 # Nodes
-
-Paper Definition 19.
 -/
 
 namespace MailboxActors
@@ -23,7 +21,7 @@ structure SomeEngine where
 /-- An engine map maps local identifiers to engine instances. -/
 abbrev EngineMap := List (Nat × SomeEngine)
 
-/-- A node is a triple `(id, engineMap, plugins)`.  Paper Definition 19. -/
+/-- A node is a triple `(id, engineMap, plugins)`. -/
 structure Node where
   id : Nat
   engines : EngineMap

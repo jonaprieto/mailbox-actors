@@ -8,7 +8,6 @@ import MailboxActors.System.State
 # Well-Typed System State
 
 The well-typedness predicate used in the metatheoretic properties.
-Paper §5 (implicit).
 -/
 
 namespace MailboxActors

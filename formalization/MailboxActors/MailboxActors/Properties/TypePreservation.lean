@@ -9,15 +9,13 @@ import MailboxActors.Semantics.Judgment
 # Type Preservation
 
 If a well-typed state takes a step, the resulting state is well-typed.
-Paper Proposition 1.
 -/
 
 namespace MailboxActors
 
 variable [EngineSpec]
 
-/-- **Type Preservation**: transitions preserve well-typedness.
-    Paper Proposition 1. -/
+/-- **Type Preservation**: transitions preserve well-typedness. -/
 theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
     WellTypedState κ → OpStep κ op κ' → WellTypedState κ' := by
   intro wt step

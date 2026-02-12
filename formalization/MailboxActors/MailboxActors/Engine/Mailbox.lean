@@ -8,8 +8,6 @@ import MailboxActors.Engine.Message
 /-!
 # Mailbox Engine
 
-Paper Definition 18.
-
 A mailbox engine is a specialised engine whose:
 - operational mode is `mail`
 - parent reference points to the paired processing engine

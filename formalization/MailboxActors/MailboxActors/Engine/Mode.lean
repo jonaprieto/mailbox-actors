@@ -6,8 +6,6 @@ import MailboxActors.Basic
 
 /-!
 # Engine Mode
-
-Paper Definition 7.
 -/
 
 namespace MailboxActors
