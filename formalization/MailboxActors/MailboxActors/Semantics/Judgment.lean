@@ -183,6 +183,14 @@ inductive OpStep : SystemState → OpLabel → SystemState → Prop where
 -- § Engine Processing
 -- ============================================================================
 
+/-- Post-processing status resolution: if the effect left the engine `busy`,
+    reset to `ready(λ_.true)`; otherwise preserve the status set by the effect
+    (e.g. `terminated` from E-Terminate, `ready(f)` from E-MFilter). -/
+def resolvePostStatus {i : EngineSpec.EngIdx} (s : EngineStatus i) : EngineStatus i :=
+  match s with
+  | .busy _ => .ready (fun _ => true)
+  | other => other
+
 /-- `ProcessStep κ addr i v κ'` : engine at `addr` of type `i` processes
     message `v`, yielding new state `κ'`. -/
 inductive ProcessStep :
@@ -195,10 +203,13 @@ inductive ProcessStep :
       p.status = EngineStatus.busy v →
       EvalStep i p v E →
       EffectEvalStep κ i E κ' →
-      -- κ'' is κ' with engine status updated:
+      -- κ'' is κ' with engine status resolved:
       --   if still Busy → Ready(λ_.tt)
       --   otherwise preserve (MFilter or Terminated already changed it)
-      κ'' = κ' → -- placeholder
+      (∃ (p' : Engine i),
+        κ'.engineAt addr = some ⟨i, p'⟩ ∧
+        κ'' = κ'.updateEngineAt addr
+          ⟨i, { p' with status := resolvePostStatus p'.status }⟩) →
       ProcessStep κ addr i v κ''
 
 -- ============================================================================
