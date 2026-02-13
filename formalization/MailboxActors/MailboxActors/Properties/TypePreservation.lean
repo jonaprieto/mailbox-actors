@@ -34,8 +34,34 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
         obtain ⟨mboxSe, hmbox, hmboxIdx, hmboxMode⟩ := wt.mailbox_exists addr se heng hmode
         exact ⟨mboxSe, by rw [key]; exact hmbox, hmboxIdx, hmboxMode⟩
     }
-  -- ── S-Clean: remove terminated engine ───────────────────────────────────
-  | sClean => subst_vars; sorry
+  -- ── S-Clean: remove terminated processing engine ────────────────────────
+  | sClean =>
+    subst_vars
+    rename_i _ addr se heng hmode _ hnomsgs
+    exact {
+      messages_typed := fun m hm => by
+        simp only [SystemState.removeEngineAt_messages] at hm
+        obtain ⟨se', hse', hidx⟩ := wt.messages_typed m hm
+        have hne := hnomsgs m hm
+        exact ⟨se', by rw [engineAt_removeEngineAt_ne κ addr m.target hne]; exact hse', hidx⟩
+      mailbox_exists := fun addr' se' heng' hmode' => by
+        -- addr' ≠ addr: if it were, engineAt would be none (removeEngineAt_self)
+        have hne : addr' ≠ addr := by
+          intro h; subst h
+          rw [engineAt_removeEngineAt_self] at heng'; exact absurd heng' (by simp)
+        rw [engineAt_removeEngineAt_ne κ addr addr' hne] at heng'
+        obtain ⟨mboxSe, hmbox, hmboxIdx, hmboxMode⟩ := wt.mailbox_exists addr' se' heng' hmode'
+        -- κ.mailboxOf addr' ≠ addr: if it were, the mailbox would be process-mode
+        -- (since se at addr has mode process), contradicting hmboxMode = mail.
+        have hmboxNe : κ.mailboxOf addr' ≠ addr := by
+          intro h; rw [h] at hmbox; rw [heng] at hmbox
+          cases hmbox; rw [hmode] at hmboxMode; exact absurd hmboxMode (by simp)
+        refine ⟨mboxSe, ?_, hmboxIdx, hmboxMode⟩
+        -- mailboxOf ignores the state, so normalize to κ.mailboxOf
+        change (κ.removeEngineAt addr).engineAt (κ.mailboxOf addr') = some mboxSe
+        rw [engineAt_removeEngineAt_ne κ addr (κ.mailboxOf addr') hmboxNe]
+        exact hmbox
+    }
   -- ── M-Send: place message in transit to target's mailbox ────────────────
   | mSend =>
     subst_vars

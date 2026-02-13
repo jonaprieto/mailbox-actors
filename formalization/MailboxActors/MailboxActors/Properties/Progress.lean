@@ -49,8 +49,7 @@ theorem progress (κ : SystemState) :
       exact ⟨_, OpLabel.node, OpStep.sNode κ _ κ.nextId rfl rfl⟩
     | mail =>
       exact ⟨_, OpLabel.node, OpStep.sNode κ _ κ.nextId rfl rfl⟩
-  · -- Case 3: terminated engine → S-Clean
-    exact ⟨κ.removeEngineAt addr, OpLabel.clean,
-      OpStep.sClean κ (κ.removeEngineAt addr) 0 addr se heng ⟨rfl, hterm⟩ rfl⟩
+  · -- Case 3: terminated engine — S-Node is always available.
+    exact ⟨_, OpLabel.node, OpStep.sNode κ _ κ.nextId rfl rfl⟩
 
 end MailboxActors
