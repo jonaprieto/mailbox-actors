@@ -102,6 +102,74 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
         wt.mailbox_exists addr se heng hmode
     }
   -- ── M-Dequeue: transition proc→busy, update mailbox ────────────────────
-  | mDequeue => subst_vars; sorry
+  | mDequeue =>
+    subst_vars
+    rename_i procAddr i procEng mboxEng v f newMboxEnv hproc hpmode _ hmbox _
+    have hne : κ.mailboxOf procAddr ≠ procAddr := mailboxOf_ne_self κ procAddr
+    -- Derive mailbox engine properties from WellTypedState
+    obtain ⟨mboxSe, hmboxSe, hmboxIdx, hmboxMode⟩ :=
+      wt.mailbox_exists procAddr ⟨i, procEng⟩ hproc hpmode
+    rw [hmbox] at hmboxSe; cases hmboxSe
+    -- Now: hmboxIdx : mboxEng.idx = i, hmboxMode : mboxEng.engine.mode = mail
+    -- Helper: the intermediate state preserves the mailbox engine
+    set procEng' : SomeEngine := ⟨i, { procEng with status := .busy v }⟩
+    have hmbox₁ : (κ.updateEngineAt procAddr procEng').engineAt
+        (κ.mailboxOf procAddr) = some mboxEng := by
+      rw [engineAt_updateEngineAt_ne _ _ _ _ hne]; exact hmbox
+    exact {
+      messages_typed := fun m hm => by
+        simp only [SystemState.updateEngineAt_messages] at hm
+        obtain ⟨se_old, hse_old, hidx⟩ := wt.messages_typed m hm
+        by_cases h1 : m.target = κ.mailboxOf procAddr
+        · -- target = mailbox: updated engine has same idx
+          refine ⟨⟨mboxEng.idx, { mboxEng.engine with env := newMboxEnv }⟩, ?_, ?_⟩
+          · rw [h1, engineAt_updateEngineAt_self _ _ _ ⟨_, hmbox₁⟩]
+          · rw [h1] at hse_old; rw [hmbox] at hse_old; cases hse_old; exact hidx
+        · by_cases h2 : m.target = procAddr
+          · -- target = proc address: updated engine has same idx
+            refine ⟨⟨i, { procEng with status := .busy v }⟩, ?_, ?_⟩
+            · rw [h2, engineAt_updateEngineAt_ne _ _ _ _ (Ne.symm hne),
+                   engineAt_updateEngineAt_self _ _ _ ⟨_, hproc⟩]
+            · rw [h2] at hse_old; rw [hproc] at hse_old; cases hse_old; exact hidx
+          · -- target = neither: lookup unchanged
+            refine ⟨se_old, ?_, hidx⟩
+            rw [engineAt_updateEngineAt_ne _ _ _ _ h1,
+                engineAt_updateEngineAt_ne _ _ _ _ h2]
+            exact hse_old
+      mailbox_exists := fun addr' se' heng' hmode' => by
+        by_cases h1 : addr' = κ.mailboxOf procAddr
+        · -- addr' = mailbox: engine mode is mail, contradicts hmode' = process
+          subst h1
+          rw [engineAt_updateEngineAt_self _ _ _ ⟨_, hmbox₁⟩] at heng'
+          cases heng'
+          -- mode after {with env := ...} is still mboxEng.engine.mode = mail
+          change mboxEng.engine.mode = EngineMode.process at hmode'
+          rw [hmboxMode] at hmode'; exact absurd hmode' (by decide)
+        · by_cases h2 : addr' = procAddr
+          · -- addr' = proc: provide the updated mailbox engine
+            rw [h2] at heng'
+            rw [engineAt_updateEngineAt_ne _ _ _ _ (Ne.symm hne),
+                engineAt_updateEngineAt_self _ _ _ ⟨_, hproc⟩] at heng'
+            cases heng'
+            refine ⟨⟨mboxEng.idx, { mboxEng.engine with env := newMboxEnv }⟩, ?_, ?_, ?_⟩
+            · -- mailboxOf ignores the state, so exact handles definitional eq
+              rw [h2]
+              exact engineAt_updateEngineAt_self _ _ _ ⟨_, hmbox₁⟩
+            · exact hmboxIdx
+            · exact hmboxMode
+          · -- addr' = neither: engine and mailbox unchanged
+            rw [engineAt_updateEngineAt_ne _ _ _ _ h1,
+                engineAt_updateEngineAt_ne _ _ _ _ h2] at heng'
+            obtain ⟨mboxSe', hmboxSe', hmboxIdx', hmboxMode'⟩ :=
+              wt.mailbox_exists addr' se' heng' hmode'
+            have hm1 : κ.mailboxOf addr' ≠ κ.mailboxOf procAddr := by
+              intro h; exact h2 (mailboxOf_injective κ h)
+            have hm2 : κ.mailboxOf addr' ≠ procAddr := by
+              intro h; rw [h] at hmboxSe'; rw [hproc] at hmboxSe'; cases hmboxSe'
+              rw [hpmode] at hmboxMode'; exact absurd hmboxMode' (by simp)
+            refine ⟨mboxSe', ?_, hmboxIdx', hmboxMode'⟩
+            exact (engineAt_updateEngineAt_ne _ _ _ _ hm1).trans
+              ((engineAt_updateEngineAt_ne _ _ _ _ hm2).trans hmboxSe')
+    }
 
 end MailboxActors
