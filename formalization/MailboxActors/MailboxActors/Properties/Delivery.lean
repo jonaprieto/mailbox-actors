@@ -57,6 +57,16 @@ private lemma invariants_trace (trace : Trace) (hexec : IsExecution trace) (n : 
     · have : n = k + 1 := by omega
       subst this; exact ⟨hwt, hiso⟩
 
+/-- The mailbox engine for `m` is ready to accept a message at every step
+    where `m` is in transit. This holds when the mailbox filter is
+    `λ_.true` (the default) and the mailbox is not permanently busy. -/
+def EnqueueReady (trace : Trace) (m : Message) (n : Nat) : Prop :=
+  ∀ k ≥ n, m ∈ (trace k).messages →
+    ∀ se : SomeEngine, (trace k).engineAt m.target = some se →
+      ∃ (f : EngineSpec.MsgType se.idx → Bool)
+        (w : EngineSpec.MsgType se.idx),
+        se.engine.status = EngineStatus.ready f ∧ f w = true
+
 /-- **Eventual Delivery**: under weak fairness every in-transit message is
     eventually consumed.
 
@@ -65,6 +75,8 @@ private lemma invariants_trace (trace : Trace) (hexec : IsExecution trace) (n : 
       (proved preserved by `mailboxIsolation`).
     * `UniqueInTransit` — the message `m` appears at most once in the
       in-transit list at every step (each sent message is a unique packet).
+    * `EnqueueReady` — the target mailbox engine is in `ready(f)` state
+      with a value `w` passing the filter `f` whenever `m` is in transit.
     * `WeaklyFair` uses predicate-level fairness (TLA⁺-style) so that
       fairness applies to the specific enqueue transition for `m`. -/
 theorem eventualDelivery (trace : Trace) (m : Message) (n : Nat) :
@@ -73,20 +85,22 @@ theorem eventualDelivery (trace : Trace) (m : Message) (n : Nat) :
     WellTypedState (trace n) →
     MailboxIsolation (trace n) →
     UniqueInTransit trace m n →
+    EnqueueReady trace m n →
     m ∈ (trace n).messages →
     ∃ k ≥ n, m ∉ (trace k).messages := by
-  intro hexec hfair hwt hiso huniq hm
+  intro hexec hfair hwt hiso huniq henqready hm
   -- By contradiction: assume m is always in transit from n onwards.
   by_contra hall
   push_neg at hall
   -- hall : ∀ k ≥ n, m ∈ (trace k).messages
-  -- Define P: "enqueue message m, removing it from the in-transit list."
+  -- Define P: "enqueue message m via M-Enqueue (mailbox ready→busy,
+  -- message removed from transit)."
   let P : SystemState → SystemState → Prop := fun κ κ' =>
-    ∃ mboxEng pre post,
+    ∃ (mboxEng : SomeEngine) (pre post : List Message),
       κ.messages = pre ++ m :: post ∧
       κ.engineAt m.target = some mboxEng ∧
       mboxEng.engine.mode = EngineMode.mail ∧
-      κ' = { κ with messages := pre ++ post }
+      κ'.messages = pre ++ post
   -- P is continuously enabled from n onwards.
   have henabled : ∀ k ≥ n, ∃ κ', P (trace k) κ' := by
     intro k hk
@@ -95,16 +109,17 @@ theorem eventualDelivery (trace : Trace) (m : Message) (n : Nat) :
     obtain ⟨hwt_k, hiso_k⟩ := invariants_trace trace hexec n hwt hiso k hk
     obtain ⟨se, hse, _⟩ := hwt_k.messages_typed m hm_k
     have hmode := hiso_k m hm_k se hse
-    exact ⟨{ trace k with messages := pre ++ post },
+    obtain ⟨f, w, _, hfilter⟩ := henqready k hk hm_k se hse
+    exact ⟨{ (trace k).updateEngineAt m.target
+               ⟨se.idx, { se.engine with status := .busy w }⟩
+             with messages := pre ++ post },
            se, pre, post, hsplit, hse, hmode, rfl⟩
   -- By weak fairness, P fires at some step k₀ ≥ n.
   obtain ⟨k₀, hk₀, hP⟩ := hfair P n henabled
-  obtain ⟨_, pre, post, hsplit, _, _, hκ'⟩ := hP
+  obtain ⟨_, pre, post, hsplit, _, _, hmsg⟩ := hP
   -- By UniqueInTransit, m appears only once, so m ∉ pre ∧ m ∉ post.
   obtain ⟨hpre, hpost⟩ := huniq k₀ hk₀ pre post hsplit
   -- Therefore m ∉ (trace (k₀ + 1)).messages.
-  have hmsg : (trace (k₀ + 1)).messages = pre ++ post := by
-    rw [hκ']
   have : m ∉ (trace (k₀ + 1)).messages := by
     rw [hmsg, List.mem_append]; push_neg; exact ⟨hpre, hpost⟩
   -- Contradiction: hall says m ∈ (trace (k₀ + 1)).messages.
