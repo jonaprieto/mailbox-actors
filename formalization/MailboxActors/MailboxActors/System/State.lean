@@ -37,6 +37,13 @@ lemma mailboxOf_ne_self (κ : SystemState) (addr : Address) :
   have : (κ.mailboxOf addr).engineId = addr.engineId := by rw [h]
   simp [SystemState.mailboxOf] at this
 
+lemma mailboxOf_injective (κ : SystemState) {addr addr' : Address}
+    (h : κ.mailboxOf addr = κ.mailboxOf addr') : addr = addr' := by
+  have h1 : (κ.mailboxOf addr).nodeId = (κ.mailboxOf addr').nodeId := by rw [h]
+  have h2 : (κ.mailboxOf addr).engineId = (κ.mailboxOf addr').engineId := by rw [h]
+  simp [SystemState.mailboxOf] at h1 h2
+  cases addr; cases addr'; simp only [Address.mk.injEq]; exact ⟨h1, h2⟩
+
 /-- Look up an engine globally by its address. -/
 def SystemState.engineAt (κ : SystemState) (addr : Address) : Option SomeEngine :=
   match κ.nodes.find? (fun n => n.id == addr.nodeId) with
