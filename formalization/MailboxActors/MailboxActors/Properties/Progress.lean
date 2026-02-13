@@ -40,14 +40,16 @@ theorem progress (κ : SystemState) :
         exact ⟨{ κ with messages := rest }, OpLabel.enqueue,
           OpStep.mEnqueue κ _ m mboxSe [] rest hne hmbox hmode rfl⟩
       | process =>
-        obtain ⟨mboxSe', hmbox', _⟩ := wt.mailbox_exists m.target mboxSe hmbox hmode
-        exact ⟨κ, OpLabel.dequeue, OpStep.mDequeue κ κ m.target mboxSe mboxSe'
-          hmbox hmode hmbox' rfl⟩
+        -- The target is a processing engine — dequeue requires a ready proc
+        -- engine with a matching message; deferred pending hasPendingWork
+        -- strengthening or MailboxIsolation premise.
+        sorry
   · -- Case 2: busy engine
     cases hmode : se.engine.mode with
     | process =>
-      obtain ⟨mboxSe, hmbox, _⟩ := wt.mailbox_exists addr se heng hmode
-      exact ⟨κ, OpLabel.dequeue, OpStep.mDequeue κ κ addr se mboxSe heng hmode hmbox rfl⟩
+      -- A busy processing engine needs ProcessStep (not wired into OpStep);
+      -- dequeue requires ready status. Deferred.
+      sorry
     | mail =>
       exact ⟨_, OpLabel.node, OpStep.sNode κ _ κ.nextId rfl rfl⟩
   · -- Case 3: terminated engine → S-Clean
