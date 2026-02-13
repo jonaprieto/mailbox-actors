@@ -88,7 +88,7 @@ automatic mailbox pairing, message passing, behaviour evaluation under
 non-overlapping guards, effect execution, and engine lifecycle management.
 Third, we establish several metatheoretic properties of the system
 (\Cref{sec:properties}), including type preservation under reduction, progress,
-effect determinism, and mailbox isolation.
+effect determinism, mailbox isolation, and eventual delivery.
 
 \paragraph{Outline}
 \Cref{sec:type-theory} fixes notation and conventions.
@@ -2025,28 +2025,56 @@ mailbox engine. Hence, no rule places a message directly in a processing
 engine's state.
 \end{proof}
 
+\begin{definition}[Unique In-Transit]\label{def:unique-in-transit}
+A message $m$ is \emph{unique in transit} from step $n$ onwards if, at every
+step $k \geq n$, $m$ appears at most once in the in-transit list
+$\SetOfMessages$. Formally, for every decomposition
+$\SetOfMessages = L_{1} \mathbin{+\!\!+} [m] \mathbin{+\!\!+} L_{2}$, we have
+$m \notin L_{1}$ and $m \notin L_{2}$.
+\end{definition}
+
 \begin{proposition}[Eventual Delivery]\label{prop:eventual-delivery}
-Under a weak fairness assumption---every continuously applicable rule is
-eventually applied---if a message $m \in \SetOfMessages$ targets a
-non-terminated processing engine, then $m$ is eventually enqueued in the
-target's mailbox.
+Let $\sigma$ be an execution trace with predicate-level weak
+fairness (TLA$^{+}$-style): for every binary predicate $P$ on states, if
+$P$ is continuously enabled from some step $n$ onwards then $P$ relates
+some consecutive pair $(\sigma(k),\sigma(k+1))$ with $k \geq n$.
+
+Assume that the initial state $\sigma(n)$ is well-typed, satisfies mailbox
+isolation (\Cref{prop:mailbox-isolation}), and that the message $m$ is unique
+in transit from step $n$ onwards (\Cref{def:unique-in-transit}).
+If $m \in \SetOfMessages$ at step~$n$, then there exists $k \geq n$ such that
+$m \notin \SetOfMessages$ at step~$k$.
 \end{proposition}
 \begin{proof}[Proof sketch]
-By \mruleref{Send}, the message $m$ is addressed to the target's mailbox
-engine. The mailbox engine's status is independent of its parent processing
-engine's termination: \sruleref{Clean} removes terminated engines, but the
-mailbox engine persists until it is independently terminated
-(\Cref{rem:terminated-messages}). Since the processing engine is
-non-terminated, neither is its mailbox. The mailbox engine accepts all messages
-(its filter is $\lambda\_.\mathsf{tt}$), so \mruleref{Enqueue} is applicable
-whenever the mailbox is in state $\ready{\ignore}$. If the mailbox is
-$\busy{\ignore}$, weak fairness ensures \sruleref{Process} eventually fires,
-returning it to $\ready{\ignore}$. Thus \mruleref{Enqueue} is eventually
-applicable and, under weak fairness, eventually applied---consuming $m$ from
-$\SetOfMessages$ and transitioning the mailbox to $\busy{m}$.
-\sruleref{Process} then evaluates the mailbox behaviour, storing the payload
-in the mailbox's local state.
+By contradiction. Suppose $m \in \SetOfMessages$ at every step $k \geq n$.
+Define the predicate $P(\SystemState, \SystemState')$: ``$\SystemState'$ is
+obtained from $\SystemState$ by removing $m$ from the in-transit list via
+\mruleref{Enqueue}.''
+
+We show $P$ is continuously enabled. At each step $k \geq n$, type
+preservation and mailbox isolation are jointly preserved along the trace (by
+induction on $k$, applying the single-step preservation lemmas
+\Cref{prop:type-preservation,prop:mailbox-isolation} at each successor step).
+Since $m$ is in transit, well-typedness provides a target engine and mailbox
+isolation ensures it is in mail mode. Hence the \mruleref{Enqueue} premises
+are satisfied and a witness state $\SystemState'$ with $m$ removed exists.
+
+By weak fairness, $P$ fires at some step $k_{0} \geq n$, yielding
+$\sigma(k_{0}+1)$ with $m$ removed. Because $m$ is unique in transit, the
+removal leaves no copy of $m$ in the message list.
+This contradicts $m \in \SetOfMessages$ at step $k_{0}+1$.
 \end{proof}
+
+\begin{remark}[Classical Reasoning]\label{rem:classical-reasoning}%
+  The proof of \Cref{prop:eventual-delivery} proceeds by contradiction:
+  it assumes the negation of the conclusion (the message remains in transit
+  forever) and derives $\bot$. In the Lean~4 mechanisation this corresponds
+  to \texttt{by\_contra}, which invokes the law of excluded middle.
+  This use of classical logic is standard for liveness properties under
+  TLA$^{+}$-style fairness, where the existential witness (the step at
+  which the message is consumed) is not computationally extractable.
+  All other propositions in this section are proved constructively.
+\end{remark}
 
 \begin{remark}[Causal Delivery and Eventual Delivery]\label{rem:causal-delivery}%
   The causal delivery mailbox of \Cref{ex:causal-mailbox} satisfies
@@ -2157,9 +2185,10 @@ preserve delivery guarantees.
 
 \paragraph{Future Work}
 Several extensions are natural. First, a companion mechanisation in Lean~4
-is under development; it includes a concrete instantiation of the abstract
-framework for the causal delivery mailbox of \Cref{ex:causal-mailbox},
-validating that the parametric definitions are usable in practice.
+covers all five propositions of \Cref{sec:properties}, including a concrete
+instantiation of the abstract framework for the causal delivery mailbox of
+\Cref{ex:causal-mailbox}, validating that the parametric definitions are usable
+in practice.
 Second, a prototype implementation in Elixir---which provides a
 robust actor runtime through the Erlang VM---would validate the practical
 applicability. Third, dynamic engine type extension would enable open systems.
