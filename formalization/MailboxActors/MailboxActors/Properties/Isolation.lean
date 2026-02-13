@@ -70,6 +70,6 @@ theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
     rw [hmsg]
     simp only [List.mem_append, List.mem_cons] at hm' ⊢
     tauto
-  | mDequeue => subst_vars; exact hiso
+  | mDequeue => subst_vars; sorry
 
 end MailboxActors

@@ -169,14 +169,23 @@ inductive OpStep : SystemState → OpLabel → SystemState → Prop where
       mboxEng.engine.mode = EngineMode.mail →
       κ' = { κ with messages := pre ++ post } →
       OpStep κ OpLabel.enqueue κ'
-  /-- M-Dequeue: transfer a message from mailbox to processing engine. -/
+  /-- M-Dequeue: transfer a message from mailbox to processing engine.
+      The processing engine transitions from `ready(f)` to `busy(v)` where
+      `f v = true`, and the mailbox engine's environment is updated. -/
   | mDequeue (κ κ' : SystemState) (procAddr : Address)
-      (procEng mboxEng : SomeEngine) :
-      κ.engineAt procAddr = some procEng →
-      procEng.engine.mode = EngineMode.process →
+      (i : EngineSpec.EngIdx) (procEng : Engine i)
+      (mboxEng : SomeEngine)
+      (v : EngineSpec.MsgType i) (f : EngineSpec.MsgType i → Bool)
+      (newMboxEnv : EngineEnv mboxEng.idx) :
+      κ.engineAt procAddr = some ⟨i, procEng⟩ →
+      procEng.mode = EngineMode.process →
+      procEng.status = EngineStatus.ready f →
       κ.engineAt (κ.mailboxOf procAddr) = some mboxEng →
-      -- processing engine is ready, mailbox has matching message
-      κ' = κ → -- placeholder: transition proc to Busy(v), update mailbox
+      f v = true →
+      κ' = SystemState.updateEngineAt
+              (κ.updateEngineAt procAddr ⟨i, { procEng with status := .busy v }⟩)
+              (κ.mailboxOf procAddr)
+              ⟨mboxEng.idx, { mboxEng.engine with env := newMboxEnv }⟩ →
       OpStep κ OpLabel.dequeue κ'
 
 -- ============================================================================

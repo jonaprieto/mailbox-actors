@@ -69,7 +69,7 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
       mailbox_exists := fun addr se heng hmode =>
         wt.mailbox_exists addr se heng hmode
     }
-  -- ── M-Dequeue: placeholder κ' = κ ──────────────────────────────────────
-  | mDequeue => subst_vars; exact wt
+  -- ── M-Dequeue: transition proc→busy, update mailbox ────────────────────
+  | mDequeue => subst_vars; sorry
 
 end MailboxActors
