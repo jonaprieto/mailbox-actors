@@ -90,8 +90,7 @@ inductive EffectEvalStep :
       κ.engineAt addr = some ⟨i, p⟩ →
       p.status = EngineStatus.busy v →
       EvalStep i p v Effect.terminate →
-      -- κ' is κ with engine at addr updated to terminated status
-      κ' = κ → -- placeholder: real update omitted for now
+      κ' = κ.updateEngineAt addr ⟨i, { p with status := .terminated }⟩ →
       EffectEvalStep κ i Effect.terminate κ'
   /-- E-Update: replace engine environment. -/
   | update (κ κ' : SystemState) (i : EngineSpec.EngIdx)
