@@ -110,4 +110,39 @@ theorem engineAt_updateEngineAt_ne (κ : SystemState) (addr addr' : Address)
     (κ.updateEngineAt addr se).engineAt addr' = κ.engineAt addr' := by
   sorry
 
+-- ============================================================================
+-- § Engine Removal Operations
+-- ============================================================================
+
+/-- Remove the engine at `localId` from a node's engine map. -/
+def Node.removeEngine (n : Node) (localId : Nat) : Node :=
+  { n with engines := n.engines.filter fun p => !(p.1 == localId) }
+
+@[simp] lemma Node.removeEngine_id (n : Node) (localId : Nat) :
+    (n.removeEngine localId).id = n.id := rfl
+
+/-- Remove the engine at a given address from the system state. -/
+def SystemState.removeEngineAt (κ : SystemState) (addr : Address) : SystemState :=
+  { κ with nodes := κ.nodes.map fun n =>
+      if n.id == addr.nodeId then n.removeEngine addr.engineId else n }
+
+@[simp] lemma SystemState.removeEngineAt_messages (κ : SystemState)
+    (addr : Address) :
+    (κ.removeEngineAt addr).messages = κ.messages := rfl
+
+@[simp] lemma SystemState.removeEngineAt_nextId (κ : SystemState)
+    (addr : Address) :
+    (κ.removeEngineAt addr).nextId = κ.nextId := rfl
+
+/-- After removing the engine at `addr`, looking up `addr` yields `none`. -/
+theorem engineAt_removeEngineAt_self (κ : SystemState) (addr : Address) :
+    (κ.removeEngineAt addr).engineAt addr = none := by
+  sorry
+
+/-- Removing the engine at `addr` does not affect lookups at a different address. -/
+theorem engineAt_removeEngineAt_ne (κ : SystemState) (addr addr' : Address)
+    (h : addr' ≠ addr) :
+    (κ.removeEngineAt addr).engineAt addr' = κ.engineAt addr' := by
+  sorry
+
 end MailboxActors
