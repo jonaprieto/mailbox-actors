@@ -5,11 +5,22 @@
 \definecolor{darkorange}{RGB}{200,80,0}
 \definecolor{darkmagenta}{RGB}{139,0,139}
 
+% Rule-category colors (accessible: blue/orange/purple/red)
+\definecolor{ruleS}{RGB}{0,80,158}       % dark blue — system-level
+\definecolor{ruleM}{RGB}{200,80,0}       % dark orange — message passing
+\definecolor{ruleB}{RGB}{102,45,145}     % dark purple — behaviour
+\definecolor{ruleE}{RGB}{160,30,30}      % dark red — effects
+
+% stmaryrd requests U/stmry/b/n for bold math, but ships no bold variant.
+% Override the bold version to reuse medium weight, silencing the
+% "Font shape U/stmry/b/n undefined" warning during \maketitle.
+\SetSymbolFont{stmry}{bold}{U}{stmry}{m}{n}
+
 % Type and constructor formatting
-\newcommand{\ctype}[1]{\ensuremath{\mathsf{\color{teal}{#1}}}}
-\newcommand{\ccon}[1]{\ensuremath{\mathsf{\color{darkmagenta}{#1}}}}
-\newcommand{\stype}[1]{\ensuremath{\mathsf{\color{blue}{#1}}}}
-\newcommand{\scon}[1]{\ensuremath{\mathsf{\color{darkgreen}{#1}}}}
+\newcommand{\ctype}[1]{\ensuremath{{\color{teal}\mathsf{#1}}}}
+\newcommand{\ccon}[1]{\ensuremath{{\color{darkmagenta}\mathsf{#1}}}}
+\newcommand{\stype}[1]{\ensuremath{{\color{blue}\mathsf{#1}}}}
+\newcommand{\scon}[1]{\ensuremath{{\color{darkgreen}\mathsf{#1}}}}
 
 % Judgmental and equality notation
 \newcommand{\Map}[2]{\ensuremath{\mathsf{Map}(#1, #2)}}
@@ -220,10 +231,10 @@
 
 
 % Rule references
-\newcommand{\srule}[1]{\textsc{s\mbox{-}#1}}
-\newcommand{\mrule}[1]{\textsc{M\mbox{-}#1}}
-\newcommand{\brule}[1]{\textsc{B\mbox{-}#1}}
-\newcommand{\erule}[1]{\textsc{E\mbox{-}#1}}
+\newcommand{\srule}[1]{{\color{ruleS}\textsc{s\mbox{-}#1}}}
+\newcommand{\mrule}[1]{{\color{ruleM}\textsc{M\mbox{-}#1}}}
+\newcommand{\brule}[1]{{\color{ruleB}\textsc{B\mbox{-}#1}}}
+\newcommand{\erule}[1]{{\color{ruleE}\textsc{E\mbox{-}#1}}}
 
 % Cref references for different rule types
 \newcommand{\sruleref}[1]{\hyperref[rule:s-#1]{\srule{#1}}}
@@ -250,6 +261,9 @@
     , #2 %
     \rangle %
 }}
+
+% List concatenation (Haskell-style ++)
+\newcommand{\pp}{\mathbin{+\mkern-3mu+}}
 
 %% DSL notation
 \newcommand{\letin}[2]{\ensuremath{\mathsf{let}\ \defequal{#1}{#2}}}
