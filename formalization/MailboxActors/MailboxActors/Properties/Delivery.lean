@@ -52,7 +52,7 @@ private lemma invariants_trace (trace : Trace) (hexec : IsExecution trace) (n : 
     by_cases h : n ≤ k
     · obtain ⟨hwt_k, hiso_k⟩ := ih h
       obtain ⟨op, hstep⟩ := hexec k
-      exact ⟨typePreservation _ _ op hwt_k hstep,
+      exact ⟨typePreservation _ _ op hwt_k hiso_k hstep,
              mailboxIsolation _ _ op hwt_k hiso_k hstep⟩
     · have : n = k + 1 := by omega
       subst this; exact ⟨hwt, hiso⟩

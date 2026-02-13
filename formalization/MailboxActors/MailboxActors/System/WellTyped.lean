@@ -35,4 +35,11 @@ structure WellTypedState (κ : SystemState) : Prop where
         κ.engineAt (κ.mailboxOf addr) = some mboxSe ∧ mboxSe.idx = se.idx ∧
         mboxSe.engine.mode = EngineMode.mail
 
+/-- All messages in transit target mailbox engines (not processing engines). -/
+def MailboxIsolation (κ : SystemState) : Prop :=
+  ∀ m ∈ κ.messages,
+    ∀ se : SomeEngine,
+      κ.engineAt m.target = some se →
+      se.engine.mode = EngineMode.mail
+
 end MailboxActors

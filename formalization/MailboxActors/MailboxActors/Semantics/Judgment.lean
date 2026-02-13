@@ -142,13 +142,13 @@ inductive OpStep : SystemState → OpLabel → SystemState → Prop where
         nodes := κ.nodes ++ [{ id := newId, engines := [] : Node }],
         nextId := newId + 1 } →
       OpStep κ OpLabel.node κ'
-  /-- S-Clean: remove a terminated processing engine with no in-transit messages. -/
+  /-- S-Clean: remove a terminated processing engine.  The mailbox persists
+      to absorb in-transit messages (Remark 4.4 in the paper). -/
   | sClean (κ κ' : SystemState) (nodeIdx : Nat) (addr : Address)
       (se : SomeEngine) :
       κ.engineAt addr = some se →
       se.engine.mode = EngineMode.process →
       se.engine.status = EngineStatus.terminated →
-      (∀ m ∈ κ.messages, m.target ≠ addr) →
       κ' = κ.removeEngineAt addr →
       OpStep κ OpLabel.clean κ'
   /-- M-Send: place a message in transit to the target's mailbox. -/

@@ -16,12 +16,6 @@ namespace MailboxActors
 
 variable [EngineSpec]
 
-/-- All messages in transit target mailbox engines (not processing engines). -/
-def MailboxIsolation (κ : SystemState) : Prop :=
-  ∀ m ∈ κ.messages,
-    ∀ se : SomeEngine,
-      κ.engineAt m.target = some se →
-      se.engine.mode = EngineMode.mail
 
 /-- **Mailbox Isolation**: M-Send is the only rule that creates messages,
     and it always targets a mailbox engine.  Requires well-typedness so that
@@ -38,12 +32,16 @@ theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
     exact hiso m hm se hse
   | sClean =>
     subst_vars
-    rename_i _ addr _ _ _ _ hnomsgs
+    rename_i _ addr _ _ _ _
     intro m hm se hse
     simp only [SystemState.removeEngineAt_messages] at hm
-    have hne := hnomsgs m hm
-    rw [engineAt_removeEngineAt_ne κ addr m.target hne] at hse
-    exact hiso m hm se hse
+    by_cases htarget : m.target = addr
+    · -- Impossible: removal makes engineAt return none
+      have := engineAt_removeEngineAt_self κ addr
+      rw [htarget] at hse; rw [this] at hse; exact absurd hse (by simp)
+    · -- Different address: engineAt unchanged
+      rw [engineAt_removeEngineAt_ne κ addr m.target htarget] at hse
+      exact hiso m hm se hse
   | mSend =>
     subst_vars
     rename_i sender target senderEng targetEng hsender htarget hmode hidx
