@@ -56,6 +56,20 @@ theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
       rw [hmbox] at hse'
       cases hse'
       exact hmboxMode
+  | sSpawnMbox =>
+    subst_vars
+    rename_i _ nodeId procSe mboxSe hnode _ _ _ hfreshP hfreshM
+    intro m hm se hse
+    simp only [SystemState.withNextId_messages, SystemState.addEngineAt_messages] at hm
+    simp only [SystemState.withNextId_engineAt] at hse
+    obtain ⟨se_old, hse_old, _⟩ := wt.messages_typed m hm
+    have hne_proc : m.target ≠ ⟨nodeId, κ.nextId⟩ := by
+      intro h; rw [h, hfreshP] at hse_old; exact absurd hse_old (by simp)
+    have hne_mbox : m.target ≠ κ.mailboxOf ⟨nodeId, κ.nextId⟩ := by
+      intro h; rw [h, hfreshM] at hse_old; exact absurd hse_old (by simp)
+    rw [engineAt_addEngineAt_ne _ _ _ _ hne_mbox,
+        engineAt_addEngineAt_ne _ _ _ _ hne_proc] at hse
+    exact hiso m hm se hse
   | mEnqueue =>
     subst_vars
     rename_i m mboxEng _ _ pre post hmsg heng _ hmode _ _

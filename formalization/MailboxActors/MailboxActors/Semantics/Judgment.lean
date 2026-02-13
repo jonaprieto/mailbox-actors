@@ -108,6 +108,25 @@ inductive EffectEvalStep :
       EvalStep i p v (Effect.mfilter f) →
       κ' = κ.updateEngineAt addr ⟨i, { p with status := .ready f }⟩ →
       EffectEvalStep κ i (Effect.mfilter f) κ'
+  /-- E-Spawn: executing a `spawn` effect creates a child engine via
+      S-SpawnWithMailbox, ensuring it is paired with a mailbox engine. -/
+  | spawn (κ κ' : SystemState) (i : EngineSpec.EngIdx)
+      (j : EngineSpec.EngIdx) (cfg : EngineSpec.CfgData j)
+      (env : EngineSpec.LocalState j)
+      (nodeId : Nat) (procSe mboxSe : SomeEngine)
+      (procAddr mboxAddr : Address) :
+      (∃ n ∈ κ.nodes, n.id = nodeId) →
+      procAddr = ⟨nodeId, κ.nextId⟩ →
+      mboxAddr = κ.mailboxOf procAddr →
+      procSe.idx = j →
+      mboxSe.idx = j →
+      procSe.engine.mode = EngineMode.process →
+      mboxSe.engine.mode = EngineMode.mail →
+      κ.engineAt procAddr = none →
+      κ.engineAt mboxAddr = none →
+      κ' = { (κ.addEngineAt procAddr procSe).addEngineAt mboxAddr mboxSe
+             with nextId := κ.nextId + 2 } →
+      EffectEvalStep κ i (Effect.spawn j cfg env) κ'
   /-- E-Chain: sequence two effects. -/
   | chain (κ κ' κ'' : SystemState) (i : EngineSpec.EngIdx)
       (e₁ e₂ : Effect i) :
@@ -179,6 +198,24 @@ inductive OpStep : SystemState → OpLabel → SystemState → Prop where
                ⟨mboxEng.idx, { mboxEng.engine with status := .busy w }⟩
              with messages := pre ++ post } →
       OpStep κ OpLabel.enqueue κ'
+  /-- S-SpawnWithMailbox: spawn a processing engine paired with its
+      dedicated mailbox engine on an existing node. -/
+  | sSpawnMbox (κ κ' : SystemState) (nodeId : Nat)
+      (k : EngineSpec.EngIdx)
+      (procSe mboxSe : SomeEngine)
+      (procAddr mboxAddr : Address) :
+      (∃ n ∈ κ.nodes, n.id = nodeId) →
+      procAddr = ⟨nodeId, κ.nextId⟩ →
+      mboxAddr = κ.mailboxOf procAddr →
+      procSe.idx = k →
+      mboxSe.idx = k →
+      procSe.engine.mode = EngineMode.process →
+      mboxSe.engine.mode = EngineMode.mail →
+      κ.engineAt procAddr = none →
+      κ.engineAt mboxAddr = none →
+      κ' = { (κ.addEngineAt procAddr procSe).addEngineAt mboxAddr mboxSe
+             with nextId := κ.nextId + 2 } →
+      OpStep κ OpLabel.spawnMbox κ'
   /-- M-Dequeue: transfer a message from mailbox to processing engine.
       The processing engine transitions from `ready(f)` to `busy(v)` where
       `f v = true`, and the mailbox engine's environment is updated. -/
