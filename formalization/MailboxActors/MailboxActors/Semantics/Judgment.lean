@@ -98,7 +98,7 @@ inductive EffectEvalStep :
       (newEnv : EngineEnv i) :
       κ.engineAt addr = some ⟨i, p⟩ →
       EvalStep i p v (Effect.update newEnv) →
-      κ' = κ → -- placeholder
+      κ' = κ.updateEngineAt addr ⟨i, { p with env := newEnv }⟩ →
       EffectEvalStep κ i (Effect.update newEnv) κ'
   /-- E-MFilter: transition engine to `ready` with new filter. -/
   | mfilter (κ κ' : SystemState) (i : EngineSpec.EngIdx)
