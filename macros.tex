@@ -217,17 +217,22 @@
 
 % Judgment forms
 \newcommand{\stepsymbol}{\ensuremath{\rightsquigarrow}}
-\newcommand{\sysstep}[2]{#1 \stepsymbol #2}
-\newcommand{\opstep}[3]{#1 \stepsymbol_{\mathsf{#2}} #3}
-\newcommand{\processstep}[4]{\ensuremath{#1, #2, #3 \stepsymbol_{\process} #4}}
-\newcommand{\sendstep}[4]{\ensuremath{#1, #2, #3 \stepsymbol_{\mathsf{send}} #4}}
 
-\newcommand{\evalstep}[3]{#1 \vdash #2 \downarrow #3}
+% System-level judgments (blue)
+\newcommand{\sysstep}[2]{#1 {\color{ruleS}\stepsymbol} #2}
+\newcommand{\opstep}[3]{#1 {\color{ruleS}\stepsymbol}_{\mathsf{#2}} #3}
+\newcommand{\processstep}[4]{\ensuremath{#1, #2, #3 {\color{ruleS}\stepsymbol}_{\process} #4}}
 
-\newcommand{\effectevalstep}[3]{#1 \vdash #2 \stepsymbol #3}
+% Message-level judgments (orange)
+\newcommand{\sendstep}[4]{\ensuremath{#1, #2, #3 {\color{ruleM}\stepsymbol}_{\mathsf{send}} #4}}
 
-\newcommand{\guardevalmsgstep}[5]{#1, \langle #2, #3 \rangle \vdash #4 \downarrow #5}
-\newcommand{\guardevalstep}[4]{#1, \langle #2, #3 \rangle \vdash #4}
+% Behaviour-level judgments (purple)
+\newcommand{\evalstep}[3]{#1 {\color{ruleB}\vdash} #2 {\color{ruleB}\downarrow} #3}
+\newcommand{\guardevalmsgstep}[5]{#1, \langle #2, #3 \rangle {\color{ruleB}\vdash} #4 {\color{ruleB}\downarrow} #5}
+\newcommand{\guardevalstep}[4]{#1, \langle #2, #3 \rangle {\color{ruleB}\vdash} #4}
+
+% Effect-level judgments (red)
+\newcommand{\effectevalstep}[3]{#1 {\color{ruleE}\vdash} #2 {\color{ruleE}\stepsymbol} #3}
 
 
 % Rule references
