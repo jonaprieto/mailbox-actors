@@ -31,6 +31,12 @@ def SystemState.mailboxOf (_κ : SystemState) (addr : Address) : Address :=
   -- on the same node (matching S-SpawnWithMailbox's sequential allocation).
   { addr with engineId := addr.engineId + 1 }
 
+lemma mailboxOf_ne_self (κ : SystemState) (addr : Address) :
+    κ.mailboxOf addr ≠ addr := by
+  intro h
+  have : (κ.mailboxOf addr).engineId = addr.engineId := by rw [h]
+  simp [SystemState.mailboxOf] at this
+
 /-- Look up an engine globally by its address. -/
 def SystemState.engineAt (κ : SystemState) (addr : Address) : Option SomeEngine :=
   match κ.nodes.find? (fun n => n.id == addr.nodeId) with
