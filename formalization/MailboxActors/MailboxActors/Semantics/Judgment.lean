@@ -106,7 +106,7 @@ inductive EffectEvalStep :
       (f : EngineSpec.MsgType i → Bool) :
       κ.engineAt addr = some ⟨i, p⟩ →
       EvalStep i p v (Effect.mfilter f) →
-      κ' = κ → -- placeholder
+      κ' = κ.updateEngineAt addr ⟨i, { p with status := .ready f }⟩ →
       EffectEvalStep κ i (Effect.mfilter f) κ'
   /-- E-Chain: sequence two effects. -/
   | chain (κ κ' κ'' : SystemState) (i : EngineSpec.EngIdx)
