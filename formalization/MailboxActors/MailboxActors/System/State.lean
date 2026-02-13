@@ -70,4 +70,44 @@ lemma engineAt_append_emptyNode (κ : SystemState) (addr : Address) :
   unfold SystemState.engineAt
   exact find?_match_append_emptyEngines κ.nodes ⟨κ.nextId, []⟩ rfl _ _
 
+-- ============================================================================
+-- § Engine Update Operations
+-- ============================================================================
+
+/-- Replace the engine at `localId` in a node's engine map.
+    If `localId` is not present, the node is unchanged. -/
+def Node.setEngine (n : Node) (localId : Nat) (se : SomeEngine) : Node :=
+  { n with engines := n.engines.map fun p =>
+      if p.1 == localId then (localId, se) else p }
+
+@[simp] lemma Node.setEngine_id (n : Node) (localId : Nat) (se : SomeEngine) :
+    (n.setEngine localId se).id = n.id := rfl
+
+/-- Update the engine at a given address in the system state. -/
+def SystemState.updateEngineAt (κ : SystemState) (addr : Address)
+    (se : SomeEngine) : SystemState :=
+  { κ with nodes := κ.nodes.map fun n =>
+      if n.id == addr.nodeId then n.setEngine addr.engineId se else n }
+
+@[simp] lemma SystemState.updateEngineAt_messages (κ : SystemState)
+    (addr : Address) (se : SomeEngine) :
+    (κ.updateEngineAt addr se).messages = κ.messages := rfl
+
+@[simp] lemma SystemState.updateEngineAt_nextId (κ : SystemState)
+    (addr : Address) (se : SomeEngine) :
+    (κ.updateEngineAt addr se).nextId = κ.nextId := rfl
+
+/-- After updating the engine at `addr` to `se`, looking up `addr` yields `se`,
+    provided the engine existed before. -/
+theorem engineAt_updateEngineAt_self (κ : SystemState) (addr : Address)
+    (se : SomeEngine) (h : ∃ old, κ.engineAt addr = some old) :
+    (κ.updateEngineAt addr se).engineAt addr = some se := by
+  sorry
+
+/-- Updating the engine at `addr` does not affect lookups at a different address. -/
+theorem engineAt_updateEngineAt_ne (κ : SystemState) (addr addr' : Address)
+    (se : SomeEngine) (h : addr' ≠ addr) :
+    (κ.updateEngineAt addr se).engineAt addr' = κ.engineAt addr' := by
+  sorry
+
 end MailboxActors
