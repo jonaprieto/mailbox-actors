@@ -127,6 +127,59 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
             refine ⟨mboxSe, ?_, hmboxIdx, hmboxMode⟩
             exact (engineAt_updateEngineAt_ne _ _ _ _ hm).trans hmboxSe
     }
+  -- ── S-SpawnWithMailbox: spawn proc + mailbox engine ─────────────────────
+  | sSpawnMbox =>
+    subst_vars
+    rename_i _ nodeId procSe mboxSe hnode hmodeP hmodeM hidxM hfreshP hfreshM
+    have hne : κ.mailboxOf ⟨nodeId, κ.nextId⟩ ≠ ⟨nodeId, κ.nextId⟩ :=
+      mailboxOf_ne_self κ _
+    exact {
+      messages_typed := fun m hm => by
+        simp only [SystemState.withNextId_messages, SystemState.addEngineAt_messages] at hm
+        obtain ⟨se, hse, hidx⟩ := wt.messages_typed m hm
+        have hne_proc : m.target ≠ ⟨nodeId, κ.nextId⟩ := by
+          intro h; rw [h, hfreshP] at hse; exact absurd hse (by simp)
+        have hne_mbox : m.target ≠ κ.mailboxOf ⟨nodeId, κ.nextId⟩ := by
+          intro h; rw [h, hfreshM] at hse; exact absurd hse (by simp)
+        refine ⟨se, ?_, hidx⟩
+        simp only [SystemState.withNextId_engineAt]
+        rw [engineAt_addEngineAt_ne _ _ _ _ hne_mbox,
+            engineAt_addEngineAt_ne _ _ _ _ hne_proc]
+        exact hse
+      mailbox_exists := fun addr se heng hmode => by
+        simp only [SystemState.withNextId_engineAt, SystemState.withNextId_mailboxOf,
+          SystemState.addEngineAt_mailboxOf] at heng ⊢
+        by_cases hp : addr = ⟨nodeId, κ.nextId⟩
+        · -- addr = procAddr: provide the freshly-spawned mailbox engine
+          subst hp
+          rw [engineAt_addEngineAt_ne _ _ _ _ hne.symm,
+              engineAt_addEngineAt_self _ _ _ hfreshP hnode] at heng
+          cases heng
+          refine ⟨mboxSe, ?_, hidxM, hmodeM⟩
+          exact engineAt_addEngineAt_self _ _ _
+            (by rw [engineAt_addEngineAt_ne _ _ _ _ hne]; exact hfreshM)
+            (addEngineAt_node_mem κ _ _ _ hnode)
+        · by_cases hm : addr = κ.mailboxOf ⟨nodeId, κ.nextId⟩
+          · -- addr = mboxAddr: mode is mail, contradicts hmode = process
+            subst hm
+            rw [engineAt_addEngineAt_self _ _ _
+              (by rw [engineAt_addEngineAt_ne _ _ _ _ hne]; exact hfreshM)
+              (addEngineAt_node_mem κ _ _ _ hnode)] at heng
+            cases heng; rw [hmodeM] at hmode; exact absurd hmode (by decide)
+          · -- addr is neither: lookup unchanged, use existing wt
+            rw [engineAt_addEngineAt_ne _ _ _ _ hm,
+                engineAt_addEngineAt_ne _ _ _ _ hp] at heng
+            obtain ⟨mboxSe', hmbox, hmboxIdx, hmboxMode⟩ :=
+              wt.mailbox_exists addr se heng hmode
+            have hm1 : κ.mailboxOf addr ≠ κ.mailboxOf ⟨nodeId, κ.nextId⟩ := by
+              intro h; exact hp (mailboxOf_injective κ h)
+            have hm2 : κ.mailboxOf addr ≠ ⟨nodeId, κ.nextId⟩ := by
+              intro h; rw [h] at hmbox; rw [hfreshP] at hmbox; exact absurd hmbox (by simp)
+            refine ⟨mboxSe', ?_, hmboxIdx, hmboxMode⟩
+            rw [engineAt_addEngineAt_ne _ _ _ _ hm1,
+                engineAt_addEngineAt_ne _ _ _ _ hm2]
+            exact hmbox
+    }
   -- ── M-Dequeue: transition proc→busy, update mailbox ────────────────────
   | mDequeue =>
     subst_vars

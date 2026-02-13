@@ -399,4 +399,186 @@ theorem engineAt_removeEngineAt_ne (κ : SystemState) (addr addr' : Address)
   | false =>
     simp [hnode]
 
+-- ============================================================================
+-- § Engine Addition Operations
+-- ============================================================================
+
+/-- Append a new engine entry to a node's engine map. -/
+def Node.addEngine (n : Node) (localId : Nat) (se : SomeEngine) : Node :=
+  { n with engines := n.engines ++ [(localId, se)] }
+
+@[simp] lemma Node.addEngine_id (n : Node) (localId : Nat) (se : SomeEngine) :
+    (n.addEngine localId se).id = n.id := rfl
+
+/-- Add an engine at a given address in the system state.
+    The node at `addr.nodeId` must already exist. -/
+def SystemState.addEngineAt (κ : SystemState) (addr : Address)
+    (se : SomeEngine) : SystemState :=
+  { κ with nodes := κ.nodes.map fun n =>
+      if n.id == addr.nodeId then n.addEngine addr.engineId se else n }
+
+@[simp] lemma SystemState.addEngineAt_messages (κ : SystemState)
+    (addr : Address) (se : SomeEngine) :
+    (κ.addEngineAt addr se).messages = κ.messages := rfl
+
+@[simp] lemma SystemState.addEngineAt_nextId (κ : SystemState)
+    (addr : Address) (se : SomeEngine) :
+    (κ.addEngineAt addr se).nextId = κ.nextId := rfl
+
+@[simp] lemma SystemState.addEngineAt_mailboxOf (κ : SystemState)
+    (target addr : Address) (se : SomeEngine) :
+    (κ.addEngineAt target se).mailboxOf addr = κ.mailboxOf addr := rfl
+
+-- ── withNextId simp lemmas ──
+
+@[simp] lemma SystemState.withNextId_engineAt (κ : SystemState) (n : Nat)
+    (addr : Address) :
+    ({ κ with nextId := n } : SystemState).engineAt addr = κ.engineAt addr := rfl
+
+@[simp] lemma SystemState.withNextId_messages (κ : SystemState) (n : Nat) :
+    ({ κ with nextId := n } : SystemState).messages = κ.messages := rfl
+
+@[simp] lemma SystemState.withNextId_mailboxOf (κ : SystemState) (n : Nat)
+    (addr : Address) :
+    ({ κ with nextId := n } : SystemState).mailboxOf addr = κ.mailboxOf addr := rfl
+
+-- ── List-level helpers for addEngine ──
+
+private lemma append_find_addEngine_self (engines : EngineMap) (id : Nat)
+    (se : SomeEngine)
+    (h : engines.find? (fun p => p.1 == id) = none) :
+    (engines ++ [(id, se)]).find? (fun p => p.1 == id) = some (id, se) := by
+  induction engines with
+  | nil => simp [beq_self_eq_true]
+  | cons e es ih =>
+    simp only [List.find?_cons] at h
+    match he : e.1 == id with
+    | true => simp [he] at h
+    | false =>
+      simp only [he, Bool.false_eq_true, ↓reduceIte] at h
+      simp only [List.cons_append, List.find?_cons, he, Bool.false_eq_true, ↓reduceIte]
+      exact ih h
+
+private lemma append_find_addEngine_ne (engines : EngineMap) (id id' : Nat)
+    (se : SomeEngine) (h : id' ≠ id) :
+    (engines ++ [(id, se)]).find? (fun p => p.1 == id') =
+    engines.find? (fun p => p.1 == id') := by
+  induction engines with
+  | nil =>
+    simp only [List.nil_append, List.find?_cons, List.find?_nil]
+    have : (id == id') = false := beq_false_of_ne (Ne.symm h)
+    simp [this]
+  | cons e es ih =>
+    simp only [List.cons_append, List.find?_cons]
+    match he : e.1 == id' with
+    | true => rfl
+    | false =>
+      simp only [he, Bool.false_eq_true, ↓reduceIte]
+      exact ih
+
+-- ── System-level engineAt after addEngineAt ──
+
+/-- `engineAt` traversal for `addEngineAt`: induction on the node list. -/
+private lemma engineAt_addEngineAt_aux (nodes : List Node)
+    (nodeId engId : Nat) (se : SomeEngine) (targetNodeId targetEngId : Nat) :
+    (match (nodes.map fun n =>
+        if n.id == nodeId then n.addEngine engId se else n).find?
+        (fun n => n.id == targetNodeId) with
+      | some node => node.getEngine targetEngId
+      | none => none) =
+    if nodeId == targetNodeId then
+      (match nodes.find? (fun n => n.id == targetNodeId) with
+        | some node => (node.addEngine engId se).getEngine targetEngId
+        | none => none)
+    else
+      (match nodes.find? (fun n => n.id == targetNodeId) with
+        | some node => node.getEngine targetEngId
+        | none => none) := by
+  induction nodes with
+  | nil => simp
+  | cons n ns ih =>
+    simp only [List.map_cons, List.find?_cons]
+    match hn : n.id == nodeId with
+    | true =>
+      simp only [hn, ↓reduceIte]
+      match ht : n.id == targetNodeId with
+      | true =>
+        have hnt : (nodeId == targetNodeId) = true := by
+          have := eq_of_beq hn; have := eq_of_beq ht; subst_vars
+          exact beq_self_eq_true _
+        simp [hnt]
+      | false => exact ih
+    | false =>
+      match ht : n.id == targetNodeId with
+      | true =>
+        match hnt : nodeId == targetNodeId with
+        | true =>
+          exfalso
+          have := eq_of_beq hnt; have := eq_of_beq ht; subst_vars
+          simp at hn
+        | false => rfl
+      | false => exact ih
+
+/-- After adding an engine at `addr`, looking up `addr` yields the new engine,
+    provided the address was fresh and the node exists. -/
+theorem engineAt_addEngineAt_self (κ : SystemState) (addr : Address)
+    (se : SomeEngine)
+    (hfresh : κ.engineAt addr = none)
+    (hnode : ∃ n ∈ κ.nodes, n.id = addr.nodeId) :
+    (κ.addEngineAt addr se).engineAt addr = some se := by
+  obtain ⟨node, hnode_mem, hnode_id⟩ := hnode
+  simp only [SystemState.engineAt, SystemState.addEngineAt] at *
+  rw [engineAt_addEngineAt_aux]
+  simp only [beq_self_eq_true, ↓reduceIte]
+  have hfind : κ.nodes.find? (fun n => n.id == addr.nodeId) ≠ none := by
+    intro habs
+    exact absurd (List.find?_eq_none.mp habs node hnode_mem) (by simp [hnode_id])
+  cases hfind' : κ.nodes.find? (fun n => n.id == addr.nodeId) with
+  | none => exact absurd hfind' hfind
+  | some node' =>
+    -- hfresh reduces to: node'.getEngine addr.engineId = none
+    have hge : node'.getEngine addr.engineId = none := by rw [hfind'] at hfresh; exact hfresh
+    simp only [Node.getEngine, Node.addEngine]
+    have hfresh' : node'.engines.find? (fun p => p.1 == addr.engineId) = none := by
+      unfold Node.getEngine at hge
+      match hf : node'.engines.find? (fun p => p.1 == addr.engineId) with
+      | none => exact hf
+      | some val => rw [hf] at hge; exact absurd hge (by simp)
+    rw [append_find_addEngine_self _ _ _ hfresh']
+    simp
+
+/-- Adding an engine at `addr` does not affect lookups at a different address. -/
+theorem engineAt_addEngineAt_ne (κ : SystemState) (addr addr' : Address)
+    (se : SomeEngine) (h : addr' ≠ addr) :
+    (κ.addEngineAt addr se).engineAt addr' = κ.engineAt addr' := by
+  simp only [SystemState.engineAt, SystemState.addEngineAt] at *
+  rw [engineAt_addEngineAt_aux]
+  match hnode : addr.nodeId == addr'.nodeId with
+  | true =>
+    simp only [hnode, ↓reduceIte]
+    cases hfind : κ.nodes.find? (fun n => n.id == addr'.nodeId) with
+    | none => rfl
+    | some node =>
+      simp only [Node.getEngine, Node.addEngine]
+      rw [append_find_addEngine_ne]
+      intro heq
+      exact absurd (show addr' = addr by
+        rcases addr with ⟨n1, e1⟩; rcases addr' with ⟨n2, e2⟩
+        simp only [Address.mk.injEq]; dsimp only at *
+        exact ⟨(eq_of_beq hnode).symm, heq⟩) h
+  | false =>
+    simp [hnode]
+
+/-- Adding an engine preserves node membership (by id). -/
+lemma addEngineAt_node_mem (κ : SystemState) (addr : Address) (se : SomeEngine)
+    (nodeId : Nat) (h : ∃ n ∈ κ.nodes, n.id = nodeId) :
+    ∃ n ∈ (κ.addEngineAt addr se).nodes, n.id = nodeId := by
+  obtain ⟨n, hn, hid⟩ := h
+  simp only [SystemState.addEngineAt]
+  let f := fun n' : Node =>
+    if n'.id == addr.nodeId then n'.addEngine addr.engineId se else n'
+  refine ⟨f n, List.mem_map.mpr ⟨n, hn, rfl⟩, ?_⟩
+  simp only [f]
+  split <;> simp [hid]
+
 end MailboxActors
