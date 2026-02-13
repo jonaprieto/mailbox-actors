@@ -34,8 +34,8 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
         obtain ⟨mboxSe, hmbox, hmboxIdx, hmboxMode⟩ := wt.mailbox_exists addr se heng hmode
         exact ⟨mboxSe, by rw [key]; exact hmbox, hmboxIdx, hmboxMode⟩
     }
-  -- ── S-Clean: placeholder κ' = κ ─────────────────────────────────────────
-  | sClean => subst_vars; exact wt
+  -- ── S-Clean: remove terminated engine ───────────────────────────────────
+  | sClean => subst_vars; sorry
   -- ── M-Send: place message in transit to target's mailbox ────────────────
   | mSend =>
     subst_vars

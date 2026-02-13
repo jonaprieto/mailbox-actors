@@ -147,7 +147,7 @@ inductive OpStep : SystemState → OpLabel → SystemState → Prop where
       (se : SomeEngine) :
       κ.engineAt addr = some se →
       (∃ _ : se.idx = se.idx, se.engine.status = EngineStatus.terminated) →
-      κ' = κ → -- placeholder: remove engine from node's engine map
+      κ' = κ.removeEngineAt addr →
       OpStep κ OpLabel.clean κ'
   /-- M-Send: place a message in transit to the target's mailbox. -/
   | mSend (κ κ' : SystemState) (sender target : Address)
