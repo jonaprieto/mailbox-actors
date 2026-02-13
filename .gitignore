@@ -18,3 +18,4 @@
 # Pandoc intermediates
 *.md.tex
 *.org.tex
+formalization/PAPER_VS_LEAN.md
