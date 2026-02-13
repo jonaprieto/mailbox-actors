@@ -36,7 +36,18 @@ theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
     intro m hm se hse
     rw [key] at hse
     exact hiso m hm se hse
-  | sClean => subst_vars; exact hiso
+  | sClean =>
+    subst_vars
+    rename_i _ addr _ _ _
+    intro m hm se hse
+    simp only [SystemState.removeEngineAt_messages] at hm
+    by_cases htarget : m.target = addr
+    · -- Impossible: removal makes engineAt return none
+      have := engineAt_removeEngineAt_self κ addr
+      rw [htarget] at hse; rw [this] at hse; exact absurd hse (by simp)
+    · -- Different address: engineAt unchanged
+      rw [engineAt_removeEngineAt_ne κ addr m.target htarget] at hse
+      exact hiso m hm se hse
   | mSend =>
     subst_vars
     rename_i sender target senderEng targetEng hsender htarget hmode hidx
