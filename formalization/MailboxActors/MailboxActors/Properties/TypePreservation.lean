@@ -88,18 +88,44 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
         -- nodes unchanged, so engineAt and mailboxOf are the same
         wt.mailbox_exists addr se heng hmode'
     }
-  -- ── M-Enqueue: message removed from transit ────────────────────────────
+  -- ── M-Enqueue: deliver message, mailbox ready→busy ─────────────────────
   | mEnqueue =>
     subst_vars
-    rename_i pre post hmsg _ _
+    rename_i m mboxEng w _ pre post hmsg heng _ hmode _ _
     exact {
       messages_typed := fun m' hm' => by
-        apply wt.messages_typed
-        rw [hmsg]
-        simp only [List.mem_append, List.mem_cons] at hm' ⊢
-        tauto
-      mailbox_exists := fun addr se heng hmode =>
-        wt.mailbox_exists addr se heng hmode
+        simp only [SystemState.withMessages_engineAt]
+        have hm'_old : m' ∈ κ.messages := by
+          rw [hmsg]; simp only [List.mem_append, List.mem_cons] at hm' ⊢; tauto
+        obtain ⟨se_old, hse_old, hidx_old⟩ := wt.messages_typed m' hm'_old
+        by_cases h : m'.target = m.target
+        · refine ⟨⟨mboxEng.idx, { mboxEng.engine with status := .busy w }⟩, ?_, ?_⟩
+          · rw [h, engineAt_updateEngineAt_self _ _ _ ⟨_, heng⟩]
+          · rw [h] at hse_old; rw [heng] at hse_old; cases hse_old; exact hidx_old
+        · exact ⟨se_old, by rw [engineAt_updateEngineAt_ne _ _ _ _ h]; exact hse_old, hidx_old⟩
+      mailbox_exists := fun addr' se' heng' hmode' => by
+        simp only [SystemState.withMessages_engineAt, SystemState.withMessages_mailboxOf,
+          SystemState.updateEngineAt_mailboxOf] at heng' ⊢
+        by_cases h : addr' = m.target
+        · -- addr' = m.target: mode is mail, contradicts process
+          subst h
+          rw [engineAt_updateEngineAt_self _ _ _ ⟨_, heng⟩] at heng'
+          cases heng'
+          change mboxEng.engine.mode = EngineMode.process at hmode'
+          rw [hmode] at hmode'; exact absurd hmode' (by decide)
+        · -- addr' ≠ m.target: engine unchanged
+          rw [engineAt_updateEngineAt_ne _ _ _ _ h] at heng'
+          obtain ⟨mboxSe, hmboxSe, hmboxIdx, hmboxMode⟩ :=
+            wt.mailbox_exists addr' se' heng' hmode'
+          by_cases hm : κ.mailboxOf addr' = m.target
+          · -- mailboxOf addr' = m.target: updated engine, same idx and mode
+            refine ⟨⟨mboxEng.idx, { mboxEng.engine with status := .busy w }⟩, ?_, ?_, ?_⟩
+            · rw [hm]; exact engineAt_updateEngineAt_self _ _ _ ⟨_, heng⟩
+            · rw [hm] at hmboxSe; rw [heng] at hmboxSe; cases hmboxSe; exact hmboxIdx
+            · exact hmode
+          · -- neither: engine unchanged
+            refine ⟨mboxSe, ?_, hmboxIdx, hmboxMode⟩
+            exact (engineAt_updateEngineAt_ne _ _ _ _ hm).trans hmboxSe
     }
   -- ── M-Dequeue: transition proc→busy, update mailbox ────────────────────
   | mDequeue =>

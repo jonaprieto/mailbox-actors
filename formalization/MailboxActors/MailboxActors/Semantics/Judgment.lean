@@ -162,14 +162,22 @@ inductive OpStep : SystemState → OpLabel → SystemState → Prop where
       κ' = { κ with
         messages := κ.messages ++ [⟨sender, κ.mailboxOf target, ⟨i, v⟩⟩] } →
       OpStep κ OpLabel.send κ'
-  /-- M-Enqueue: deliver a message to a ready mailbox engine.
-      The message `m` is removed from `κ.messages`. -/
+  /-- M-Enqueue: deliver an in-transit message to a ready mailbox engine.
+      The mailbox transitions from `ready(f)` to `busy(w)` and the message
+      `m` is removed from `κ.messages`. -/
   | mEnqueue (κ κ' : SystemState) (m : Message) (mboxEng : SomeEngine)
+      (w : EngineSpec.MsgType mboxEng.idx)
+      (f : EngineSpec.MsgType mboxEng.idx → Bool)
       (pre post : List Message) :
       κ.messages = pre ++ m :: post →
       κ.engineAt m.target = some mboxEng →
+      m.payload.1 = mboxEng.idx →
       mboxEng.engine.mode = EngineMode.mail →
-      κ' = { κ with messages := pre ++ post } →
+      mboxEng.engine.status = EngineStatus.ready f →
+      f w = true →
+      κ' = { κ.updateEngineAt m.target
+               ⟨mboxEng.idx, { mboxEng.engine with status := .busy w }⟩
+             with messages := pre ++ post } →
       OpStep κ OpLabel.enqueue κ'
   /-- M-Dequeue: transfer a message from mailbox to processing engine.
       The processing engine transitions from `ready(f)` to `busy(v)` where

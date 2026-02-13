@@ -58,12 +58,18 @@ theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
       exact hmboxMode
   | mEnqueue =>
     subst_vars
-    rename_i pre post hmsg _ _
+    rename_i m mboxEng _ _ pre post hmsg heng _ hmode _ _
     intro m' hm' se hse
-    apply hiso m' _ se hse
-    rw [hmsg]
-    simp only [List.mem_append, List.mem_cons] at hm' ⊢
-    tauto
+    simp only [SystemState.withMessages_engineAt] at hse
+    have hm'_old : m' ∈ κ.messages := by
+      rw [hmsg]; simp only [List.mem_append, List.mem_cons] at hm' ⊢; tauto
+    by_cases h : m'.target = m.target
+    · -- target = m.target: updated engine still has mode mail
+      rw [h, engineAt_updateEngineAt_self _ _ _ ⟨_, heng⟩] at hse
+      cases hse; exact hmode
+    · -- target ≠ m.target: engine unchanged
+      rw [engineAt_updateEngineAt_ne _ _ _ _ h] at hse
+      exact hiso m' hm'_old se hse
   | mDequeue =>
     subst_vars
     rename_i procAddr i procEng mboxEng _ _ _ hproc hpmode _ hmbox _
