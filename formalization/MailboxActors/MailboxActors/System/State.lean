@@ -106,6 +106,21 @@ def SystemState.updateEngineAt (κ : SystemState) (addr : Address)
     (addr : Address) (se : SomeEngine) :
     (κ.updateEngineAt addr se).messages = κ.messages := rfl
 
+/-- Overriding `messages` does not affect `engineAt` (which depends only on `nodes`). -/
+@[simp] lemma SystemState.withMessages_engineAt (κ : SystemState) (ms : List Message)
+    (addr : Address) :
+    ({ κ with messages := ms } : SystemState).engineAt addr = κ.engineAt addr := rfl
+
+/-- `mailboxOf` ignores the state entirely, so overriding messages preserves it. -/
+@[simp] lemma SystemState.withMessages_mailboxOf (κ : SystemState) (ms : List Message)
+    (addr : Address) :
+    ({ κ with messages := ms } : SystemState).mailboxOf addr = κ.mailboxOf addr := rfl
+
+/-- `mailboxOf` ignores the state entirely, so `updateEngineAt` preserves it. -/
+@[simp] lemma SystemState.updateEngineAt_mailboxOf (κ : SystemState)
+    (target addr : Address) (se : SomeEngine) :
+    (κ.updateEngineAt target se).mailboxOf addr = κ.mailboxOf addr := rfl
+
 @[simp] lemma SystemState.updateEngineAt_nextId (κ : SystemState)
     (addr : Address) (se : SomeEngine) :
     (κ.updateEngineAt addr se).nextId = κ.nextId := rfl

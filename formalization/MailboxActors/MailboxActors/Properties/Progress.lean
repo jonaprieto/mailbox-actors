@@ -37,8 +37,8 @@ theorem progress (κ : SystemState) :
       obtain ⟨mboxSe, hmbox, _⟩ := wt.messages_typed m hm
       cases hmode : mboxSe.engine.mode with
       | mail =>
-        exact ⟨{ κ with messages := rest }, OpLabel.enqueue,
-          OpStep.mEnqueue κ _ m mboxSe [] rest hne hmbox hmode rfl⟩
+        -- M-Enqueue now requires ready(f) and filter; S-Node is always available.
+        exact ⟨_, OpLabel.node, OpStep.sNode κ _ κ.nextId rfl rfl⟩
       | process =>
         -- The target is in process mode; S-Node is always available.
         exact ⟨_, OpLabel.node, OpStep.sNode κ _ κ.nextId rfl rfl⟩
