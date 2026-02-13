@@ -575,10 +575,9 @@ if $g_j(x) = \some{r}$ then $g_k(x) = \none$.
 \end{definition}
 
 \begin{definition}[Well-Formed Behaviour]\label{def:well-formed-behaviour}%
-A \textbf{well-formed behaviour} for an engine of type $i$ is a pair
-$\typing{(b, \pi)}{\behaviourtype{i} \times \mathsf{NonOverlapping}(b)}$
-consisting of a behaviour $b$ and a proof $\pi$ that $b$ has non-overlapping
-guards. Throughout this paper, all behaviours are well-formed.
+A behaviour $\typing{b}{\behaviourtype{i}}$ is \textbf{well-formed} if it has
+non-overlapping guards (\Cref{def:non-overlapping-guards}).
+Throughout this paper, all behaviours are assumed to be well-formed.
 \end{definition}
 
 Alternative guard selection strategies---inspired, for instance, by
@@ -1799,7 +1798,7 @@ produces:
 \[
   \chain{%
     \update{(\mathsf{dlv} \cup \{h_1\},\; \mathsf{pnd},\;
-             \mathsf{rdy} \mathbin{+\!\!+} [m_1])}%
+             \mathsf{rdy} \pp [m_1])}%
   }{\noop}
 \]
 \eruleref{Chain} executes: \eruleref{Update} stores $m_1$ in the ready queue
@@ -1843,10 +1842,10 @@ $q_2.\mathsf{pnd}$: message $m_2$ has $\mathsf{deps}(m_2) = \{h_3\}
   \refeffect{Chain}\bigl(\;
     &\update{(\mathsf{dlv} \cup \{h_3\},\;
              \mathsf{pnd},\;
-             \mathsf{rdy} \mathbin{+\!\!+} [m_3])},\\
+             \mathsf{rdy} \pp [m_3])},\\
     &\update{(\mathsf{dlv} \cup \{h_3\},\;
              \mathsf{pnd} \setminus \{h_2\},\;
-             \mathsf{rdy} \mathbin{+\!\!+} [m_3, m_2])}\;\bigr)
+             \mathsf{rdy} \pp [m_3, m_2])}\;\bigr)
 \end{align*}
 \eruleref{Chain} sequences two \eruleref{Update} steps: the first adds $m_3$
 to the ready queue, the second moves $m_2$ from pending to ready.
@@ -2029,7 +2028,7 @@ engine's state.
 A message $m$ is \emph{unique in transit} from step $n$ onwards if, at every
 step $k \geq n$, $m$ appears at most once in the in-transit list
 $\SetOfMessages$. Formally, for every decomposition
-$\SetOfMessages = L_{1} \mathbin{+\!\!+} [m] \mathbin{+\!\!+} L_{2}$, we have
+$\SetOfMessages = L_{1} \pp [m] \pp L_{2}$, we have
 $m \notin L_{1}$ and $m \notin L_{2}$.
 \end{definition}
 
