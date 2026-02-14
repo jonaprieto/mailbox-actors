@@ -38,4 +38,25 @@ def MailboxIsolation (κ : SystemState) : Prop :=
       κ.engineAt m.target = some se →
       se.engine.mode = EngineMode.mail
 
+-- ── Corollaries ──────────────────────────────────────────────────────────
+
+/-- **No orphaned messages**: every in-transit message has a live target
+    engine in the system.  Direct consequence of `messages_typed`. -/
+theorem noOrphanedMessages (κ : SystemState) (wt : WellTypedState κ)
+    (m : Message) (hm : m ∈ κ.messages) :
+    ∃ se : SomeEngine, κ.engineAt m.target = some se :=
+  let ⟨se, hse, _⟩ := wt.messages_typed m hm; ⟨se, hse⟩
+
+/-- **Spawn pairing**: every processing engine has a paired mailbox engine
+    with matching type index in `mail` mode.  Restates `mailbox_exists`
+    as a standalone theorem for clarity. -/
+theorem spawnPairing (κ : SystemState) (wt : WellTypedState κ)
+    (addr : Address) (se : SomeEngine)
+    (heng : κ.engineAt addr = some se) (hmode : se.engine.mode = EngineMode.process) :
+    ∃ mboxSe : SomeEngine,
+      κ.engineAt (κ.mailboxOf addr) = some mboxSe ∧
+      mboxSe.idx = se.idx ∧
+      mboxSe.engine.mode = EngineMode.mail :=
+  wt.mailbox_exists addr se heng hmode
+
 end MailboxActors
