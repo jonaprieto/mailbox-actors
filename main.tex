@@ -1769,7 +1769,7 @@ from $\ready{f}$ to $\busy{\append(m_1)}$.
 
 \paragraph{Step 3: The mailbox processes $m_1$.}
 \sruleref{Process} fires. \bruleref{GuardStrategy} selects the unique guarded
-action: $\guard{c}(\append(m_1), c, q_0) = \some{m_1}$.
+action: $\guard{c}(\append(m_1), k, q_0) = \some{m_1}$.
 Since $\mathsf{deps}(m_1) = \emptyset \subseteq q_0.\mathsf{dlv}$, the action
 produces:
 \[
@@ -1789,13 +1789,19 @@ The mailbox returns to $\ready{\lambda\_.\mathsf{tt}}$.
 
 \paragraph{Step 4: $m_1$ is delivered.}
 By \mruleref{Dequeue}, broker $t$ transitions
-$\ready{f} \to \busy{m_1}$, retrieving $m_1$ from the mailbox's ready queue.
+$\ready{f} \to \busy{m_1}$, and $m_1$ is removed from the mailbox's ready
+queue. The mailbox state becomes
+\[
+  q_1' = (\mathsf{dlv}{=}\{h_1\},\;
+         \mathsf{pnd}{=}\emptyset,\;
+         \mathsf{rdy}{=}[\,])\,.
+\]
 
 \paragraph{Step 5: $m_2$ arrives and is buffered.}
 $m_2$ enters via \mruleref{Send} and \mruleref{Enqueue}, then
-\sruleref{Process} fires. The guard matches: $\guard{c}(\append(m_2), c, q_1)
+\sruleref{Process} fires. The guard matches: $\guard{c}(\append(m_2), k, q_1')
 = \some{m_2}$. However, $\mathsf{deps}(m_2) = \{h_3\} \not\subseteq
-\{h_1\} = q_1.\mathsf{dlv}$. The action produces:
+\{h_1\} = q_1'.\mathsf{dlv}$. The action produces:
 \[
   \update{(\mathsf{dlv}{=}\{h_1\},\;
            \mathsf{pnd} \cup \{h_2 \mapsto m_2\},\;
@@ -1824,8 +1830,10 @@ $q_2.\mathsf{pnd}$: message $m_2$ has $\mathsf{deps}(m_2) = \{h_3\}
              \mathsf{pnd} \setminus \{h_2\},\;
              \mathsf{rdy} \pp [m_3, m_2])}\;\bigr)
 \end{align*}
-\eruleref{Chain} sequences two \eruleref{Update} steps: the first adds $m_3$
-to the ready queue, the second moves $m_2$ from pending to ready.
+\eruleref{Chain} sequences two \eruleref{Update} effects. Because each
+\eruleref{Update} replaces the entire environment, the second effect
+supersedes the first: it records $m_3$ in the ready queue \emph{and}
+moves the now-satisfiable $m_2$ from pending to ready.
 \[
   q_3 = (\mathsf{dlv}{=}\{h_1, h_3\},\;
          \mathsf{pnd}{=}\emptyset,\;
@@ -1839,8 +1847,9 @@ $m_3$.
 
 \medskip\noindent
 This trace exercises \mruleref{Send}, \mruleref{Enqueue}, \mruleref{Dequeue},
-\sruleref{Process}, \bruleref{GuardStrategy}, \eruleref{Update},
-\eruleref{Chain}, and \eruleref{Noop}---eight of the system's eighteen rules.
+\sruleref{Process}, \bruleref{GuardStrategy}, \bruleref{GuardedActionEval},
+\eruleref{Update},
+\eruleref{Chain}, and \eruleref{Noop}---nine of the system's eighteen rules.
 The cascade in Step~6 illustrates why first-class mailbox actors are
 essential: a passive data structure could not conditionally release buffered
 messages upon the arrival of their dependencies.
