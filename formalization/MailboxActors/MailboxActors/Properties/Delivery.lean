@@ -34,9 +34,9 @@ def UniqueInTransit (trace : Trace) (m : Message) (n : Nat) : Prop :=
   ∀ k ≥ n, ∀ pre post : List Message,
     (trace k).messages = pre ++ m :: post → m ∉ pre ∧ m ∉ post
 
-/-- Well-typedness and mailbox isolation are jointly preserved along
-    any execution trace. -/
-private lemma invariants_trace (trace : Trace) (hexec : IsExecution trace) (n : Nat)
+/-- **Safety**: well-typedness and mailbox isolation are jointly preserved
+    along any execution trace starting from a well-typed state. -/
+theorem invariants_trace (trace : Trace) (hexec : IsExecution trace) (n : Nat)
     (hwt : WellTypedState (trace n)) (hiso : MailboxIsolation (trace n))
     (k : Nat) (hk : n ≤ k) :
     WellTypedState (trace k) ∧ MailboxIsolation (trace k) := by
