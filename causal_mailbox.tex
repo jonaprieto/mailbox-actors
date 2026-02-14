@@ -19,10 +19,11 @@
       \msgtype{\mathsf{broker}}%
     } \coloneqq
       \msg{TopicMsg}(\Address, \FinSet{\mathsf{Hash}}, \mathsf{Data},
-      \mathsf{Sig})\,,
+      \mathsf{Sig}, \mathsf{Hash})\,,
   \end{equation}
   where the second component records the set of message hashes on which this
-  message causally depends. We write $\mathsf{deps}(v)$ for this dependency set
+  message causally depends and the fifth component is the message's own hash.
+  We write $\mathsf{deps}(v)$ for this dependency set
   and $\mathsf{h}(v)$ for the hash of message~$v$.
 
   The relay engine uses the default mailbox (\Cref{def:mailbox-engine}).
@@ -46,7 +47,7 @@
   $\guardedactionval{\guard{c}}{\action{c}}$:
   \begin{itemize}
   \item The guard always matches:
-    $\guard{c}(\append(v), c, q) \coloneqq \some{v}$.
+    $\guard{c}(\append(v), k, q) \coloneqq \some{v}$.
   \item The action branches on dependency satisfaction.
     If $\mathsf{deps}(v) \subseteq q.\mathsf{dlv}$, the message is ready
     and a cascade check releases any pending messages whose dependencies are
@@ -57,12 +58,15 @@
           \update{q[\mathsf{dlv} \cup \{\mathsf{h}(v)\},\;
                     \mathsf{rdy} \pp [v]]}%
         }{%
-          \update{q[\mathsf{pnd} \setminus S,\;
-                    \mathsf{rdy} \pp S_{\mathsf{list}}]}%
+          \update{q[\mathsf{dlv} \cup \{\mathsf{h}(v)\},\;
+                    \mathsf{pnd} \setminus S,\;
+                    \mathsf{rdy} \pp [v] \pp S_{\mathsf{list}}]}%
         }
     \end{multline*}
     where $S = \{ w \in q.\mathsf{pnd} \mid \mathsf{deps}(w)
     \subseteq q.\mathsf{dlv} \cup \{\mathsf{h}(v)\}\}$.
+    When $S = \emptyset$, the second effect coincides with the first;
+    this case simplifies to $\chain{\update{\cdot}}{\noop}$.
 
     If $\mathsf{deps}(v) \not\subseteq q.\mathsf{dlv}$, the message is
     buffered:
