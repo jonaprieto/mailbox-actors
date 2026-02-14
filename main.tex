@@ -1677,6 +1677,9 @@ The \sruleref{Process} rule coordinates behaviour evaluation, effect execution,
 and the engine's return to the ready state.
 
 \begin{definition}[\srule{Process}]\label{rule:s-Process}
+When a processing engine is in the $\busy{m}$ state, its behaviour is evaluated
+against message $m$ to produce an effect $E$, the effect is executed, and the
+engine returns to the ready state.
 {\small
 \begin{prooftree}
 \AxiomC{$%
