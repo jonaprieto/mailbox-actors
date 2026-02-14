@@ -135,6 +135,18 @@ inductive EffectEvalStep :
       EffectEvalStep κ i (Effect.chain e₁ e₂) κ''
 
 -- ============================================================================
+-- § Post-Processing Status Resolution
+-- ============================================================================
+
+/-- Post-processing status resolution: if the effect left the engine `busy`,
+    reset to `ready(λ_.true)`; otherwise preserve the status set by the effect
+    (e.g. `terminated` from E-Terminate, `ready(f)` from E-MFilter). -/
+def resolvePostStatus {i : EngineSpec.EngIdx} (s : EngineStatus i) : EngineStatus i :=
+  match s with
+  | .busy _ => .ready (fun _ => true)
+  | other => other
+
+-- ============================================================================
 -- § System-Level Operations
 -- ============================================================================
 
@@ -234,18 +246,24 @@ inductive OpStep : SystemState → OpLabel → SystemState → Prop where
               (κ.mailboxOf procAddr)
               ⟨mboxEng.idx, { mboxEng.engine with env := newMboxEnv }⟩ →
       OpStep κ OpLabel.dequeue κ'
+  /-- S-Process: engine processing — a busy engine evaluates its behaviour,
+      executes the resulting effect, and resolves post-processing status. -/
+  | sProcess (κ κ' κ'' : SystemState) (addr : Address)
+      (i : EngineSpec.EngIdx) (p : Engine i) (v : EngineSpec.MsgType i)
+      (E : Effect i) :
+      κ.engineAt addr = some ⟨i, p⟩ →
+      p.status = EngineStatus.busy v →
+      EvalStep i p v E →
+      EffectEvalStep κ i E κ' →
+      (∃ (p' : Engine i),
+        κ'.engineAt addr = some ⟨i, p'⟩ ∧
+        κ'' = κ'.updateEngineAt addr
+          ⟨i, { p' with status := resolvePostStatus p'.status }⟩) →
+      OpStep κ OpLabel.process κ''
 
 -- ============================================================================
 -- § Engine Processing
 -- ============================================================================
-
-/-- Post-processing status resolution: if the effect left the engine `busy`,
-    reset to `ready(λ_.true)`; otherwise preserve the status set by the effect
-    (e.g. `terminated` from E-Terminate, `ready(f)` from E-MFilter). -/
-def resolvePostStatus {i : EngineSpec.EngIdx} (s : EngineStatus i) : EngineStatus i :=
-  match s with
-  | .busy _ => .ready (fun _ => true)
-  | other => other
 
 /-- `ProcessStep κ addr i v κ'` : engine at `addr` of type `i` processes
     message `v`, yielding new state `κ'`. -/

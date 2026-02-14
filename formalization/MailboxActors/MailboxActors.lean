@@ -22,6 +22,7 @@ import MailboxActors.System.WellTyped
 import MailboxActors.Semantics.Judgment
 
 -- Metatheoretic properties
+import MailboxActors.Properties.EffectPreservation
 import MailboxActors.Properties.TypePreservation
 import MailboxActors.Properties.Progress
 import MailboxActors.Properties.Determinism
