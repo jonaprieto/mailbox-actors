@@ -838,12 +838,9 @@ $}
 \subsection{Engine Creation}\label{sec:engine-creation-rules}
 
 \sloppy
-Every processing engine is paired with a dedicated mailbox engine at
-creation time (\sruleref{SpawnWithMailbox}). To avoid duplicating the
-shared setup logic---assigning a fresh address, initialising the
-configuration and environment, and registering the engine in its
-node's engine map---we factor it into the auxiliary rule
-\sruleref{EngineSpawn} below.
+Since every processing engine is paired with a mailbox engine
+(\sruleref{SpawnWithMailbox}), the shared setup logic is factored into
+the auxiliary rule \sruleref{EngineSpawn}.
 
 \begin{definition}[\srule{EngineSpawn}\textnormal{ --- auxiliary}]\label{rule:s-EngineSpawn}
 Given a node $\node{i}$, an engine type index $k$, and an optional parent
@@ -941,9 +938,6 @@ $}
 \end{prooftree}
 }%
 \end{definition}
-
-Spawning a processing engine requires creating its paired mailbox engine. The
-following rule makes this coupling explicit.
 
 \begin{definition}[\srule{SpawnWithMailbox}]\label{rule:s-SpawnWithMailbox}
 For engine type $k$ on node $\node{i}$, this rule invokes
@@ -1088,9 +1082,7 @@ $}
 \end{prooftree}
 \end{definition}
 
-The \mruleref{Send} rule redirects messages to the target engine's dedicated
-mailbox, wrapping the payload in an $\append$ constructor. This is the only way
-to add a message to $\SetOfMessages$.
+The \mruleref{Send} rule is the only way to add a message to $\SetOfMessages$.
 
 \begin{definition}[\mrule{Enqueue}]\label{rule:m-Enqueue}
 An in-transit message $m$ addressed to a mailbox engine $\mailbox{t}$ is
@@ -1331,12 +1323,10 @@ $}
 \end{definition}
 
 \paragraph{Guard Selection Strategy}
-Under the non-overlapping guard assumption (\Cref{def:non-overlapping-guards}),
-at most one guarded action produces a non-$\noop$ effect for any given input.
-The following rule selects the unique matching guard.
 
 \begin{definition}[\brule{GuardStrategy}]\label{rule:b-GuardStrategy}
-Under the non-overlapping guard assumption, engine $p$ processing message $v$
+Under the non-overlapping guard assumption
+(\Cref{def:non-overlapping-guards}), engine $p$ processing message $v$
 selects the unique guarded action $\guardedaction{i}$ whose guard produces a
 non-$\noop$ effect $E$, while all other guards $\guard{j}$ ($j \neq i$)
 produce $\noop$.
@@ -1386,8 +1376,6 @@ $}
 $}
 \end{prooftree}
 \end{definition}
-
-When no guard matches the message, the overall effect is $\noop$.
 
 \begin{definition}[\brule{AllGuardsFail}]\label{rule:b-AllGuardsFail}
 If every guarded action $\guardedaction{j}$ in $\behaviour{p}$ produces
@@ -1552,10 +1540,8 @@ $\ready{f}$.
   )}
 $}
   \end{prooftree}
-Note that \eruleref{MFilter} transitions the engine from $\busy{v}$ to
-$\ready{f}$, setting the filter for the next message cycle. When composed via
-\eruleref{Chain}, this transition takes priority over the default return to
-$\ready{\lambda\_.\mathsf{tt}}$ in \sruleref{Process}.
+When composed via \eruleref{Chain}, this transition takes priority over the
+default return to $\ready{\lambda\_.\mathsf{tt}}$ in \sruleref{Process}.
   \end{definition}
 
 
@@ -1670,7 +1656,6 @@ $}
   )}
 $}
 \end{prooftree}
-The \eruleref{Terminate} effect sets the engine's status to $\terminated$.
 The \sruleref{Clean} rule subsequently removes the engine from the system.
 \end{definition}
 
@@ -1701,8 +1686,8 @@ Executing a $\noop$ effect leaves the system state $\SystemState$ unchanged.
 
 \subsection{Engine Processing}\label{sec:engine-processing}
 
-The \sruleref{Process} rule coordinates behaviour evaluation, effect execution,
-and the engine's return to the ready state.
+The \sruleref{Process} rule ties together behaviour evaluation, effect
+execution, and status management into a single system-level transition.
 
 \begin{definition}[\srule{Process}]\label{rule:s-Process}
 When a processing engine is in the $\busy{m}$ state, its behaviour is evaluated
