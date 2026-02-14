@@ -837,13 +837,17 @@ $}
 \subsection{Engine Creation}\label{sec:engine-creation-rules}
 
 \sloppy
-Engine creation involves setting up both the processing engine and its
-dedicated mailbox engine. The following auxiliary rule creates an individual
-engine; it is not a top-level system transition but is invoked by
-\sruleref{SpawnWithMailbox}.
+Every processing engine is paired with a dedicated mailbox engine at
+creation time (\sruleref{SpawnWithMailbox}). To avoid duplicating the
+shared setup logic---assigning a fresh address, initialising the
+configuration and environment, and registering the engine in its
+node's engine map---we factor it into the auxiliary rule
+\sruleref{EngineSpawn} below.
 
 \begin{definition}[\srule{EngineSpawn} (auxiliary)]\label{rule:s-EngineSpawn}
-  \hspace{-1.5em}
+A single engine is created with a fresh identifier, an initial configuration,
+and an environment seeded with the engine's own address.
+{\small
   \begin{prooftree}
   \AxiomC{$%
         \equal{%
@@ -884,7 +888,7 @@ engine; it is not a top-level system transition but is invoked by
       }{
         \localenvval%
           {s}
-          {[(\textsc{self}, \iota)]}
+          {[(\self, \iota)]}
       }
 \quad \defequal{\iota}{\freshid}
 \quad \typing{\loc{\mathsf{id}_i}{\iota}}{\Address}
@@ -931,6 +935,7 @@ $}
     }%
   $}
 \end{prooftree}
+}%
 \end{definition}
 
 Spawning a processing engine requires creating its paired mailbox engine. The
