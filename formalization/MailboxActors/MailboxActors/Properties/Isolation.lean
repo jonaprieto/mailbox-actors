@@ -105,4 +105,31 @@ theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
         rw [engineAt_updateEngineAt_ne _ _ _ _ h2] at hse
         exact hiso m hm se hse
 
+-- ── Mailbox Persistence ──────────────────────────────────────────────────
+
+/-- **Mailbox persistence after cleanup** (Remark 4.4): when S-Clean removes
+    a terminated processing engine, its paired mailbox engine survives.
+    This prevents in-flight messages from being orphaned. -/
+theorem mailboxPersistence (κ : SystemState) (addr : Address) (se : SomeEngine)
+    (heng : κ.engineAt addr = some se)
+    (hmode : se.engine.mode = EngineMode.process)
+    (hterm : se.engine.status = EngineStatus.terminated) :
+    (κ.removeEngineAt addr).engineAt (κ.mailboxOf addr) =
+      κ.engineAt (κ.mailboxOf addr) := by
+  exact engineAt_removeEngineAt_ne κ addr (κ.mailboxOf addr) (mailboxOf_ne_self κ addr)
+
+/-- After S-Clean, a well-typed state's paired mailbox still exists. -/
+theorem mailboxSurvivesClean (κ : SystemState) (wt : WellTypedState κ)
+    (addr : Address) (se : SomeEngine)
+    (heng : κ.engineAt addr = some se)
+    (hmode : se.engine.mode = EngineMode.process)
+    (hterm : se.engine.status = EngineStatus.terminated) :
+    ∃ mboxSe : SomeEngine,
+      (κ.removeEngineAt addr).engineAt (κ.mailboxOf addr) = some mboxSe ∧
+      mboxSe.idx = se.idx ∧
+      mboxSe.engine.mode = EngineMode.mail := by
+  obtain ⟨mboxSe, hmbox, hidx, hmboxMode⟩ := wt.mailbox_exists addr se heng hmode
+  exact ⟨mboxSe, by rw [mailboxPersistence κ addr se heng hmode hterm]; exact hmbox,
+    hidx, hmboxMode⟩
+
 end MailboxActors
