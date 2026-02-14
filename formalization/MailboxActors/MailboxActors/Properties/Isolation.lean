@@ -4,6 +4,7 @@ Authors: Jonathan Prieto-Cubides
 -/
 import MailboxActors.System.WellTyped
 import MailboxActors.Semantics.Judgment
+import MailboxActors.Properties.EffectPreservation
 
 /-!
 # Mailbox Isolation
@@ -70,6 +71,8 @@ theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
     rw [engineAt_addEngineAt_ne _ _ _ _ hne_mbox,
         engineAt_addEngineAt_ne _ _ _ _ hne_proc] at hse
     exact hiso m hm se hse
+  | sProcess _ _ _ _ _ _ _ _ _ _ heff hresolve =>
+    exact (sProcessPreservesInvariants _ _ _ _ _ _ heff hresolve wt hiso).2
   | mEnqueue =>
     subst_vars
     rename_i m mboxEng _ _ pre post hmsg heng _ hmode _ _

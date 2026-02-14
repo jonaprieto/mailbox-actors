@@ -4,6 +4,7 @@ Authors: Jonathan Prieto-Cubides
 -/
 import MailboxActors.System.WellTyped
 import MailboxActors.Semantics.Judgment
+import MailboxActors.Properties.EffectPreservation
 
 /-!
 # Type Preservation
@@ -180,6 +181,9 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
                 engineAt_addEngineAt_ne _ _ _ _ hm2]
             exact hmbox
     }
+  -- ── S-Process: engine processes a message ───────────────────────────────
+  | sProcess _ _ _ _ _ _ _ _ _ _ heff hresolve =>
+    exact (sProcessPreservesInvariants _ _ _ _ _ _ heff hresolve wt hiso).1
   -- ── M-Dequeue: transition proc→busy, update mailbox ────────────────────
   | mDequeue =>
     subst_vars
