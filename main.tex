@@ -806,7 +806,8 @@ yields state $\SystemState'$.
 \subsection{System-level Initialisation}\label{sec:creation-rules}
 
 \begin{definition}[\srule{Node}]\label{rule:s-Node}
-A new node is created with a fresh identifier and an empty engine map.
+A new node $n$ with fresh identifier $\iota$ and an empty engine map is added
+to the set of nodes $\SetOfNodes$.
 \begin{prooftree}
 \AxiomC{$%
       \defequal{\iota}{\freshid}
@@ -845,8 +846,11 @@ node's engine map---we factor it into the auxiliary rule
 \sruleref{EngineSpawn} below.
 
 \begin{definition}[\srule{EngineSpawn}\textnormal{ --- auxiliary}]\label{rule:s-EngineSpawn}
-A single engine is created with a fresh identifier, an initial configuration,
-and an environment seeded with the engine's own address.
+Given a node $\node{i}$, an engine type index $k$, and an optional parent
+address $\pi$, this rule creates a new engine with fresh identifier $\iota$,
+initialises its configuration $\config{\new}$ and environment $\localenv{\new}$
+(seeded with the engine's own address), and registers it in $\node{i}$'s
+engine map.
 {\small
   \begin{prooftree}
   \AxiomC{$%
@@ -942,7 +946,11 @@ Spawning a processing engine requires creating its paired mailbox engine. The
 following rule makes this coupling explicit.
 
 \begin{definition}[\srule{SpawnWithMailbox}]\label{rule:s-SpawnWithMailbox}
-Every processing engine is paired with a dedicated mailbox engine at creation.
+For engine type $k$ on node $\node{i}$, this rule invokes
+\sruleref{EngineSpawn} twice: once to create the processing engine (with fresh
+identifier $\iota_p$) and once to create its paired mailbox engine (with fresh
+identifier $\iota_m$), whose parent address points back to the processing
+engine.
 \begin{prooftree}
 \AxiomC{$%
   \typing{k}{\EngIdx}
@@ -990,7 +998,8 @@ To prevent zombie engine instances---engines in the $\terminated$ state---the
 system removes them.
 
 \begin{definition}[\srule{Clean}]\label{rule:s-Clean}
-An engine whose status is $\terminated$ is removed from its node's engine map.
+An engine $p$ on node $\node{i}$ whose status is $\terminated$ is removed
+from $\node{i}$'s engine map $\enginemap_i$.
 \begin{prooftree}
 \AxiomC{$%
   \node{i} \in \SetOfNodes
@@ -1037,9 +1046,10 @@ non-blocking sends, mailbox isolation with eventual delivery, and explicit
 lifecycle management.
 
 \begin{definition}[\mrule{Send}]\label{rule:m-Send}
-A message with payload $v$ conforming to the target's interface is wrapped
-in the $\append$ constructor and placed in transit, addressed to the target
-engine's dedicated mailbox.
+A sender engine $\engine{s}$ dispatches a message with payload
+$\typing{v}{\msgtype{t}}$ to a target processing engine $\engine{t}$. The
+payload is wrapped in the $\append$ constructor and placed in transit,
+addressed to $\engine{t}$'s dedicated mailbox.
 \begin{prooftree}
 \AxiomC{$%
 \engine{s}, \engine{t} \in \SetOfEngines%
@@ -1083,10 +1093,10 @@ mailbox, wrapping the payload in an $\append$ constructor. This is the only way
 to add a message to $\SetOfMessages$.
 
 \begin{definition}[\mrule{Enqueue}]\label{rule:m-Enqueue}
-An in-transit message addressed to a mailbox engine is consumed from
-$\SetOfMessages$, transitioning the mailbox engine from $\ready{f}$ to
-$\busy{w}$. The mailbox engine then processes the message through its
-behaviour via \sruleref{Process}.
+An in-transit message $m$ addressed to a mailbox engine $\mailbox{t}$ is
+consumed from $\SetOfMessages$, transitioning $\mailbox{t}$ from $\ready{f}$
+to $\busy{w}$. The mailbox engine then processes $w$ through its behaviour
+via \sruleref{Process}.
 \begin{prooftree}
 \AxiomC{$%
   \equal{%
@@ -1141,9 +1151,9 @@ $}
 \end{definition}
 
 \begin{definition}[\mrule{Dequeue}]\label{rule:m-Dequeue}
-When a processing engine is ready and its mailbox contains a message passing
-the engine's filter, the message is removed from the mailbox and the engine
-transitions to the busy state.
+When a processing engine $p$ is in state $\ready{f}$ and its mailbox contains
+a message $\typing{v}{\msgtype{p}}$ accepted by filter $f$, the message is
+removed from the mailbox and $p$ transitions to $\busy{v}$.
 \begin{prooftree}
 \AxiomC{$
   p \in \SetOfEngines%
@@ -1234,8 +1244,10 @@ This subsection formalises how an engine evaluates its guarded actions in
 response to a message.
 
 \begin{definition}[\brule{GuardedActionEval}]\label{rule:b-GuardedActionEval}
-A single guarded action is evaluated: if the guard is satisfied, the action
-is applied to produce an effect.
+For an engine $p$ processing message $\typing{v}{\msgtype{p}}$, a guarded
+action $\guardedactionval{g}{a} \in \behaviour{p}$ is evaluated: if guard $g$
+accepts $v$ (returning $\some{r}$), then action $a$ is applied to produce an
+effect.
 \begin{prooftree}
 \AxiomC{$%
   p \in \SetOfEngines%
@@ -1278,7 +1290,8 @@ $}
 \end{definition}
 
 \begin{definition}[\brule{NoMatchingGuard}]\label{rule:b-NoMatchingGuard}
-If a guard returns $\none$, the guarded action produces $\noop$.
+For a guarded action $\guardedactionval{g}{a} \in \behaviour{p}$, if guard $g$
+rejects message $v$ (returning $\none$), the action produces $\noop$.
 \begin{prooftree}
 \AxiomC{$%
   p \in \SetOfEngines%
@@ -1323,7 +1336,10 @@ at most one guarded action produces a non-$\noop$ effect for any given input.
 The following rule selects the unique matching guard.
 
 \begin{definition}[\brule{GuardStrategy}]\label{rule:b-GuardStrategy}
-\hspace{-1.5em}
+Under the non-overlapping guard assumption, engine $p$ processing message $v$
+selects the unique guarded action $\guardedaction{i}$ whose guard produces a
+non-$\noop$ effect $E$, while all other guards $\guard{j}$ ($j \neq i$)
+produce $\noop$.
 \begin{prooftree}
 \AxiomC{$%
 p \in \SetOfEngines%
@@ -1374,7 +1390,8 @@ $}
 When no guard matches the message, the overall effect is $\noop$.
 
 \begin{definition}[\brule{AllGuardsFail}]\label{rule:b-AllGuardsFail}
-\hspace{-1.5em}
+If every guarded action $\guardedaction{j}$ in $\behaviour{p}$ produces
+$\noop$ for message $v$, the overall behaviour evaluation yields $\noop$.
 \begin{prooftree}
 \AxiomC{$%
   p \in \SetOfEngines%
@@ -1421,8 +1438,8 @@ states that executing $E$ in $\SystemState$ produces $\SystemState'$. This
 judgment is defined by case analysis on $E$.
 
 \begin{definition}[\erule{Send}]\label{rule:e-Send}
-Executing a $\ccon{Send}$ effect dispatches a message via the \mruleref{Send}
-rule.
+Executing a $\send{l_t}{m}$ effect dispatches message $m$ to target address
+$l_t$ via the \mruleref{Send} rule.
 \begin{prooftree}
 \AxiomC{$%
   \engine{s}, \engine{t} \in \SetOfEngines%
@@ -1459,8 +1476,8 @@ $}
 \end{definition}
 
 \begin{definition}[\erule{Update}]\label{rule:e-Update}
-Executing an $\ccon{Update}$ effect replaces the engine's execution environment
-with the provided value.
+Executing an $\update{s}$ effect replaces engine $p$'s execution environment
+with the value $\typing{s}{\envtype{p}}$.
 \begin{prooftree}
 \AxiomC{$%
       p \in \SetOfEngines%
@@ -1498,7 +1515,9 @@ $}
 
 
 \begin{definition}[\erule{MFilter}]\label{rule:e-MFilter}
-  \hspace{-1.5em}
+Executing an $\mfilter{f}$ effect sets engine $p$'s message filter to
+$\typing{f}{\msgtype{p} \to \Bool}$, transitioning it from $\busy{v}$ to
+$\ready{f}$.
   \begin{prooftree}
   \AxiomC{$%
   p \in \SetOfEngines%
@@ -1541,8 +1560,10 @@ $\ready{\lambda\_.\mathsf{tt}}$ in \sruleref{Process}.
 
 
 \begin{definition}[\erule{Spawn}]\label{rule:e-Spawn}
-Executing a $\ccon{Spawn}$ effect creates a child engine via
-\sruleref{SpawnWithMailbox}, ensuring it is paired with a mailbox engine.
+Executing a $\spawn{\langle j, c, s \rangle}$ effect on node $\node{i}$
+creates a child engine of type $\typing{j}{\EngIdx}$ with initial
+configuration $c$ and environment $s$, delegating to
+\sruleref{SpawnWithMailbox}.
 \begin{prooftree}
 \AxiomC{$%
 \node{i} \in \SetOfNodes%
@@ -1579,8 +1600,10 @@ $}
 \end{definition}
 
 \begin{definition}[\erule{Chain}]\label{rule:e-Chain}
-Executing a $\ccon{Chain}$ effect sequences two sub-effects: the first is
-executed in the current state, and the second in the resulting state.
+Executing a $\chain{\mathit{eff}_1}{\mathit{eff}_2}$ effect sequences two
+sub-effects: $\mathit{eff}_1$ is executed in state $\SystemState$ yielding
+$\SystemState'$, then $\mathit{eff}_2$ in $\SystemState'$ yielding
+$\SystemState''$.
 \begin{prooftree}
 \AxiomC{$%
       p \in \SetOfEngines%
@@ -1613,7 +1636,7 @@ $}
 \end{definition}
 
 \begin{definition}[\erule{Terminate}]\label{rule:e-Terminate}
-\hspace{-1.5em}
+Executing a $\terminate$ effect sets engine $p$'s status to $\terminated$.
 \begin{prooftree}
 \AxiomC{$%
       p \in \SetOfEngines%
@@ -1652,7 +1675,7 @@ The \sruleref{Clean} rule subsequently removes the engine from the system.
 \end{definition}
 
 \begin{definition}[\erule{Noop}]\label{rule:e-Noop}
-Executing a $\noop$ effect leaves the system state unchanged.
+Executing a $\noop$ effect leaves the system state $\SystemState$ unchanged.
   \begin{prooftree}
   \AxiomC{$%
         p \in \SetOfEngines%
