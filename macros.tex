@@ -222,11 +222,11 @@
 
 % System-level judgments (blue)
 \newcommand{\sysstep}[2]{#1 \mathrel{\color{ruleS}\stepsymbol} #2}
-\newcommand{\opstep}[3]{#1 \mathrel{\color{ruleS}\stepsymbol}_{\mathsf{#2}} #3}
-\newcommand{\processstep}[4]{\ensuremath{#1, #2, #3 \mathrel{\color{ruleS}\stepsymbol}_{\mathsf{process}} #4}}
+\newcommand{\opstep}[3]{#1 \mathrel{{\color{ruleS}\stepsymbol}_{\mathsf{#2}}} #3}
+\newcommand{\processstep}[4]{\ensuremath{#1, #2, #3 \mathrel{{\color{ruleS}\stepsymbol}_{\mathsf{process}}} #4}}
 
 % Message-level judgments (orange)
-\newcommand{\sendstep}[4]{\ensuremath{#1, #2, #3 \mathrel{\color{ruleM}\stepsymbol}_{\mathsf{send}} #4}}
+\newcommand{\sendstep}[4]{\ensuremath{#1, #2, #3 \mathrel{{\color{ruleM}\stepsymbol}_{\mathsf{send}}} #4}}
 
 % Behaviour-level judgments (purple)
 \newcommand{\evalstep}[3]{#1 \mathrel{\color{ruleB}\vdash} #2 \mathrel{\color{ruleB}\downarrow} #3}
