@@ -2159,6 +2159,12 @@ The mailbox isolation property, in particular, captures the key design
 invariant: all messages to a processing engine are mediated by its dedicated
 mailbox actor, which is guaranteed by the structure of the transition rules.
 
+A companion Lean~4 mechanisation covers all definitions and all five
+propositions of \Cref{sec:properties}, including a concrete instantiation of
+the abstract framework for the causal delivery mailbox of
+\Cref{ex:causal-mailbox}, validating that the parametric definitions are
+directly implementable in a proof assistant.
+
 \paragraph{Limitations}
 The model assumes static engine types (no dynamic type extension), static
 engine allocation (no migration between nodes), and fixed behaviours (no
@@ -2169,17 +2175,16 @@ mailboxes per processing engine are excluded to avoid race conditions and
 preserve delivery guarantees.
 
 \paragraph{Future Work}
-Several extensions are natural. First, a companion mechanisation in Lean~4
-covers all five propositions of \Cref{sec:properties}, including a concrete
-instantiation of the abstract framework for the causal delivery mailbox of
-\Cref{ex:causal-mailbox}, validating that the parametric definitions are usable
-in practice.
-Second, a prototype implementation in Elixir---which provides a
-robust actor runtime through the Erlang VM---would validate the practical
-applicability. Third, dynamic engine type extension would enable open systems.
-Finally, relaxing the non-overlapping guard assumption to permit prioritised or
-nondeterministic guard selection would broaden the class of expressible
-behaviours.
+Several directions remain open. A prototype implementation in Elixir---which
+provides a robust actor runtime through the Erlang VM---would validate the
+practical applicability of the framework and bridge the gap between the formal
+model and deployed systems. Dynamic engine type extension would enable open
+systems in which new engine types can be registered at runtime. Relaxing the
+non-overlapping guard assumption to permit prioritised or nondeterministic
+guard selection would broaden the class of expressible behaviours. Finally,
+integrating mailbox types~\cite{special-delivery-mailbox-types-2023} into the
+framework could combine our operational guarantees with static type-theoretic
+reasoning about mailbox contents.
 
 \section{Acknowledgements}
 
