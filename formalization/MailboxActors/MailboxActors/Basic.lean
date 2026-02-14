@@ -1,7 +1,3 @@
-/-
-Copyright (c) 2026 Jonathan Prieto-Cubides. All rights reserved.
-Authors: Jonathan Prieto-Cubides
--/
 import Mathlib.Data.Fintype.Basic
 
 /-!
