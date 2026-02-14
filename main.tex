@@ -955,18 +955,14 @@ engine.
 \quad
   \defequal{\iota_m}{\freshid}
 $}
-\noLine
-\UnaryInfC{$\vdots$}
-\noLine
+\vdotsline
 \UnaryInfC{$%
   \opstep%
     {\SystemState, \node{i}, k, \pi, \iota_p, b_k, f, \process, c, s}
     {spawn}
     {\SystemState_1}
 $}
-\noLine
-\UnaryInfC{$\vdots$}
-\noLine
+\vdotsline
 \UnaryInfC{$%
   \opstep%
     {\SystemState_1, \node{i}, k_m, \some{\loc{\mathsf{id}_i}{\iota_p}},
@@ -1242,9 +1238,7 @@ accepts $v$ (returning $\some{r}$), then action $a$ is applied to produce an
 effect.
 \begin{prooftree}
 \AxiomC{$%
-  p \in \SetOfEngines%
-\quad %
-  \typing{v}{\msgtype{p}}%
+  \effectpremise{p}{v}%
 \quad %
   \equal{%
     p
@@ -1286,9 +1280,7 @@ For a guarded action $\guardedactionval{g}{a} \in \behaviour{p}$, if guard $g$
 rejects message $v$ (returning $\none$), the action produces $\noop$.
 \begin{prooftree}
 \AxiomC{$%
-  p \in \SetOfEngines%
-\quad %
-  \typing{v}{\msgtype{p}}%
+  \effectpremise{p}{v}%
 \quad %
   \equal{%
     p
@@ -1467,14 +1459,8 @@ $}
 Executing an $\update{s}$ effect replaces engine $p$'s execution environment
 with the value $\typing{s}{\envtype{p}}$.
 \begin{prooftree}
-\AxiomC{$%
-      p \in \SetOfEngines%
-\quad \typing{v}{\msgtype{p}}%
-\quad \typing{s}{\envtype{p}}%
-$}
-\noLine
-\UnaryInfC{$\vdots$}
-\noLine
+\AxiomC{$\effectpremise{p}{v}\quad \typing{s}{\envtype{p}}$}
+\vdotsline
 \UnaryInfC{$%
      \evalstep%
         {p}
@@ -1507,14 +1493,8 @@ Executing an $\mfilter{f}$ effect sets engine $p$'s message filter to
 $\typing{f}{\msgtype{p} \to \Bool}$, transitioning it from $\busy{v}$ to
 $\ready{f}$.
   \begin{prooftree}
-  \AxiomC{$%
-  p \in \SetOfEngines%
-  \quad \typing{v}{\msgtype{p}}%
-  \quad \typing{f}{\msgtype{p} \to \Bool}%
-  $}
-  \noLine
-  \UnaryInfC{$\vdots$}
-  \noLine
+  \AxiomC{$\effectpremise{p}{v}\quad \typing{f}{\msgtype{p} \to \Bool}$}
+  \vdotsline
   \UnaryInfC{$%
   \evalstep%
             {p}
@@ -1566,9 +1546,7 @@ $}
 \quad
   \typing{b}{\behaviourtype{j}}
 $}
-\noLine
-\UnaryInfC{$\vdots$}
-\noLine
+\vdotsline
 \UnaryInfC{$%
   \opstep%
     {\SystemState, \node{i}, j, \some{\alpha(p)}, \iota, b,
@@ -1591,13 +1569,8 @@ sub-effects: $\mathit{eff}_1$ is executed in state $\SystemState$ yielding
 $\SystemState'$, then $\mathit{eff}_2$ in $\SystemState'$ yielding
 $\SystemState''$.
 \begin{prooftree}
-\AxiomC{$%
-      p \in \SetOfEngines%
-\quad \typing{v}{\msgtype{p}}%
-$}
-\noLine
-\UnaryInfC{$\vdots$}
-\noLine
+\AxiomC{$\effectpremise{p}{v}$}
+\vdotsline
 \UnaryInfC{$%
      \evalstep%
         {p}
@@ -1624,13 +1597,8 @@ $}
 \begin{definition}[\erule{Terminate}]\label{rule:e-Terminate}
 Executing a $\terminate$ effect sets engine $p$'s status to $\terminated$.
 \begin{prooftree}
-\AxiomC{$%
-      p \in \SetOfEngines%
-\quad \typing{v}{\msgtype{p}}%
-$}
-\noLine
-\UnaryInfC{$\vdots$}
-\noLine
+\AxiomC{$\effectpremise{p}{v}$}
+\vdotsline
 \UnaryInfC{$%
 \evalstep%
           {p}
@@ -1662,13 +1630,8 @@ The \sruleref{Clean} rule subsequently removes the engine from the system.
 \begin{definition}[\erule{Noop}]\label{rule:e-Noop}
 Executing a $\noop$ effect leaves the system state $\SystemState$ unchanged.
   \begin{prooftree}
-  \AxiomC{$%
-        p \in \SetOfEngines%
-  \quad \typing{v}{\msgtype{p}}%
-  $}
-  \noLine
-  \UnaryInfC{$\vdots$}
-  \noLine
+  \AxiomC{$\effectpremise{p}{v}$}
+  \vdotsline
   \UnaryInfC{$%
   \evalstep%
           {p}
@@ -1710,9 +1673,7 @@ engine returns to the ready state.
           {\localenv{p}}
       }
 $}
-\noLine
-\UnaryInfC{$\vdots$}
-\noLine
+\vdotsline
 \UnaryInfC{$%
       \evalstep%
         {p}
