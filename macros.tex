@@ -269,6 +269,10 @@
     \rangle %
 }}
 
+% Proof-tree helpers (bussproofs)
+\newcommand{\vdotsline}{\noLine\UnaryInfC{$\vdots$}\noLine}
+\newcommand{\effectpremise}[2]{#1 \in \SetOfEngines\quad\typing{#2}{\msgtype{#1}}}
+
 % List concatenation (Haskell-style ++)
 \newcommand{\pp}{\mathbin{+\mkern-3mu+}}
 
