@@ -13,6 +13,13 @@
 
 \input{metadata.tex}
 \input{macros.tex}
+
+% MSC diagrams — save \action (paper macro) before msc redefines it
+\let\paperaction\action
+\usepackage{msc}
+\let\mscaction\action        % msc's \action → \mscaction
+\let\action\paperaction      % restore paper's \action
+
 %\input{templates/pandoc.tex} % needed for pandoc-generated files
 
 \begin{document}
@@ -1754,12 +1761,75 @@ We trace the operational semantics on the causal delivery mailbox of
 $\mathsf{broker}$ whose mailbox $\mailboxOf{\enginemap(t)}$ uses the causal
 behaviour $\guardedactionval{\guard{c}}{\action{c}}$. Three topic messages
 arrive: $m_1$ has no dependencies, $m_2$ depends on $m_3$, and $m_3$ has
-none. They arrive in order $m_1, m_2, m_3$.
+none. They arrive in order $m_1, m_2, m_3$;
+\Cref{fig:causal-delivery-msc} gives a visual overview.
 
 The initial mailbox state is
 $q_0 = (\fdlv = \emptyset,\;
          \fpnd = \emptyset,\;
          \frdy = [\,])$.
+
+\begin{figure}[ht]
+\centering
+\begin{msc}[
+  draw frame=none,
+  msc keyword={},
+  small values,
+  instance distance=2.4cm,
+  level height=0.55cm,
+  first level height=0.4cm,
+  last level height=0.3cm,
+  left environment distance=1.2cm,
+  label distance=0.15cm,
+]{}
+\declinst{s}{}{$s$}
+\declinst{mbox}{}{$\mailboxOfname$}
+\declinst{t}{}{$t$}
+
+% ── Steps 1–2: m₁ sent + enqueued ──
+\msccomment[side=left]{1--2}{s}
+\mess[color=ruleM]{$m_1$}{s}{mbox}
+\nextlevel[2]
+
+% ── Steps 3–4: Process + Dequeue m₁ ──
+\msccomment[side=left]{3--4}{s}
+\mess[color=darkgreen]{$m_1$}{mbox}{t}
+\nextlevel
+\mscaction*{$\fdlv = \{h_1\}$}{mbox}
+\nextlevel[2]
+
+% ── Step 5: m₂ sent, buffered ──
+\msccomment[side=left]{5}{s}
+\mess[color=ruleM]{$m_2$}{s}{mbox}
+\nextlevel
+\mscaction*[fill=darkorange!8, draw=darkorange!50]%
+  {$m_2 \to \fpnd$ (awaits $h_3$)}{mbox}
+\nextlevel[3]
+
+% ── Step 6: m₃ sent, cascade ──
+\msccomment[side=left]{6}{s}
+\mess[color=ruleM]{$m_3$}{s}{mbox}
+\nextlevel
+\mscaction*[fill=darkgreen!8, draw=darkgreen!50]%
+  {\textit{cascade:} $m_2$ released}{mbox}
+\nextlevel[3]
+
+% ── Step 7: Causal delivery ──
+\msccomment[side=left]{7}{s}
+\mess[color=darkgreen]{$m_3$}{mbox}{t}
+\nextlevel
+\mess[color=darkgreen]{$m_2$}{mbox}{t}
+\nextlevel
+
+\end{msc}
+\caption{Message sequence chart for the causal delivery trace.
+{\color{ruleM}Amber} arrows denote \mrule{Send}\,/\,\mrule{Enqueue} steps;
+{\color{darkgreen}green} arrows denote \mrule{Dequeue} deliveries.
+Message $m_2$ is buffered at Step~5 because its dependency $m_3$
+has not yet been delivered; when $m_3$ arrives at Step~6, a cascade
+releases $m_2$, restoring causal order.}
+\label{fig:causal-delivery-msc}
+\end{figure}
 
 \paragraph{Step 1: $m_1$ enters the system}
 A publisher $s$ sends $m_1$ with $\deps{m_1} = \emptyset$. By
