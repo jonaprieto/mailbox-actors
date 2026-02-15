@@ -2268,15 +2268,25 @@ connection to Dijkstra's guarded command
 language~\cite{dijkstra-guarded-commands} is also apparent in the non-overlapping
 guard assumption.
 
-\paragraph{Mailbox Decoupling}
+\paragraph{Mailbox Decoupling and Typing}
 The Kilim framework~\cite{kilim-framework} achieves mailbox decoupling through
-specialised queues where actors pull messages when ready. However, Kilim treats
-mailboxes as passive data structures. Actor selector
-patterns~\cite{selectors-actors-2014} provide mechanisms for selective message
-reception but do not promote the mailbox itself. Our work combines Kilim's
-structural separation with the programmability of first-class actors, enabling
-custom delivery policies, message prioritisation, and independent scaling of
-message ingestion.
+specialised queues where actors pull messages when ready, but treats mailboxes
+as passive data structures. Actor selector patterns~\cite{selectors-actors-2014}
+provide selective receive without promoting the mailbox itself. Mailbox type
+systems explicitly reason about mailbox contents: de'Liguoro and Padovani's
+mailbox calculus~\cite{deliguoro-padovani-2018-mailbox} gives a behavioural
+type system for unordered mailboxes, and the Pat language~\cite{fowler-2023-pat}
+mechanises programmable mailboxes with type soundness and completeness of an
+algorithmic system. Our contribution differs by making mailboxes first-class
+actors with dependent-type-indexed interfaces and Lean mechanisation of the
+operational semantics.
+
+\paragraph{Communicating Actor Automata}
+Communicating Actor Automata model Erlang processes as communicating machines
+with explicit mailboxes~\cite{Orchard_2023}, addressing dynamic topologies and
+process interactions. Our model similarly exposes the mailbox but uses
+dependent types to index engine components and provides a Lean formalisation of
+creation, enqueue/dequeue, and processing with paired mailboxes.
 
 \paragraph{Formalisation of Actor Systems}
 Talcott~\cite{Talcott1998} provides an actor theory in rewriting logic,
