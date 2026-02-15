@@ -208,15 +208,13 @@ signature for engines in a system, as detailed in~\Cref{def:engine}.
   % ── Message interface ──
   \node[comp] (msg) at (-1.6, 1.05) {$\msgtype{e}$};
 
-  % ── Internal state (dashed box) ──
-  \node[draw, thick, dashed, rounded corners=1pt,
-        minimum width=24mm, minimum height=20mm]
-    (istate) at (-1.6, -0.4) {};
-  \node[lbl, anchor=south] at (istate.south) {internal state};
+  % ── Configuration (immutable) ──
+  \node[comp] (cfg) at (-1.6, 0.2) {$\config{e}$};
 
-  \node[comp, minimum height=5.5mm] (cfg) at (-1.6, 0.1) {$\config{e}$};
-  \node[font=\small] (env) at (-1.6, -0.6) {$\environment{e}$};
-  \draw[thick, black!25] ([xshift=-7mm]cfg.south) -- ([xshift=7mm]cfg.south);
+  % ── Environment (mutable — dashed border) ──
+  \node[draw, thick, dashed, rounded corners=1pt,
+        minimum width=22mm, minimum height=9mm, font=\small]
+    (env) at (-1.6, -0.7) {$\environment{e}$};
 
   % ── Behaviour ──
   \node[beh, minimum width=22mm, minimum height=26mm]
@@ -234,8 +232,8 @@ signature for engines in a system, as detailed in~\Cref{def:engine}.
     node[above, font=\small, text=black] {$m\!:\!\msgtype{e}$}
     -- (beh.north);
 
-  % Internal state → behaviour (context — dashed, subdued)
-  \draw[->, thick, dashed, color=black!45] (istate.east) -- (beh.west);
+  % Environment → behaviour (context — dashed, subdued)
+  \draw[->, thick, dashed, color=black!45] (env.east) -- (beh.west);
 
   % Behaviour → effect (output — crimson, exits engine box)
   \draw[->, thick, color=ruleE] (beh.east) -- ([xshift=10mm]eng.east)
@@ -243,12 +241,11 @@ signature for engines in a system, as detailed in~\Cref{def:engine}.
   \end{tikzpicture}
   \caption{Architecture of an engine $e$.
   An incoming message $m\!:\!\msgtype{e}$ (\textcolor{ruleM}{amber arrow}) is
-  evaluated by the behaviour $\behaviour{e}$ using the internal state
+  evaluated by the behaviour $\behaviour{e}$ using the execution environment
   (\textcolor{black!45}{dashed arrow}), producing an effect
   (\textcolor{ruleE}{crimson arrow}).
-  The dashed box groups the internal state: only
-  $\environment{e}$ may change between steps, while $\config{e}$
-  and $\behaviour{e}$ remain fixed.}
+  The dashed border on $\environment{e}$ indicates it is the only
+  component that may change between steps.}
   \label{fig:engine}
 \end{figure}
 
@@ -701,16 +698,6 @@ though they may provide custom configuration, environment, and behaviour for
 the mailbox at the moment of processing engine creation. The default mailbox
 operates as a first-in-first-out queue.
 
-\begin{figure}
-  \centering
-  \includegraphics[width=\textwidth]{figures/mailbox-engines}
-  \caption{A processing engine $p$ with its dedicated mailbox engine
-  $\mailboxOfname$. When a message $m_k$ is sent to $p$, the system routes it
-  to $\mailboxOfname$, which stores it. When $p$ is ready, the mailbox
-  delivers a message determined by $p$'s filter and the mailbox's behaviour.}
-  \label{fig:mailbox-engines}
-\end{figure}
-
 \begin{definition}[Mailbox Engine]\label{def:mailbox-engine}%
 A \emph{mailbox engine} $m$ for a processing engine $p$ of type $i$ is a
 system-configured engine satisfying:
@@ -750,12 +737,11 @@ The \mruleref{Enqueue} rule transitions the mailbox engine from $\ready{f}$ to
 $\busy{w}$, after which the behaviour evaluates the message and produces an
 effect---by default, storing the payload in the message store.
 
-As depicted in \Cref{fig:mailbox-engines}, adding mailbox engines introduces a
-clear producer-consumer pattern. The separation of message storage from
-processing logic, opaque to sending engines, allows for independent scaling of
-message ingestion and core computation. The mailbox engine acts as a mediator
-implementing custom delivery policies via its behaviour, while the processing
-engine focuses on its computational tasks.
+Adding mailbox engines introduces a clear producer-consumer pattern. The
+separation of message storage from processing logic, opaque to sending engines,
+allows for independent scaling of message ingestion and core computation. The
+mailbox engine acts as a mediator implementing custom delivery policies via its
+behaviour, while the processing engine focuses on its computational tasks.
 
 \begin{remark}[Mailbox Overhead for Simple Engines]\label{rem:mailbox-overhead}%
   For processing engines that require no custom delivery logic, one may ask
