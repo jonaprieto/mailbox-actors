@@ -85,7 +85,7 @@ theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
       exact hiso m' hm'_old se hse
   | mDequeue =>
     subst_vars
-    rename_i procAddr i procEng mboxEng _ _ _ hproc hpmode _ hmbox _
+    rename_i _ procAddr i procEng mboxEng _ _ _ hproc hpmode _ hmbox _ _ _
     have hne : κ.mailboxOf procAddr ≠ procAddr := mailboxOf_ne_self κ procAddr
     intro m hm se hse
     simp only [SystemState.updateEngineAt_messages] at hm

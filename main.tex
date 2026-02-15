@@ -1464,39 +1464,36 @@ states that executing $E$ in $\SystemState$ produces $\SystemState'$. This
 judgment is defined by case analysis on $E$.
 
 \begin{definition}[\erule{Send}]\label{rule:e-Send}
-Executing a $\send{l_t}{m}$ effect dispatches message $m$ to target address
-$l_t$ via the \mruleref{Send} rule.
+Executing a $\send{l_t}{m}$ effect appends message~$m$ to the in-transit
+list, addressed to the mailbox of the target engine at~$l_t$.  The target
+validity premises---that $\engine{t}$ exists, is in \process mode, and has a
+message type matching the payload---ensure type preservation
+(\Cref{prop:type-preservation}).
 \begin{prooftree}
 \AxiomC{$%
   \engine{s}, \engine{t} \in \SetOfEngines%
 \quad %
-  \equal{l_{t}}{\alpha(\engine{t})}
+  \equal{l_{t}}{\alpha(\engine{t})}%
 \quad %
-  \typing{v}{\msgtype{s}}
-\quad \typing{m}{\msgtype{t}}
-$}
-\noLine
-\UnaryInfC{$%
-  \vdots
-$}
-\noLine
-\UnaryInfC{$%
-     \evalstep%
-        {\engine{s}}
-        {v}
-        {\send{l_{t}}{m}}
+  \equal{\mode(\engine{t})}{\process}%
 \quad %
-      \sendstep%
-        {\SystemState}
-        {l_{t}}
-        {m}
-        {\SystemState'}
+  \typing{m}{\msgtype{t}}%
 $}
 \UnaryInfC{$
 \effectevalstep%
-  {\SystemState}
+  {(\SetOfNodes, \SetOfMessages, \SetOfPlugins)}
   {\send{l_{t}}{m}}
-  {\SystemState'}
+  {( \SetOfNodes
+    , \SetOfMessages \cup%
+      \{
+        \msgpacket%
+          {\alpha(\engine{s})}
+          {\mailboxOf{\enginemap(\engine{t})}}
+          {\append(m)}
+      \}%
+    , \SetOfPlugins
+    )
+  }
 $}
 \end{prooftree}
 \end{definition}
@@ -2059,7 +2056,9 @@ satisfying $\typing{v}{\msgtype{t}}$ by premise, wrapping in $\append$;
 engine to $\busy{w}$, where $w$ has type $\msgtype{m}$;
 \mruleref{Dequeue} preserves the type family when moving a message to the
 processing engine's busy state.
-For effect execution: \eruleref{Update} requires $\typing{s}{\envtype{p}}$;
+For effect execution: \eruleref{Send} appends a well-typed message by
+requiring $\typing{m}{\msgtype{t}}$ and redirecting to the target's mailbox;
+\eruleref{Update} requires $\typing{s}{\envtype{p}}$;
 \eruleref{Spawn} delegates to \sruleref{SpawnWithMailbox}; \eruleref{Terminate}
 and \eruleref{MFilter} change only the status, remaining in
 $\EngineStatus{i}$; \eruleref{Chain} composes two type-preserving steps;
@@ -2117,9 +2116,9 @@ A processing engine never directly receives a message from $\SetOfMessages$.
 All messages are mediated by the corresponding mailbox engine.
 \end{proposition}
 \begin{proof}[Proof sketch]
-By inspection of the \mruleref{Send} rule: its premise
+By inspection of the \mruleref{Send} and \eruleref{Send} rules: each premise
 $\equal{\mode(\engine{t})}{\process}$ restricts the target to a processing
-engine, and its conclusion redirects the message to
+engine, and each conclusion redirects the message to
 $\mailboxOf{\enginemap(\engine{t})}$. The \mruleref{Enqueue} rule delivers
 messages only to mailbox engines by transitioning them to $\busy{w}$. The
 \mruleref{Dequeue} rule is the sole mechanism by which a processing engine

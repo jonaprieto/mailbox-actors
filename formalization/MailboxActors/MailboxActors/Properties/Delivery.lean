@@ -81,7 +81,14 @@ theorem eventualDelivery (trace : Trace) (m : Message) (n : Nat) :
     m ∈ (trace n).messages →
     ∃ k ≥ n, m ∉ (trace k).messages := by
   intro hexec hfair hwt hiso huniq haccepts hm
-  -- Proof as before but using EventuallyAccepts to show Enqueue enabled
+  -- Strategy: EventuallyAccepts gives a step l ≥ n where M-Enqueue is enabled
+  -- (mailbox ready + filter accepts). WeaklyFair then gives a step where M-Enqueue
+  -- actually fires, removing m from messages.
+  --
+  -- Gap: WeaklyFair requires *continuous* enablement from some point, but the
+  -- mailbox may oscillate between ready/busy states. A stronger fairness
+  -- assumption (strong fairness) or an explicit "mailbox eventually stabilises"
+  -- hypothesis would close this. Left as sorry per Phase 3 plan.
   sorry
 
 end MailboxActors

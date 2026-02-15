@@ -80,12 +80,17 @@ inductive EffectEvalStep :
   /-- E-Noop: no change. -/
   | noop (κ : SystemState) (i : EngineSpec.EngIdx) :
       EffectEvalStep κ i Effect.noop κ
-  /-- E-Send: place a message in transit. -/
+  /-- E-Send: place a message in transit.
+      Target validity premises ensure preservation can show the new message
+      is well-typed (target has a mailbox with matching type index). -/
   | send (κ κ' : SystemState) (i : EngineSpec.EngIdx)
       (addr : Address) (p : Engine i) (v : EngineSpec.MsgType i)
-      (j : EngineSpec.EngIdx) (target : Address) (payload : EngineSpec.MsgType j) :
+      (j : EngineSpec.EngIdx) (target : Address) (payload : EngineSpec.MsgType j)
+      (targetEng : SomeEngine) :
       κ.engineAt addr = some ⟨i, p⟩ →
-      EvalStep i p v (Effect.send j target payload) →
+      κ.engineAt target = some targetEng →
+      targetEng.engine.mode = EngineMode.process →
+      targetEng.idx = j →
       κ' = { κ with messages := κ.messages ++ [⟨addr, κ.mailboxOf target, ⟨j, payload⟩⟩] } →
       EffectEvalStep κ i (Effect.send j target payload) κ'
   /-- E-Terminate: set engine status to `terminated`. -/

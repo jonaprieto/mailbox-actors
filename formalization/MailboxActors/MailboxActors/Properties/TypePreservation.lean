@@ -183,7 +183,11 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
   -- ── M-Dequeue: transition proc→busy, update mailbox ────────────────────
   | mDequeue =>
     subst_vars
-    rename_i procAddr i procEng mboxEng v f newMboxEnv hproc hpmode _ hmbox _
+    rename_i _ procAddr i procEng mboxEng w v f hproc hpmode _ hmbox _ _ _
+    -- Re-introduce newMboxEnv (subst_vars eliminated it)
+    set newMboxEnv : EngineEnv mboxEng.idx :=
+      { mboxEng.engine.env with
+        localState := EngineSpec.mailboxRemove mboxEng.engine.env.localState w } with hNewMboxEnv
     have hne : κ.mailboxOf procAddr ≠ procAddr := mailboxOf_ne_self κ procAddr
     -- Derive mailbox engine properties from WellTypedState
     obtain ⟨mboxSe, hmboxSe, hmboxIdx, hmboxMode⟩ :=

@@ -18,15 +18,18 @@ private lemma guardEvalStep_det {i : EngineSpec.EngIdx} {p : Engine i}
     {ga : GuardedAction i} {v : EngineSpec.MsgType i} {E₁ E₂ : Effect i}
     (h₁ : GuardEvalStep i p ga v E₁) (h₂ : GuardEvalStep i p ga v E₂) : E₁ = E₂ := by
   cases h₁ with
-  | guardMatch inp₁ _ _ hinp₁ =>
+  | guardMatch inp₁ w₁ hg₁ _ hinp₁ =>
     subst hinp₁
     cases h₂ with
-    | guardMatch inp₂ _ _ hinp₂ => subst hinp₂; rfl
+    | guardMatch inp₂ w₂ hg₂ _ hinp₂ =>
+      subst hinp₂
+      have hw : w₁ = w₂ := by injection hg₁.symm.trans hg₂
+      subst hw; rfl
     | guardFail inp₂ _ hinp₂ hg₂ => subst hinp₂; simp_all
   | guardFail inp₁ _ hinp₁ hg₁ =>
     subst hinp₁
     cases h₂ with
-    | guardMatch inp₂ _ _ hinp₂ => subst hinp₂; simp_all
+    | guardMatch inp₂ _ _ _ hinp₂ => subst hinp₂; simp_all
     | guardFail inp₂ _ hinp₂ _ => rfl
 
 /-- **Effect Determinism**: the effect is unique.

@@ -28,7 +28,16 @@ theorem causal_invariant_preserved (κ κ' : SystemState) (op : OpLabel) :
     GlobalCausalInvariant κ' := by
   intro wt inv step
   intro addr' se' heng' hidx'
-  -- Proof by case analysis on op
-  sorry -- To be filled in Phase 4
+  -- Case analysis on OpStep.
+  -- Easy cases: S-Node, S-Clean, M-Send, M-Enqueue, S-SpawnMbox, M-Dequeue
+  --   do not modify broker local state (only status, messages, or add/remove engines).
+  --   Relate κ'.engineAt addr' back to κ.engineAt addr' to use inv.
+  -- Hard case: S-Process
+  --   If the processing engine is a broker, the effect (from causalAction) modifies
+  --   CausalState. Linking through EffectEvalStep requires showing causalAction
+  --   preserves CausalInvariant for all reachable states, which depends on
+  --   causalAction_preserves_invariant but needs additional plumbing through the
+  --   OpStep/EffectEvalStep machinery. Left as sorry.
+  sorry
 
 end MailboxActors.Examples.CausalMailbox

@@ -44,6 +44,7 @@ structure TopicMsg where
   content   : Nat               -- simplified payload
   sig       : Nat               -- simplified signature
   msgHash   : MsgHash           -- this message's own hash
+  deriving DecidableEq, BEq
 
 -- ============================================================================
 -- § Configuration Types
@@ -138,17 +139,17 @@ def removeCascaded (pending : List (MsgHash × TopicMsg))
     (delivered : Finset MsgHash) : List (MsgHash × TopicMsg) :=
   pending.filter (fun (_, m) => !dependenciesMet m delivered)
 
-/-- The causal broker guard: always matches (extracts the payload). -/
-def causalGuard : GuardInput PubSubIdx.broker → Bool :=
-  fun _ => true
+/-- The causal broker guard: always matches (witness is `Unit`). -/
+def causalGuard : GuardInput PubSubIdx.broker → Option Unit :=
+  fun _ => some ()
 
 /-- The causal broker action: branches on dependency satisfaction.
     - Dependencies met: store in ready, record hash, cascade pending.
     - Dependencies not met: buffer in pending.
 
     Uses `Effect.chain` for the cascade. -/
-def causalAction (inp : GuardInput PubSubIdx.broker) (_ : causalGuard inp = true) :
-    Effect PubSubIdx.broker :=
+def causalAction (_w : Unit) (inp : GuardInput PubSubIdx.broker)
+    (_ : causalGuard inp = some _w) : Effect PubSubIdx.broker :=
   let msg : TopicMsg := inp.msg
   let q : CausalState := inp.env.localState
     if dependenciesMet msg q.delivered then
@@ -182,7 +183,7 @@ def causalAction (inp : GuardInput PubSubIdx.broker) (_ : causalGuard inp = true
 
 /-- The causal broker guarded action. -/
 def causalGuardedAction : GuardedAction PubSubIdx.broker :=
-  { guard := causalGuard, action := causalAction }
+  { Witness := Unit, guard := causalGuard, action := causalAction }
 
 /-- The underlying action list for the causal delivery mailbox. -/
 def causalActions : Behaviour PubSubIdx.broker :=
@@ -232,7 +233,7 @@ theorem findCascade_deps_met (pending : List (MsgHash × TopicMsg))
     only released to subscribers when their causal predecessors have
     already been delivered. -/
 theorem causalAction_preserves_invariant
-    (inp : GuardInput PubSubIdx.broker) (h : causalGuard inp = true) :
+    (inp : GuardInput PubSubIdx.broker) (h : causalGuard inp = some ()) :
     let q := inp.env.localState
     CausalInvariant q →
     -- The resulting Effect (via chain/update) produces states

@@ -101,6 +101,33 @@ theorem effectEvalStepPreservesInvariants (κ κ' : SystemState)
     subst hκ'
     exact updateEngineAt_preserves_invariants κ_old addr ⟨_, p⟩
       ⟨_, { p with status := .ready f }⟩ heng rfl rfl wt hiso
+  | send κ₀ _ _ addr _ _ _ target _ targetEng heng htarget hmode hidx hκ' =>
+    subst hκ' hidx
+    constructor
+    · -- WellTypedState: only messages changed, engines unchanged
+      exact {
+        messages_typed := fun m hm => by
+          rw [List.mem_append] at hm
+          rcases hm with hm | hm
+          · exact wt.messages_typed m hm
+          · rw [List.mem_singleton] at hm; subst hm
+            obtain ⟨mboxSe, hmbox, hmboxIdx, _⟩ :=
+              wt.mailbox_exists target targetEng htarget hmode
+            exact ⟨mboxSe, hmbox, hmboxIdx.symm⟩
+        mailbox_exists := fun addr' se heng' hmode' =>
+          wt.mailbox_exists addr' se heng' hmode'
+      }
+    · -- MailboxIsolation: new message targets mailboxOf target, which is mail
+      intro m hm se hse
+      rw [List.mem_append] at hm
+      rcases hm with hm | hm
+      · exact hiso m hm se hse
+      · rw [List.mem_singleton] at hm; subst hm
+        obtain ⟨mboxSe, hmbox, _, hmboxMode⟩ :=
+          wt.mailbox_exists target targetEng htarget hmode
+        have hse' : κ₀.engineAt (κ₀.mailboxOf target) = some se := hse
+        rw [hmbox] at hse'; cases hse'
+        exact hmboxMode
   | spawn =>
     subst_vars
     rename_i _ κ₀ _ nid procSe mboxSe hnode hmodeP hmodeM _ _ hidxM hfreshP hfreshM
