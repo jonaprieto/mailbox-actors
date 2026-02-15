@@ -192,15 +192,63 @@ signature for engines in a system, as detailed in~\Cref{def:engine}.
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.6\textwidth]{figures/engine}
-  \caption{
-  An engine $e$ processing a message $m$ conforming to its message interface
-  $\msgtype{e}$, producing an effect by evaluating its behaviour $\behaviour{e}$
-  in the context of its configuration $\config{e}$ and execution environment
-  $\environment{e}$. The dashed line indicates that these components may change
-  in a future step. The behaviour $\behaviour{e}$ consists of guarded actions
-  $\langle g_1, a_1 \rangle, \langle g_2, a_2 \rangle$, and
-  $\langle g_3, a_3 \rangle$.}
+  \begin{tikzpicture}[>=stealth,
+    comp/.style={draw, thick, minimum width=18mm, minimum height=6mm,
+                 font=\small, inner sep=2pt},
+    beh/.style={draw, thick, rounded corners=6pt, fill=yellow!10,
+                inner sep=5pt, font=\small},
+    lbl/.style={font=\footnotesize\itshape, text=black!50},
+  ]
+  % ── Engine outer box ──
+  \node[draw, thick, fill=black!3, rounded corners=2pt,
+        minimum width=66mm, minimum height=36mm] (eng) {};
+  \node[anchor=north east, font=\small\itshape, inner sep=3pt]
+    at (eng.north east) {$e$};
+
+  % ── Message interface ──
+  \node[comp] (msg) at (-1.6, 1.05) {$\msgtype{e}$};
+
+  % ── Internal state (dashed box) ──
+  \node[draw, thick, dashed, rounded corners=1pt,
+        minimum width=24mm, minimum height=20mm]
+    (istate) at (-1.6, -0.4) {};
+  \node[lbl, anchor=south] at (istate.south) {internal state};
+
+  \node[comp, minimum height=5.5mm] (cfg) at (-1.6, 0.1) {$\config{e}$};
+  \node[font=\small] (env) at (-1.6, -0.6) {$\environment{e}$};
+  \draw[thick, black!25] ([xshift=-7mm]cfg.south) -- ([xshift=7mm]cfg.south);
+
+  % ── Behaviour ──
+  \node[beh, minimum width=22mm, minimum height=26mm]
+    (beh) at (1.3, 0) {};
+  \node[anchor=north east, font=\small, inner sep=3pt]
+    at (beh.north east) {$\behaviour{e}$};
+
+  \node[font=\small] at (1.3, 0.55) {$\guardedaction{1}$};
+  \node[font=\small] at (1.3, 0)    {$\guardedaction{2}$};
+  \node[font=\small] at (1.3,-0.55) {$\guardedaction{3}$};
+
+  % ── Arrows ──
+  % Message in → behaviour (trigger — amber, message-passing colour)
+  \draw[->, thick, color=ruleM] (1.3, 2.4)
+    node[above, font=\small, text=black] {$m\!:\!\msgtype{e}$}
+    -- (beh.north);
+
+  % Internal state → behaviour (context — dashed, subdued)
+  \draw[->, thick, dashed, color=black!45] (istate.east) -- (beh.west);
+
+  % Behaviour → effect (output — crimson, exits engine box)
+  \draw[->, thick, color=ruleE] (beh.east) -- ([xshift=10mm]eng.east)
+    node[right, font=\small] {\effect};
+  \end{tikzpicture}
+  \caption{Architecture of an engine $e$.
+  An incoming message $m\!:\!\msgtype{e}$ (\textcolor{ruleM}{amber arrow}) is
+  evaluated by the behaviour $\behaviour{e}$ using the internal state
+  (\textcolor{black!45}{dashed arrow}), producing an effect
+  (\textcolor{ruleE}{crimson arrow}).
+  The dashed box groups the internal state: only
+  $\environment{e}$ may change between steps, while $\config{e}$
+  and $\behaviour{e}$ remain fixed.}
   \label{fig:engine}
 \end{figure}
 
