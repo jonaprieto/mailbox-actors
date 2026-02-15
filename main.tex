@@ -2228,10 +2228,11 @@ This contradicts $m \in \SetOfMessages$ at step $k_{0}+1$.
   $q.\fdlv \cup \{\mhash{v}\}$. In the buffering branch, the ready queue
   is unchanged and the invariant holds trivially.
   Global preservation (\texttt{causal\_invariant\_preserved}) is proved
-  for most operational rules; the remaining gaps are the initial state of
-  a freshly spawned broker (\sruleref{SpawnWithMailbox}), a
-  dependent-type cast in the mailbox-remove case of
-  \mruleref{Dequeue}, and the linking of local invariant
+  for most operational rules, including the \mruleref{Dequeue}
+  mailbox-remove case via a helper lemma that decomposes the
+  \texttt{SomeEngine} index for \texttt{subst}; the remaining gaps
+  are the initial state of a freshly spawned broker
+  (\sruleref{SpawnWithMailbox}) and the linking of local invariant
   preservation through \sruleref{Process}.
 \end{remark}
 
@@ -2346,10 +2347,9 @@ The mechanisation also includes a concrete instantiation of the
 abstract framework for the causal delivery mailbox of
 \Cref{ex:causal-mailbox}, with the \texttt{causalAction} action
 proved to preserve a causal invariant (\Cref{rem:causal-invariant})
-and global preservation proved for most operational rules; three
-\texttt{sorry} placeholders remain for spawned-broker initial states,
-mailbox-remove cast plumbing, and effect-to-invariant linking through
-\sruleref{Process}.
+and global preservation proved for most operational rules; two
+\texttt{sorry} placeholders remain for spawned-broker initial states
+and effect-to-invariant linking through \sruleref{Process}.
 
 \paragraph{Limitations}
 The model assumes static engine types (no dynamic type extension), static

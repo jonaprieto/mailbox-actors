@@ -28,6 +28,19 @@ private lemma causalInvariant_erase (s : CausalState) (w : TopicMsg) :
   intro hinv msg hmem
   exact hinv msg (List.mem_of_mem_erase hmem)
 
+/-- mailboxRemove preserves CausalInvariant: removing a message from a broker's
+    ready list preserves the invariant. Taking `idx` as a free variable lets
+    `subst` eliminate it so the cast and mailboxRemove both reduce. -/
+private lemma mailboxRemove_preserves_causalInvariant
+    {idx : EngineSpec.EngIdx} {localState : EngineSpec.LocalState idx}
+    {w : EngineSpec.MsgType idx}
+    (hidx : idx = PubSubIdx.broker)
+    (hinv : CausalInvariant (cast (by rw [hidx]; rfl) localState)) :
+    CausalInvariant (cast (by rw [hidx]; rfl)
+      (EngineSpec.mailboxRemove localState w)) := by
+  subst hidx
+  exact causalInvariant_erase _ _ hinv
+
 theorem causal_invariant_preserved (κ κ' : SystemState) (op : OpLabel) :
     WellTypedState κ →
     GlobalCausalInvariant κ →
@@ -84,12 +97,14 @@ theorem causal_invariant_preserved (κ κ' : SystemState) (op : OpLabel) :
       rw [engineAt_updateEngineAt_ne _ _ _ _ hne]; exact hmbox
     by_cases h1 : addr' = κ.mailboxOf procAddr
     · -- addr' = mailbox: env changes via mailboxRemove
-      -- mailboxRemove for broker = { s with ready := s.ready.erase w },
-      -- which preserves CausalInvariant (causalInvariant_erase).
-      -- However, navigating the dependent cast (idx = PubSubIdx.broker
-      -- is propositional, not definitional) requires cast calculus that
-      -- Lean 4's subst can't automate through the proof term.
-      sorry
+      subst h1
+      rw [engineAt_updateEngineAt_self _ _ _ ⟨_, hmbox₁⟩] at heng'
+      simp only [Option.some.injEq] at heng'
+      subst heng'
+      -- Provide explicit idx and localState to match the OLD engine state
+      exact mailboxRemove_preserves_causalInvariant
+        (idx := mboxEng.idx) (localState := mboxEng.engine.env.localState)
+        hidx' (inv _ mboxEng hmbox hidx')
     · by_cases h2 : addr' = procAddr
       · -- addr' = procAddr: only status changed, env unchanged
         subst h2
