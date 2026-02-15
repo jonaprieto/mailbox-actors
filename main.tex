@@ -2196,6 +2196,12 @@ This contradicts $m \in \SetOfMessages$ at step $k_{0}+1$.
   This use of classical logic is standard for liveness properties under
   TLA$^{+}$-style fairness, where the existential witness (the step at
   which the message is consumed) is not computationally extractable.
+  The Lean~4 proof of eventual delivery is stated but carries a
+  \texttt{sorry} gap: weak fairness guarantees the enqueue rule fires
+  whenever it is \emph{continuously} enabled, but a mailbox that
+  oscillates between ready and busy is only \emph{repeatedly} enabled,
+  requiring strong fairness or a stabilisation argument not yet
+  formalised.
   All other propositions in this section are proved constructively.
 \end{remark}
 
@@ -2221,6 +2227,12 @@ This contradicts $m \in \SetOfMessages$ at step $k_{0}+1$.
   messages whose dependencies are met with respect to
   $q.\fdlv \cup \{\mhash{v}\}$. In the buffering branch, the ready queue
   is unchanged and the invariant holds trivially.
+  Global preservation (\texttt{causal\_invariant\_preserved}) is proved
+  for most operational rules; the remaining gaps are the initial state of
+  a freshly spawned broker (\sruleref{SpawnWithMailbox}), a
+  dependent-type cast in the mailbox-remove case of
+  \mruleref{Dequeue}, and the linking of local invariant
+  preservation through \sruleref{Process}.
 \end{remark}
 
 \section{Related Work}\label{sec:related-work}
@@ -2318,18 +2330,26 @@ The mailbox isolation property, in particular, captures the key design
 invariant: all messages to a processing engine are mediated by its dedicated
 mailbox actor, which is guaranteed by the structure of the transition rules.
 
-A companion Lean~4 mechanisation covers all definitions and all five
-propositions of \Cref{sec:properties}, together with auxiliary results
-such as mailbox persistence (\Cref{lem:mailbox-persistence}) and
-trace-level invariant preservation (\Cref{cor:trace-invariants}).
-The mechanisation also includes a concrete instantiation
-of the abstract framework for the causal delivery mailbox of
-\Cref{ex:causal-mailbox}, with a machine-checked proof that the
-mailbox action preserves the causal invariant
-(\Cref{rem:causal-invariant}), validating that the parametric
-definitions are directly implementable in a proof assistant.
-Every lemma and theorem in the mechanisation is fully verified,
-with no \texttt{sorry} (incomplete proof) declarations.
+A companion Lean~4 mechanisation covers all definitions, all five
+propositions of \Cref{sec:properties}, and auxiliary results such as
+mailbox persistence (\Cref{lem:mailbox-persistence}) and trace-level
+invariant preservation (\Cref{cor:trace-invariants}).
+Type preservation, effect determinism, and mailbox isolation are fully
+machine-checked with no \texttt{sorry} declarations.
+Progress (\Cref{prop:progress}) is proved for the evaluation-totality
+component (\texttt{evalStep\_total}), with the effect-execution
+totality of \sruleref{Process} left as an axiom; eventual delivery
+(\Cref{prop:eventual-delivery}) is stated with a gap between the weak
+fairness assumption and the strong fairness needed for mailbox
+readiness oscillation (see \Cref{rem:classical-reasoning}).
+The mechanisation also includes a concrete instantiation of the
+abstract framework for the causal delivery mailbox of
+\Cref{ex:causal-mailbox}, with the \texttt{causalAction} action
+proved to preserve a causal invariant (\Cref{rem:causal-invariant})
+and global preservation proved for most operational rules; three
+\texttt{sorry} placeholders remain for spawned-broker initial states,
+mailbox-remove cast plumbing, and effect-to-invariant linking through
+\sruleref{Process}.
 
 \paragraph{Limitations}
 The model assumes static engine types (no dynamic type extension), static
