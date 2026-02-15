@@ -2149,6 +2149,16 @@ $\SetOfMessages = L_{1} \pp [m] \pp L_{2}$, we have
 $m \notin L_{1}$ and $m \notin L_{2}$.
 \end{definition}
 
+\begin{corollary}[Trace Invariants]\label{cor:trace-invariants}
+Let $\sigma$ be an execution trace. If $\sigma(n)$ is well-typed and satisfies
+mailbox isolation, then for every $k \geq n$, $\sigma(k)$ is well-typed and
+satisfies mailbox isolation.
+\end{corollary}
+\begin{proof}[Proof sketch]
+By induction on $k$, applying
+\Cref{prop:type-preservation,prop:mailbox-isolation} at each successor step.
+\end{proof}
+
 \begin{proposition}[Eventual Delivery]\label{prop:eventual-delivery}
 Let $\sigma$ be an execution trace with predicate-level weak
 fairness (TLA$^{+}$-style): for every binary predicate $P$ on states, if
@@ -2167,10 +2177,8 @@ Define the predicate $P(\SystemState, \SystemState')$: ``$\SystemState'$ is
 obtained from $\SystemState$ by removing $m$ from the in-transit list via
 \mruleref{Enqueue}.''
 
-We show $P$ is continuously enabled. At each step $k \geq n$, type
-preservation and mailbox isolation are jointly preserved along the trace (by
-induction on $k$, applying the single-step preservation lemmas
-\Cref{prop:type-preservation,prop:mailbox-isolation} at each successor step).
+We show $P$ is continuously enabled. At each step $k \geq n$,
+\Cref{cor:trace-invariants} ensures well-typedness and mailbox isolation hold.
 Since $m$ is in transit, well-typedness provides a target engine and mailbox
 isolation ensures it is in mail mode. Hence the \mruleref{Enqueue} premises
 are satisfied and a witness state $\SystemState'$ with $m$ removed exists.
