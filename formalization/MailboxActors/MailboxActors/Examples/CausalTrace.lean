@@ -18,8 +18,15 @@ def GlobalCausalInvariant (κ : SystemState) : Prop :=
   ∀ addr se, κ.engineAt addr = some se →
     ∀ (h : se.idx = PubSubIdx.broker),
     -- Cast localState to CausalState using the type equality
-    let s : CausalState := cast (by simp [PubSub.LocalState, h]) se.engine.env.localState
+    let s : CausalState := cast (by rw [h]; rfl) se.engine.env.localState
     CausalInvariant s
+
+/-- CausalInvariant is preserved when removing a message from ready:
+    fewer messages to check, delivered set unchanged. -/
+private lemma causalInvariant_erase (s : CausalState) (w : TopicMsg) :
+    CausalInvariant s → CausalInvariant { s with ready := s.ready.erase w } := by
+  intro hinv msg hmem
+  exact hinv msg (List.mem_of_mem_erase hmem)
 
 theorem causal_invariant_preserved (κ κ' : SystemState) (op : OpLabel) :
     WellTypedState κ →
@@ -28,16 +35,77 @@ theorem causal_invariant_preserved (κ κ' : SystemState) (op : OpLabel) :
     GlobalCausalInvariant κ' := by
   intro wt inv step
   intro addr' se' heng' hidx'
-  -- Case analysis on OpStep.
-  -- Easy cases: S-Node, S-Clean, M-Send, M-Enqueue, S-SpawnMbox, M-Dequeue
-  --   do not modify broker local state (only status, messages, or add/remove engines).
-  --   Relate κ'.engineAt addr' back to κ.engineAt addr' to use inv.
-  -- Hard case: S-Process
-  --   If the processing engine is a broker, the effect (from causalAction) modifies
-  --   CausalState. Linking through EffectEvalStep requires showing causalAction
-  --   preserves CausalInvariant for all reachable states, which depends on
-  --   causalAction_preserves_invariant but needs additional plumbing through the
-  --   OpStep/EffectEvalStep machinery. Left as sorry.
-  sorry
+  cases step with
+  -- ── S-Node: new empty node, no engine changes ────────────────────────
+  | sNode =>
+    subst_vars
+    rw [engineAt_append_emptyNode] at heng'
+    exact inv addr' se' heng' hidx'
+  -- ── S-Clean: remove terminated engine ─────────────────────────────────
+  | sClean =>
+    subst_vars
+    rename_i addr _ heng _ _
+    by_cases h : addr' = addr
+    · subst h; rw [engineAt_removeEngineAt_self] at heng'; simp at heng'
+    · rw [engineAt_removeEngineAt_ne _ _ _ h] at heng'
+      exact inv addr' se' heng' hidx'
+  -- ── M-Send: only messages change, engines unchanged ───────────────────
+  | mSend =>
+    subst_vars
+    -- engineAt is independent of messages (definitional by withMessages_engineAt)
+    exact inv addr' se' heng' hidx'
+  -- ── M-Enqueue: mailbox status changes (ready→busy), env unchanged ────
+  | mEnqueue =>
+    subst_vars
+    rename_i m mboxEng _ _ _ _ _ heng _ _ _ _
+    simp only [SystemState.withMessages_engineAt] at heng'
+    by_cases h : addr' = m.target
+    · -- Updated engine: only status changed, env/localState identical
+      subst h
+      rw [engineAt_updateEngineAt_self _ _ _ ⟨_, heng⟩] at heng'
+      cases heng'
+      exact inv m.target mboxEng heng hidx'
+    · rw [engineAt_updateEngineAt_ne _ _ _ _ h] at heng'
+      exact inv addr' se' heng' hidx'
+  -- ── S-SpawnWithMailbox: fresh engines at new addresses ────────────────
+  | sSpawnMbox =>
+    -- Fresh engine initial states require an additional assumption that
+    -- spawned brokers satisfy CausalInvariant. Left as sorry.
+    sorry
+  -- ── M-Dequeue: proc status changes, mailbox env changes ──────────────
+  | mDequeue =>
+    subst_vars
+    rename_i procAddr i procEng mboxEng _ v _ hproc _ _ hmbox _ _ _
+    have hne : κ.mailboxOf procAddr ≠ procAddr := mailboxOf_ne_self κ procAddr
+    -- Intermediate state after updating procAddr preserves the mailbox
+    have hmbox₁ : (κ.updateEngineAt procAddr
+        ⟨i, { procEng with status := .busy v }⟩).engineAt
+        (κ.mailboxOf procAddr) = some mboxEng := by
+      rw [engineAt_updateEngineAt_ne _ _ _ _ hne]; exact hmbox
+    by_cases h1 : addr' = κ.mailboxOf procAddr
+    · -- addr' = mailbox: env changes via mailboxRemove
+      -- mailboxRemove for broker = { s with ready := s.ready.erase w },
+      -- which preserves CausalInvariant (causalInvariant_erase).
+      -- However, navigating the dependent cast (idx = PubSubIdx.broker
+      -- is propositional, not definitional) requires cast calculus that
+      -- Lean 4's subst can't automate through the proof term.
+      sorry
+    · by_cases h2 : addr' = procAddr
+      · -- addr' = procAddr: only status changed, env unchanged
+        subst h2
+        rw [engineAt_updateEngineAt_ne _ _ _ _ (Ne.symm hne),
+            engineAt_updateEngineAt_self _ _ _ ⟨_, hproc⟩] at heng'
+        cases heng'
+        exact inv addr' ⟨_, procEng⟩ hproc hidx'
+      · -- addr' = neither: engine unchanged
+        rw [engineAt_updateEngineAt_ne _ _ _ _ h1,
+            engineAt_updateEngineAt_ne _ _ _ _ h2] at heng'
+        exact inv addr' se' heng' hidx'
+  -- ── S-Process: effect may modify engine state ─────────────────────────
+  | sProcess =>
+    -- The processing engine's local state may change via E-Update.
+    -- Linking causalAction_preserves_invariant through EffectEvalStep
+    -- requires additional plumbing. Left as sorry.
+    sorry
 
 end MailboxActors.Examples.CausalMailbox
