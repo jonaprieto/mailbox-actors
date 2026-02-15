@@ -52,17 +52,15 @@
     If $\deps{v} \subseteq q.\fdlv$, the message is ready
     and a cascade check releases any pending messages whose dependencies are
     now met:
-    \begin{multline*}
-      \action{c}(v, \ldots) \coloneqq {}\\
-        \chain{%
-          \update{q[\fdlv \cup \{\mhash{v}\},\;
-                    \frdy \pp [v]]}%
-        }{%
-          \update{q[\fdlv \cup \{\mhash{v}\},\;
+    \begin{align*}
+      \action{c}(v, \ldots) \coloneqq {}&\\
+        \refeffect{Chain}\bigl(\;
+          &\update{q[\fdlv \cup \{\mhash{v}\},\;
+                    \frdy \pp [v]]},\\
+          &\update{q[\fdlv \cup \{\mhash{v}\},\;
                     \fpnd \setminus S,\;
-                    \frdy \pp [v] \pp S_{\mathsf{list}}]}%
-        }
-    \end{multline*}
+                    \frdy \pp [v] \pp S_{\mathsf{list}}]}\;\bigr)
+    \end{align*}
     where $S = \{ w \in q.\fpnd \mid \deps{w}
     \subseteq q.\fdlv \cup \{\mhash{v}\}\}$.
     When $S = \emptyset$, the second effect coincides with the first;
