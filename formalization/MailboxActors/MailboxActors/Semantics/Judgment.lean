@@ -29,16 +29,16 @@ inductive GuardEvalStep (i : EngineSpec.EngIdx) :
     Engine i → GuardedAction i → EngineSpec.MsgType i → Effect i → Prop where
   /-- B-GuardedActionEval: guard matches, action fires. -/
   | guardMatch (p : Engine i) (ga : GuardedAction i) (v : EngineSpec.MsgType i)
-      (inp : GuardInput i) (h : ga.guard inp = true) :
+      (inp : GuardInput i) (w : ga.Witness) (h : ga.guard inp = some w) :
       p.status = EngineStatus.busy v →
       inp = ⟨v, p.config, p.env⟩ →
-      GuardEvalStep i p ga v (ga.action inp h)
+      GuardEvalStep i p ga v (ga.action w inp h)
   /-- B-NoMatchingGuard: guard fails, produce `noop`. -/
   | guardFail (p : Engine i) (ga : GuardedAction i) (v : EngineSpec.MsgType i)
       (inp : GuardInput i) :
       p.status = EngineStatus.busy v →
       inp = ⟨v, p.config, p.env⟩ →
-      ga.guard inp = false →
+      ga.guard inp = none →
       GuardEvalStep i p ga v Effect.noop
 
 -- ============================================================================
@@ -80,6 +80,14 @@ inductive EffectEvalStep :
   /-- E-Noop: no change. -/
   | noop (κ : SystemState) (i : EngineSpec.EngIdx) :
       EffectEvalStep κ i Effect.noop κ
+  /-- E-Send: place a message in transit. -/
+  | send (κ κ' : SystemState) (i : EngineSpec.EngIdx)
+      (addr : Address) (p : Engine i) (v : EngineSpec.MsgType i)
+      (j : EngineSpec.EngIdx) (target : Address) (payload : EngineSpec.MsgType j) :
+      κ.engineAt addr = some ⟨i, p⟩ →
+      EvalStep i p v (Effect.send j target payload) →
+      κ' = { κ with messages := κ.messages ++ [⟨addr, κ.mailboxOf target, ⟨j, payload⟩⟩] } →
+      EffectEvalStep κ i (Effect.send j target payload) κ'
   /-- E-Terminate: set engine status to `terminated`. -/
   | terminate (κ κ' : SystemState) (i : EngineSpec.EngIdx)
       (addr : Address) (p : Engine i) (v : EngineSpec.MsgType i) :
@@ -198,7 +206,7 @@ inductive OpStep : SystemState → OpLabel → SystemState → Prop where
       (pre post : List Message) :
       κ.messages = pre ++ m :: post →
       κ.engineAt m.target = some mboxEng →
-      m.payload.1 = mboxEng.idx →
+      m.payload = ⟨mboxEng.idx, w⟩ →
       mboxEng.engine.mode = EngineMode.mail →
       mboxEng.engine.status = EngineStatus.ready f →
       f w = true →
@@ -230,12 +238,18 @@ inductive OpStep : SystemState → OpLabel → SystemState → Prop where
   | mDequeue (κ κ' : SystemState) (procAddr : Address)
       (i : EngineSpec.EngIdx) (procEng : Engine i)
       (mboxEng : SomeEngine)
+      (w : EngineSpec.MsgType mboxEng.idx)
       (v : EngineSpec.MsgType i) (f : EngineSpec.MsgType i → Bool)
+      (mboxEnv : EngineEnv mboxEng.idx)
       (newMboxEnv : EngineEnv mboxEng.idx) :
       κ.engineAt procAddr = some ⟨i, procEng⟩ →
       procEng.mode = EngineMode.process →
       procEng.status = EngineStatus.ready f →
       κ.engineAt (κ.mailboxOf procAddr) = some mboxEng →
+      mboxEng.engine.env = mboxEnv →
+      EngineSpec.mailboxContains mboxEnv.localState w →
+      EngineSpec.unwrap w = some v →
+      newMboxEnv = { mboxEnv with localState := EngineSpec.mailboxRemove mboxEnv.localState w } →
       f v = true →
       κ' = SystemState.updateEngineAt
               (κ.updateEngineAt procAddr ⟨i, { procEng with status := .busy v }⟩)

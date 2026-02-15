@@ -15,7 +15,7 @@ abbrev Behaviour (i : EngineSpec.EngIdx) := List (GuardedAction i)
     produces a non-`noop` effect. -/
 def NonOverlappingGuards (b : Behaviour i) : Prop :=
   ∀ (inp : GuardInput i),
-    (b.filter (fun ga => ga.guard inp)).length ≤ 1
+    (b.filter (fun ga => (ga.guard inp).isSome)).length ≤ 1
 
 /-- A well-formed behaviour bundles a list of guarded actions with a proof
     of non-overlapping guards, so downstream theorems need not take

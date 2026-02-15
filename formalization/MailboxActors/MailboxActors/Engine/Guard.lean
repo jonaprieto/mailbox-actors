@@ -34,18 +34,21 @@ structure GuardInput (i : EngineSpec.EngIdx) where
 /-- A guarded action pairs a guard with an action.
 
     The action is dependently typed: it may only be applied when
-    `guard inp = true`, so the type system enforces the invariant
+    `guard inp = some w`, so the type system enforces the invariant
     "action only when guard holds." -/
 structure GuardedAction (i : EngineSpec.EngIdx) where
-  /-- The guard: returns `true` when the action should fire. -/
-  guard : GuardInput i → Bool
+  Witness : Type
+  /-- The guard: returns `some w` when the action should fire, providing a witness `w`. -/
+  guard : GuardInput i → Option Witness
   /-- The action: produces an effect, given an input **and** a proof that
-      the guard holds on that input. -/
-  action : (inp : GuardInput i) → guard inp = true → Effect i
+      the guard holds on that input with witness `w`. -/
+  action : (w : Witness) → (inp : GuardInput i) → guard inp = some w → Effect i
 
 /-- Apply a guarded action: if the guard matches, fire the action
     (passing the proof that the guard holds); otherwise produce `noop`. -/
 def GuardedAction.apply (ga : GuardedAction i) (inp : GuardInput i) : Effect i :=
-  if h : ga.guard inp then ga.action inp h else Effect.noop
+  match h : ga.guard inp with
+  | some w => ga.action w inp h
+  | none   => Effect.noop
 
 end MailboxActors

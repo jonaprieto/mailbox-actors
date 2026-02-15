@@ -106,6 +106,19 @@ instance PubSubSpec : EngineSpec where
   MsgType    := PubSub.MsgType
   CfgData    := PubSub.CfgData
   LocalState := PubSub.LocalState
+  mailboxContains := fun {i} s m =>
+    match i with
+    | .broker => m ∈ s.ready
+    | .relay  => True -- Relays are just FIFOs or stateless for this example?
+  mailboxRemove := fun {i} s m =>
+    match i with
+    | .broker => { s with ready := s.ready.erase m }
+    | .relay  => s
+  unwrap := fun {i j} m =>
+    match i, j, m with
+    | .broker, .broker, msg => some msg
+    | .relay, .relay, msg   => some msg
+    | _, _, _               => none
 
 -- ============================================================================
 -- § Causal Mailbox Guard and Action

@@ -36,6 +36,12 @@ class EngineSpec where
   CfgData : EngIdx → Type
   /-- Type-specific local state (`L_i`). -/
   LocalState : EngIdx → Type
+  /-- Mailbox contains predicate: used for mDequeue. -/
+  mailboxContains : {i : EngIdx} → LocalState i → MsgType i → Prop
+  /-- Mailbox remove operation: used for mDequeue. -/
+  mailboxRemove : {i : EngIdx} → LocalState i → MsgType i → LocalState i
+  /-- Unwrap message payload: relates mailbox message to processing message. -/
+  unwrap : {i j : EngIdx} → MsgType i → Option (MsgType j)
 
 attribute [instance] EngineSpec.fintype EngineSpec.decEq
 
