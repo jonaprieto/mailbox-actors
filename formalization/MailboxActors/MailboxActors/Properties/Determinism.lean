@@ -43,18 +43,24 @@ theorem effectDeterminism (i : EngineSpec.EngIdx)
     E₁ = E₂ := by
   intro h₁ h₂
   cases h₁ with
-  | guardStrategy ga₁ _ _ hga₁mem hge₁ hne₁ hall₁ =>
+  | guardStrategy ga₁ _ _ hga₁mem hge₁ hall₁ =>
     cases h₂ with
-    | guardStrategy ga₂ _ _ hga₂mem hge₂ hne₂ hall₂ =>
+    | guardStrategy ga₂ _ _ hga₂mem hge₂ hall₂ =>
       rcases Classical.em (ga₁ = ga₂) with heq | hne
       · subst heq; exact guardEvalStep_det hge₁ hge₂
-      · exact absurd (guardEvalStep_det hge₂ (hall₁ ga₂ hga₂mem (Ne.symm hne))) hne₂
+      · -- ga₁ ≠ ga₂: hall₂ says ga₁ produces noop, so E₁ = noop by det.
+        -- Similarly hall₁ says ga₂ produces noop, so E₂ = noop.
+        have := guardEvalStep_det hge₁ (hall₂ ga₁ hga₁mem hne)
+        have := guardEvalStep_det hge₂ (hall₁ ga₂ hga₂mem (fun h => hne h.symm))
+        simp_all
     | allGuardsFail _ hall₂ =>
-      exact absurd (guardEvalStep_det hge₁ (hall₂ ga₁ hga₁mem)) hne₁
+      -- ga₁ matched in h₁, but hall₂ says ga₁ produces noop → E₁ = noop.
+      -- h₂ is allGuardsFail → E₂ = noop. So E₁ = E₂.
+      exact guardEvalStep_det hge₁ (hall₂ ga₁ hga₁mem)
   | allGuardsFail _ hall₁ =>
     cases h₂ with
-    | guardStrategy ga₂ _ _ hga₂mem hge₂ hne₂ _ =>
-      exact absurd (guardEvalStep_det hge₂ (hall₁ ga₂ hga₂mem)) hne₂
+    | guardStrategy ga₂ _ _ hga₂mem hge₂ _ =>
+      exact (guardEvalStep_det hge₂ (hall₁ ga₂ hga₂mem)).symm
     | allGuardsFail _ _ => rfl
 
 end MailboxActors

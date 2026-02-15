@@ -57,7 +57,6 @@ inductive EvalStep (i : EngineSpec.EngIdx) :
       p.status = EngineStatus.busy v →
       ga ∈ p.behaviour.actions →
       GuardEvalStep i p ga v E →
-      E ≠ Effect.noop →
       (∀ ga' ∈ p.behaviour.actions, ga' ≠ ga →
         GuardEvalStep i p ga' v Effect.noop) →
       EvalStep i p v E
