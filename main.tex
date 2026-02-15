@@ -2213,6 +2213,17 @@ This contradicts $m \in \SetOfMessages$ at step $k_{0}+1$.
   triggering the cascade that moves it to the ready queue.
 \end{remark}
 
+\begin{remark}[Causal Invariant Preservation]\label{rem:causal-invariant}%
+  The Lean~4 mechanisation additionally verifies that the causal mailbox
+  action of \Cref{ex:causal-mailbox} preserves a \emph{causal invariant}:
+  every message in the ready queue has all its dependencies recorded in the
+  delivered set. In the direct-delivery branch ($\deps{v} \subseteq
+  q.\fdlv$), the cascade function $\mathit{findCascade}$ returns only
+  messages whose dependencies are met with respect to
+  $q.\fdlv \cup \{\mhash{v}\}$. In the buffering branch, the ready queue
+  is unchanged and the invariant holds trivially.
+\end{remark}
+
 \section{Related Work}\label{sec:related-work}
 
 \paragraph{Actor Model Foundations}
