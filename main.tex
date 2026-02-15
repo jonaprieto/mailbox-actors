@@ -62,22 +62,21 @@ structure: it is a fully-fledged actor with its own guarded-action behaviour,
 enabling custom delivery policies, message prioritisation, and filtering
 without modifying the processing actor or the system runtime.
 
-We formalise this architecture in a predicative Martin-L\"of type theory. The
-choice of foundation is driven by the model itself: every
-engine component---messages, configurations, environments, behaviours---is a
-type family indexed by a finite type of engine type indices, so a type-safe
-description of engine creation and inter-engine communication requires dependent
-types to quantify over indices and pair them with their associated data.
-Alternative foundations such as set theory or rewriting logic could express the
-operational rules but would not enforce these typing invariants by construction;
-dependent types make them intrinsic, yielding definitions that are correct by
-construction and directly implementable in proof assistants such as Agda, Coq,
-or Lean. Our model introduces \emph{engines}---a refinement of the actor
-notion---structured around four components: a configuration, an execution
-environment, a message interface, and a behaviour defined by guarded actions.
+We formalise this architecture in a predicative Martin-L\"of type theory,
+introducing \emph{engines}---a refinement of the actor notion---structured
+around four components: a configuration, an execution environment, a message
+interface, and a behaviour defined by guarded actions. The choice of foundation
+is driven by the model itself: every engine component is a type family indexed
+by a finite type of engine type indices, so a type-safe description of engine
+creation and inter-engine communication requires dependent types to quantify
+over indices and pair them with their associated data. Alternative foundations
+such as set theory or rewriting logic could express the operational rules but
+would not enforce these typing invariants by construction; dependent types make
+them intrinsic, yielding definitions that are correct by construction and
+directly implementable in proof assistants such as Agda, Coq, or Lean.
 
 \paragraph{Contributions}
-The contributions of this paper are threefold.
+The contributions of this paper are fourfold.
 First, we present a dependent-type-theoretic formalisation of actor systems in
 which mailboxes are first-class actors (\Cref{sec:model}). The framework is
 parametric in the engine type family, making it applicable to any actor-like
@@ -89,12 +88,18 @@ non-overlapping guards, effect execution, and engine lifecycle management.
 Third, we establish several metatheoretic properties of the system
 (\Cref{sec:properties}), including type preservation under reduction, progress,
 effect determinism, mailbox isolation, and eventual delivery.
+Fourth, all definitions and properties are mechanised in Lean~4, including a
+concrete instantiation for the causal delivery mailbox
+(\Cref{ex:causal-mailbox}), providing machine-checked proofs and validating
+that the parametric framework is directly usable in practice.
 
 \paragraph{Outline}
 \Cref{sec:type-theory} fixes notation and conventions.
 \Cref{sec:model} introduces the engine model and its components, culminating in
 the definition of mailbox engines. \Cref{sec:semantics} presents the
-operational semantics. \Cref{sec:properties} states metatheoretic properties.
+operational semantics---eighteen inference rules grouped into four judgment
+forms---and traces a worked example on a causal delivery mailbox.
+\Cref{sec:properties} establishes five metatheoretic properties.
 \Cref{sec:related-work} discusses related work, and \Cref{sec:conclusion}
 concludes.
 
