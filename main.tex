@@ -2310,10 +2310,17 @@ invariant: all messages to a processing engine are mediated by its dedicated
 mailbox actor, which is guaranteed by the structure of the transition rules.
 
 A companion Lean~4 mechanisation covers all definitions and all five
-propositions of \Cref{sec:properties}, including a concrete instantiation of
-the abstract framework for the causal delivery mailbox of
-\Cref{ex:causal-mailbox}, validating that the parametric definitions are
-directly implementable in a proof assistant.
+propositions of \Cref{sec:properties}, together with auxiliary results
+such as mailbox persistence (\Cref{lem:mailbox-persistence}) and
+trace-level invariant preservation (\Cref{cor:trace-invariants}).
+The mechanisation also includes a concrete instantiation
+of the abstract framework for the causal delivery mailbox of
+\Cref{ex:causal-mailbox}, with a machine-checked proof that the
+mailbox action preserves the causal invariant
+(\Cref{rem:causal-invariant}), validating that the parametric
+definitions are directly implementable in a proof assistant.
+Every lemma and theorem in the mechanisation is fully verified,
+with no \texttt{sorry} (incomplete proof) declarations.
 
 \paragraph{Limitations}
 The model assumes static engine types (no dynamic type extension), static
