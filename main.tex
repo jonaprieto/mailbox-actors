@@ -2128,6 +2128,19 @@ mailbox engine. Hence, no rule places a message directly in a processing
 engine's state.
 \end{proof}
 
+\begin{lemma}[Mailbox Persistence]\label{lem:mailbox-persistence}
+When \sruleref{Clean} removes a terminated processing engine at address~$a$,
+the paired mailbox engine $\mailboxOf{a}$ is unaffected. In a well-typed
+state, the mailbox engine still exists after removal, retains the same type
+index, and remains in mail mode.
+\end{lemma}
+\begin{proof}[Proof sketch]
+Processing and mailbox engines of the same pair occupy
+distinct addresses ($\mailboxOf{a} \neq a$). Hence
+$\mathit{removeEngineAt}(a)$ does not alter the engine map at
+$\mailboxOf{a}$.
+\end{proof}
+
 \begin{definition}[Unique In-Transit]\label{def:unique-in-transit}
 A message $m$ is \emph{unique in transit} from step $n$ onwards if, at every
 step $k \geq n$, $m$ appears at most once in the in-transit list
