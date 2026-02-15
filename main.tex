@@ -2035,6 +2035,13 @@ $\SystemState = (\SetOfNodes, \SetOfMessages, \SetOfPlugins)$ is
   \item for every processing engine $p$, the function $\mailboxOfname$ returns
   a valid mailbox engine address.
 \end{enumerate}
+Well-typedness entails two structural properties.
+First, every in-transit message has a live target: if
+$\msgpacket{s}{t}{v} \in \SetOfMessages$, then the engine at address~$t$
+exists (\emph{no orphaned messages}).
+Second, every processing engine~$p$ has a paired mailbox engine
+$\mailboxOf{p}$ with matching type index in mail mode (\emph{spawn pairing}).
+Both follow directly from the definition and are used in the proofs below.
 
 \begin{proposition}[Type Preservation]\label{prop:type-preservation}
 If $\sysstep{\SystemState}{\SystemState'}$ and $\SystemState$ is well-typed,
