@@ -1776,11 +1776,13 @@ $q_0 = (\fdlv = \emptyset,\;
   msc keyword={},
   small values,
   instance distance=2.4cm,
-  level height=0.55cm,
-  first level height=0.4cm,
-  last level height=0.3cm,
+  level height=0.45cm,
+  first level height=0.25cm,
+  last level height=0.15cm,
+  head top distance=0.1cm,
+  foot distance=0.1cm,
   left environment distance=1.2cm,
-  label distance=0.15cm,
+  label distance=0.1cm,
 ]{}
 \declinst{s}{}{$s$}
 \declinst{mbox}{}{$\mailboxOfname$}
@@ -1789,7 +1791,7 @@ $q_0 = (\fdlv = \emptyset,\;
 % ── Steps 1–2: m₁ sent + enqueued ──
 \msccomment[side=left]{1--2}{s}
 \mess[color=ruleM]{$m_1$}{s}{mbox}
-\nextlevel[2]
+\nextlevel
 
 % ── Steps 3–4: Process + Dequeue m₁ ──
 \msccomment[side=left]{3--4}{s}
