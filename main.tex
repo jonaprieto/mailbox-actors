@@ -563,15 +563,17 @@ $\some{r}$ if satisfied, and $\none$ otherwise.
 \end{definition}
 
 \begin{definition}[Action]\label{def:action}%
-An \textbf{action} for an engine of type $i$ acting on data of type
-$\returntype$ is a function of type
+Given a guard $g \colon \In{i} \to \Option{\returntype}$ for an engine of
+type~$i$, an \textbf{action} is a dependent function of type
 \begin{equation}\label{eq:action-type-out}
-\returntype \times
-\In{i}
-\to
-\Out{i} \text{ where }
+\Pi\,(r : \returntype).\,\Pi\,(x : \In{i}).\,
+  g(x) = \some{r} \to \Out{i}
+\text{ where }
 \defequal{\Out{i}}{\effecttype{i}}\,.
 \end{equation}
+The proof argument $g(x) = \some{r}$ records in the type system that the
+action is defined only when the guard holds, eliminating the need for a
+separate guard-match assumption in semantic rules.
 \end{definition}
 
 Together, a guard and an action induce a function of type $\In{i} \to \Out{i}$.
@@ -586,7 +588,7 @@ type $\In{i} \to \Out{i}$ defined by
     &(\guard{i} \odot \action{i})
   }{
   \lambda \langle m, c, s \rangle .
-    \mathsf{case}\ \guard{i}(m)\ \mathsf{of}\ \{ \\
+    \mathsf{case}\ \guard{i}(m, c, s)\ \mathsf{of}\ \{ \\
      &\quad \some{r} \Rightarrow \action{i}(r, \langle m, c, s \rangle); \\
      &\quad \none \Rightarrow \noop
   \}
@@ -596,15 +598,6 @@ type $\In{i} \to \Out{i}$ defined by
 \end{equation}
 \end{definition}
 
-\begin{remark}[Dependent Action Type]\label{rem:dependent-action-type}%
-The action component is only invoked when the guard returns $\some{r}$.
-In a dependently-typed setting, one can refine the action type to
-$\Pi\,(x : \In{i}).\, g(x) = \some{r} \to \Out{i}$, recording
-in the type system that the action is defined only when the guard holds.
-This eliminates the need for a separate guard-match assumption in
-semantic rules such as \bruleref{GuardedActionEval}.  Our Lean~4
-formalisation employs this refinement.
-\end{remark}
 
 \begin{definition}[Engine Behaviour]\label{def:engine-behaviour}%
 A \textbf{behaviour} for an engine of type $i$ is a list of guarded actions,
