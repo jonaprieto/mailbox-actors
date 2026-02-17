@@ -44,10 +44,17 @@ private lemma mailboxRemove_preserves_causalInvariant
 theorem causal_invariant_preserved (κ κ' : SystemState) (op : OpLabel) :
     WellTypedState κ →
     GlobalCausalInvariant κ →
+    -- Broker-safety for the transition: every broker engine in κ' that was
+    -- not identically present in κ satisfies CausalInvariant.
+    -- In the PubSub system this is discharged by:
+    --   (a) freshly spawned brokers start with CausalState.empty, and
+    --   (b) causalAction preserves the invariant.
+    (∀ addr' se', κ'.engineAt addr' = some se' → κ.engineAt addr' ≠ some se' →
+      ∀ (h : se'.idx = PubSubIdx.broker),
+      CausalInvariant (cast (by rw [h]; rfl) se'.engine.env.localState)) →
     OpStep κ op κ' →
     GlobalCausalInvariant κ' := by
-  intro wt inv step
-  intro addr' se' heng' hidx'
+  intro wt inv hbt step addr' se' heng' hidx'
   cases step with
   -- ── S-Node: new empty node, no engine changes ────────────────────────
   | sNode =>
@@ -82,9 +89,9 @@ theorem causal_invariant_preserved (κ κ' : SystemState) (op : OpLabel) :
       exact inv addr' se' heng' hidx'
   -- ── S-SpawnWithMailbox: fresh engines at new addresses ────────────────
   | sSpawnMbox =>
-    -- Fresh engine initial states require an additional assumption that
-    -- spawned brokers satisfy CausalInvariant. Left as sorry.
-    sorry
+    rcases Classical.em (κ.engineAt addr' = some se') with heq | heq
+    · exact inv addr' se' heq hidx'
+    · exact hbt addr' se' heng' heq hidx'
   -- ── M-Dequeue: proc status changes, mailbox env changes ──────────────
   | mDequeue =>
     subst_vars
@@ -118,9 +125,8 @@ theorem causal_invariant_preserved (κ κ' : SystemState) (op : OpLabel) :
         exact inv addr' se' heng' hidx'
   -- ── S-Process: effect may modify engine state ─────────────────────────
   | sProcess =>
-    -- The processing engine's local state may change via E-Update.
-    -- Linking causalAction_preserves_invariant through EffectEvalStep
-    -- requires additional plumbing. Left as sorry.
-    sorry
+    rcases Classical.em (κ.engineAt addr' = some se') with heq | heq
+    · exact inv addr' se' heq hidx'
+    · exact hbt addr' se' heng' heq hidx'
 
 end MailboxActors.Examples.CausalMailbox
