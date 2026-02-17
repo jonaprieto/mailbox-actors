@@ -2163,14 +2163,19 @@ By induction on $k$, applying
 \end{proof}
 
 \begin{proposition}[Eventual Delivery]\label{prop:eventual-delivery}
-Let $\sigma$ be an execution trace with predicate-level weak
+Let $\sigma$ be an execution trace with predicate-level strong
 fairness (TLA$^{+}$-style): for every binary predicate $P$ on states, if
-$P$ is continuously enabled from some step $n$ onwards then $P$ relates
-some consecutive pair $(\sigma(k),\sigma(k+1))$ with $k \geq n$.
+$P$ is infinitely often enabled from step $n$ onwards (i.e.\ for every
+$k \geq n$ there exists $l \geq k$ such that $P$ is enabled at~$l$), then
+$P$ relates some consecutive pair $(\sigma(k),\sigma(k+1))$ with $k \geq n$.
 
 Assume that the initial state $\sigma(n)$ is well-typed, satisfies mailbox
 isolation (\Cref{prop:mailbox-isolation}), and that the message $m$ is unique
 in transit from step $n$ onwards (\Cref{def:unique-in-transit}).
+Assume further that the target mailbox \emph{eventually accepts}~$m$: at any
+step where $m$ is still in transit, there is a future step at which the
+mailbox engine is in state $\ready{f}$ with $\equal{f(w)}{\mathsf{tt}}$ for
+the message payload~$w$.
 If $m \in \SetOfMessages$ at step~$n$, then there exists $k \geq n$ such that
 $m \notin \SetOfMessages$ at step~$k$.
 \end{proposition}
@@ -2180,13 +2185,15 @@ Define the predicate $P(\SystemState, \SystemState')$: ``$\SystemState'$ is
 obtained from $\SystemState$ by removing $m$ from the in-transit list via
 \mruleref{Enqueue}.''
 
-We show $P$ is continuously enabled. At each step $k \geq n$,
-\Cref{cor:trace-invariants} ensures well-typedness and mailbox isolation hold.
-Since $m$ is in transit, well-typedness provides a target engine and mailbox
-isolation ensures it is in mail mode. Hence the \mruleref{Enqueue} premises
-are satisfied and a witness state $\SystemState'$ with $m$ removed exists.
+We show $P$ is infinitely often enabled. Given any $k \geq n$, since $m$ is
+in transit the \emph{eventually-accepts} hypothesis provides a future step
+$l \geq k$ at which the target mailbox is in state $\ready{f}$ and accepts
+the payload.
+\Cref{cor:trace-invariants} ensures well-typedness and mailbox isolation hold
+at~$l$, so the \mruleref{Enqueue} premises are satisfied and a witness state
+$\SystemState'$ with $m$ removed exists.
 
-By weak fairness, $P$ fires at some step $k_{0} \geq n$, yielding
+By strong fairness, $P$ fires at some step $k_{0} \geq n$, yielding
 $\sigma(k_{0}+1)$ with $m$ removed. Because $m$ is unique in transit, the
 removal leaves no copy of $m$ in the message list.
 This contradicts $m \in \SetOfMessages$ at step $k_{0}+1$.
@@ -2200,12 +2207,13 @@ This contradicts $m \in \SetOfMessages$ at step $k_{0}+1$.
   This use of classical logic is standard for liveness properties under
   TLA$^{+}$-style fairness, where the existential witness (the step at
   which the message is consumed) is not computationally extractable.
-  The Lean~4 proof of eventual delivery is stated but carries a
-  \texttt{sorry} gap: weak fairness guarantees the enqueue rule fires
-  whenever it is \emph{continuously} enabled, but a mailbox that
-  oscillates between ready and busy is only \emph{repeatedly} enabled,
-  requiring strong fairness or a stabilisation argument not yet
-  formalised.
+  The Lean~4 proof uses strong fairness (\texttt{StronglyFair}) together
+  with an explicit liveness hypothesis (\texttt{EventuallyAccepts}) that
+  the target mailbox is infinitely often ready to accept the message.
+  This resolves the tension between fairness and mailbox oscillation:
+  because the mailbox may alternate between ready and busy states, the
+  enqueue predicate is only \emph{repeatedly} (not \emph{continuously})
+  enabled, necessitating strong fairness.
   All other propositions in this section are proved constructively.
 \end{remark}
 
@@ -2231,13 +2239,17 @@ This contradicts $m \in \SetOfMessages$ at step $k_{0}+1$.
   messages whose dependencies are met with respect to
   $q.\fdlv \cup \{\mhash{v}\}$. In the buffering branch, the ready queue
   is unchanged and the invariant holds trivially.
-  Global preservation (\texttt{causal\_invariant\_preserved}) is proved
-  for most operational rules, including the \mruleref{Dequeue}
-  mailbox-remove case via a helper lemma that decomposes the
-  \texttt{SomeEngine} index for \texttt{subst}; the remaining gaps
-  are the initial state of a freshly spawned broker
-  (\sruleref{SpawnWithMailbox}) and the linking of local invariant
-  preservation through \sruleref{Process}.
+  Global preservation (\texttt{causal\_invariant\_preserved}) is fully
+  proved for all operational rules under an additional
+  \emph{broker-safety hypothesis}: every broker engine in the successor
+  state that was not identically present in the predecessor must satisfy
+  the causal invariant. For \sruleref{SpawnWithMailbox} and
+  \sruleref{Process}, the proof splits (via the law of excluded middle) on
+  whether the engine at a given address is unchanged---using the old
+  invariant---or new/modified---using the broker-safety hypothesis. In the
+  concrete pub/sub instantiation, this hypothesis is discharged by
+  (a)~freshly spawned brokers starting with an empty state (vacuously
+  invariant) and (b)~\texttt{causalAction} preserving the invariant.
 \end{remark}
 
 \section{Related Work}\label{sec:related-work}
@@ -2339,21 +2351,21 @@ A companion Lean~4 mechanisation covers all definitions, all five
 propositions of \Cref{sec:properties}, and auxiliary results such as
 mailbox persistence (\Cref{lem:mailbox-persistence}) and trace-level
 invariant preservation (\Cref{cor:trace-invariants}).
-Type preservation, effect determinism, and mailbox isolation are fully
-machine-checked with no \texttt{sorry} declarations.
+Type preservation, effect determinism, mailbox isolation, and eventual
+delivery are fully machine-checked with no \texttt{sorry} declarations.
 Progress (\Cref{prop:progress}) is proved for the evaluation-totality
 component (\texttt{evalStep\_total}), with the effect-execution
-totality of \sruleref{Process} left as an axiom; eventual delivery
-(\Cref{prop:eventual-delivery}) is stated with a gap between the weak
-fairness assumption and the strong fairness needed for mailbox
-readiness oscillation (see \Cref{rem:classical-reasoning}).
+totality of \sruleref{Process} left as an axiom.
+Eventual delivery (\Cref{prop:eventual-delivery}) is proved under
+strong fairness together with a liveness hypothesis that the target
+mailbox is infinitely often ready to accept the message
+(see \Cref{rem:classical-reasoning}).
 The mechanisation also includes a concrete instantiation of the
 abstract framework for the causal delivery mailbox of
 \Cref{ex:causal-mailbox}, with the \texttt{causalAction} action
 proved to preserve a causal invariant (\Cref{rem:causal-invariant})
-and global preservation proved for most operational rules; two
-\texttt{sorry} placeholders remain for spawned-broker initial states
-and effect-to-invariant linking through \sruleref{Process}.
+and global preservation fully proved for all operational rules under a
+broker-safety hypothesis (see \Cref{rem:causal-invariant}).
 
 \paragraph{Limitations}
 The model assumes static engine types (no dynamic type extension), static
