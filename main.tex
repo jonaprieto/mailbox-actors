@@ -356,14 +356,13 @@ $\msgpacket{s}{t}{v}$ where:
 \begin{itemize}
     \item $\typing{s}{\Address}$ is the sender engine address,
     \item $\typing{t}{\Address}$ is the target engine address, and
-    \item $\typing{v}{\msgtype{t}}$ is the payload conforming to the target
-    engine's message interface.
+    \item $\typing{v}{\TotalMsg}$ is a typed payload.
 \end{itemize}
 \end{definition}
 
-The type of the payload $v$ depends on the target address $t$: it must conform
-to $\msgtype{t}$, the message interface of the engine at address $t$. This
-dependent typing ensures that only well-formed messages can be constructed.
+The payload $v$ is an element of $\TotalMsg$, the $\Sigma$-type collecting all
+valid message payloads across engine types. This ensures that only well-formed
+messages can be constructed.
 
 To refer to the type of an arbitrary message within the system, we use the
 $\Sigma$-type
@@ -471,7 +470,7 @@ the local state. The execution \textbf{environment} of an engine of type $i$
 is a pair $\localenvval{s}{m}$ of type $\envtype{i}$, where:
 \begin{itemize}
     \item $\typing{s}{L_i}$ is the local state, and
-    \item $\typing{m}{\Name \to \Address}$ is the engine's address book, with
+    \item $\typing{m}{\Name \to \Option{\Address}}$ is the engine's address book, with
     a predefined name \self for the engine's own address.
 \end{itemize}
 The type family of environments is
@@ -479,7 +478,7 @@ The type family of environments is
 \defequal{
   \envtype{i}
 }{
-  L_i \times (\Name \to \Address)
+  L_i \times (\Name \to \Option{\Address})
 }\,.
 \end{equation}
 \end{definition}
@@ -507,13 +506,11 @@ operation that the issuing engine requests the system to execute.
   &\effecttype{i}
 }{\\   &\quad \noop & &%
         \text{(null operation)} \\
-\, \mid & \quad \send{\Address}{\TotalMsg} & &%
+\, \mid & \quad \send{j : \EngIdx}{\Address}{\msgtype{j}} & &%
         \text{(message dispatch)} \\
 \, \mid & \quad \update{\envtype{i}} & &%
         \text{(update environment)} \\
-\, \mid & \quad \spawn{
-    \Sigma_{(j : \EngIdx)}\, (\configtype{j} \times \envtype{j})
-  } & &%
+\, \mid & \quad \spawn{j : \EngIdx}{C_j}{L_j} & &%
         \text{(spawn child engine of type $j$)} \\
 \, \mid & \quad \mfilter{%
                   {\msgtype{i} \to \Bool}
@@ -600,14 +597,14 @@ type $\In{i} \to \Out{i}$ defined by
 
 
 \begin{definition}[Engine Behaviour]\label{def:engine-behaviour}%
-A \textbf{behaviour} for an engine of type $i$ is a list of guarded actions,
-of type $\behaviourtype{i}$, where
+A \textbf{behaviour} for an engine of type $i$ is a list of guarded action
+structures, of type $\behaviourtype{i}$, where
 \begin{equation}
 \defequal{
   \behaviourtype{i}
 }{
   \List{
-    \In{i} \to \Out{i}
+    \mathsf{GuardedAction}_i
   }
 }\,.
 \end{equation}
@@ -713,6 +710,15 @@ system-configured engine satisfying:
   \item $\typing{(\deletemsgop)}{L_m \times \msgtype{i} \to L_m}$ for
   message deletion.
   \end{itemize}
+\item Three mailbox operations are provided:
+  \begin{itemize}
+  \item $\typing{\mathsf{mailboxContains}}{L_m \times \msgtype{m} \to \mathsf{Prop}}$:
+  holds when the store contains a given wrapped message,
+  \item $\typing{\mathsf{mailboxRemove}}{L_m \times \msgtype{m} \to L_m}$:
+  removes a wrapped message from the store, and
+  \item $\typing{\mathsf{unwrap}}{\msgtype{m} \to \Option{\msgtype{i}}}$:
+  extracts the payload from a wrapped message.
+  \end{itemize}
 \item The default behaviour $b_m$ consists of a single guarded action
   $\guardedactionval{g_m}{a_m}$ where:
   \begin{itemize}
@@ -754,11 +760,9 @@ behaviour, while the processing engine focuses on its computational tasks.
 \subsection{Nodes}\label{sec:nodes}
 
 \begin{definition}[Node]\label{def:node}%
-A \textbf{node} in $\SetOfNodes$ is a tuple
-$\nodeval{n_i}{\enginemap_i}{\plugins_i}$ where $\node{i}$ is the node's
-unique identifier, $\enginemap_i$ maps local identifiers to engine instances,
-and $\plugins_i$ represents node-specific services such as unique identifier
-generation.
+A \textbf{node} in $\SetOfNodes$ is a pair
+$\nodeval{n_i}{\enginemap_i}$ where $\node{i}$ is the node's
+unique identifier and $\enginemap_i$ maps local identifiers to engine instances.
 \end{definition}
 
 For a node with identifier $n_i$, we write $\SetOfEngines_i$ for the set of
@@ -784,21 +788,20 @@ $\systemval{\SetOfNodes}{\SetOfMessages}{\SetOfPlugins}$ where:
 \begin{itemize}
 \item $\SetOfNodes$ is the set of uniquely identified nodes,
 \item $\SetOfMessages$ is the set of in-transit messages, and
-\item $\SetOfPlugins$ is the set of system-wide services.
+\item $\typing{\SetOfPlugins}{\N}$ is a fresh-identifier counter.
 \end{itemize}
 \end{definition}
 
 The superscript $\SystemState^{(i)}$ denotes the system state at step $i$,
 with $\SystemState^{(0)}$ the initial state. We may define
-$\defequal{\SystemState^{(0)}}{\systemval{\emptyset}{\emptyset}{\emptyset}}$
+$\defequal{\SystemState^{(0)}}{\systemval{\emptyset}{\emptyset}{0}}$
 and grow the system via the transition rules of \Cref{sec:semantics}.
 
-The system services $\SetOfPlugins$ include:
-\begin{itemize}
-\item $\freshidname$: generates unique identifiers, and
-\item $\typing{\mailboxOfname}{\Address \to \Address}$: returns the address
-of the dedicated mailbox engine for a given processing engine.
-\end{itemize}
+Rules that allocate identifiers consume from the counter $\SetOfPlugins$ and
+increment it. The function
+$\typing{\mailboxOfname}{\Address \to \Address}$ returns the address
+of the dedicated mailbox engine for a given processing engine; by convention,
+$\mailboxOfname$ maps each engine address to a fixed companion address.
 
 We extend the node-local engine map $\enginemap_i$ to a global version
 $\enginemap$ that operates over all engines $\SetOfEngines$ in the system.
@@ -809,8 +812,9 @@ The operational semantics are expressed through the reduction relation
 $\stepsymbol$, where
 $\sysstep{\SystemState^{(i)}}{\SystemState^{(i+1)}}$ indicates a transition.
 A system state $\kappa$ is represented as
-$(\SetOfNodes, \SetOfMessages, \SetOfPlugins)$, with $\enginemap$ mapping
-engine addresses to instances, and $\alpha$ mapping instances to addresses.
+$(\SetOfNodes, \SetOfMessages, \SetOfPlugins)$, where $\SetOfPlugins$ is the
+fresh-identifier counter, $\enginemap$ maps engine addresses to instances,
+and $\alpha$ maps instances to addresses.
 
 \subsection{Judgment Forms}\label{sec:judgment-forms}
 
@@ -849,7 +853,7 @@ A new node $n$ with fresh identifier $\iota$ and an empty engine map is added
 to the set of nodes $\SetOfNodes$.
 \begin{prooftree}
 \AxiomC{$%
-      \defequal{\iota}{\freshid}
+      \defequal{\iota}{\SetOfPlugins}
 \quad %
       \equal{%
         n
@@ -857,7 +861,6 @@ to the set of nodes $\SetOfNodes$.
         \nodeval%
           {\iota}
           {\emptyset}
-          {\plugins_n}
       }
 $}
 \UnaryInfC{$%
@@ -867,7 +870,7 @@ $}
 {%
   ( \SetOfNodes \cup \{n\}
   , \SetOfMessages
-  , \SetOfPlugins
+  , \SetOfPlugins + 1
   )
 }%
 $}
@@ -896,7 +899,6 @@ engine map.
           \nodeval%
             {\mathsf{id}_i}
             {\enginemap_i}
-            {\plugins_i}
         }
         \in \SetOfNodes
   $}
@@ -930,7 +932,7 @@ engine map.
           {s}
           {[(\self, \iota)]}
       }
-\quad \defequal{\iota}{\freshid}
+\quad \defequal{\iota}{\SetOfPlugins}
 \quad \typing{\loc{\mathsf{id}_i}{\iota}}{\Address}
 $}
 \noLine
@@ -970,7 +972,7 @@ $}
     {%
       ( \SetOfNodes[\enginemap_i \mapsto \enginemap']%
       , \SetOfMessages%
-      , \SetOfPlugins%
+      , \SetOfPlugins + 1%
       )
     }%
   $}
@@ -990,9 +992,9 @@ engine.
 \quad
   \node{i} \in \SetOfNodes
 \quad
-  \defequal{\iota_p}{\freshid}
+  \defequal{\iota_p}{\SetOfPlugins}
 \quad
-  \defequal{\iota_m}{\freshid}
+  \defequal{\iota_m}{\SetOfPlugins + 1}
 $}
 \vdotsline
 \UnaryInfC{$%
@@ -1179,8 +1181,9 @@ $}
 
 \begin{definition}[\mrule{Dequeue}]\label{rule:m-Dequeue}
 When a processing engine $p$ is in state $\ready{f}$ and its mailbox contains
-a message $\typing{v}{\msgtype{p}}$ accepted by filter $f$, the message is
-removed from the mailbox and $p$ transitions to $\busy{v}$.
+a wrapped message $\typing{w}{\msgtype{\mailbox{p}}}$ that unwraps to a
+payload $\typing{v}{\msgtype{p}}$ accepted by filter $f$, the wrapped message
+is removed from the mailbox and $p$ transitions to $\busy{v}$.
 \begin{prooftree}
 \AxiomC{$
   p \in \SetOfEngines%
@@ -1209,13 +1212,19 @@ $}
   }
 \quad %
   \equal{%
-    \mathsf{env}(\enginemap(\mailbox{p}))
+    q
   }{%
-   q \cup \{v\}
+   \localenvproj{\enginemap(\mailbox{p})}
   }
 $}
 \noLine
 \UnaryInfC{$
+  \typing{w}{\msgtype{\mailbox{p}}}%
+\quad %
+  \mathsf{mailboxContains}(q, w)
+\quad %
+  \equal{\mathsf{unwrap}(w)}{\some{v}}
+\quad %
   \typing{v}{\msgtype{p}}%
 \quad %
   \equal{f(v)}{\mathsf{tt}}
@@ -1242,7 +1251,7 @@ $}
           {\ignore}
           {\ignore}
           {\ignore}
-          {q}
+          {\mathsf{mailboxRemove}(q, w)}
     ]%
 }
 $}
@@ -1457,7 +1466,7 @@ states that executing $E$ in $\SystemState$ produces $\SystemState'$. This
 judgment is defined by case analysis on $E$.
 
 \begin{definition}[\erule{Send}]\label{rule:e-Send}
-Executing a $\send{l_t}{m}$ effect appends message~$m$ to the in-transit
+Executing a $\send{j}{l_t}{v}$ effect appends message~$v$ to the in-transit
 list, addressed to the mailbox of the target engine at~$l_t$.  The target
 validity premises---that $\engine{t}$ exists, is in \process mode, and has a
 message type matching the payload---ensure type preservation
@@ -1470,19 +1479,21 @@ message type matching the payload---ensure type preservation
 \quad %
   \equal{\mode(\engine{t})}{\process}%
 \quad %
-  \typing{m}{\msgtype{t}}%
+  \typing{j}{\EngIdx}
+\quad %
+  \typing{v}{\msgtype{j}}%
 $}
 \UnaryInfC{$
 \effectevalstep%
   {(\SetOfNodes, \SetOfMessages, \SetOfPlugins)}
-  {\send{l_{t}}{m}}
+  {\send{j}{l_{t}}{v}}
   {( \SetOfNodes
     , \SetOfMessages \cup%
       \{
         \msgpacket%
           {\alpha(\engine{s})}
           {\mailboxOf{\enginemap(\engine{t})}}
-          {\append(m)}
+          {\append(v)}
       \}%
     , \SetOfPlugins
     )
@@ -1562,7 +1573,7 @@ default return to $\ready{\lambda\_.\mathsf{tt}}$ in \sruleref{Process}.
 
 
 \begin{definition}[\erule{Spawn}]\label{rule:e-Spawn}
-Executing a $\spawn{\langle j, c, s \rangle}$ effect on node $\node{i}$
+Executing a $\spawn{j}{c}{s}$ effect on node $\node{i}$
 creates a child engine of type $\typing{j}{\EngIdx}$ with initial
 configuration $c$ and environment $s$, delegating to
 \sruleref{SpawnWithMailbox}.
@@ -1572,7 +1583,7 @@ configuration $c$ and environment $s$, delegating to
 \quad p \in \SetOfEngines_i%
 \quad
   \typing{j}{\EngIdx}
-\quad \defequal{\iota}{\freshid}
+\quad \defequal{\iota}{\SetOfPlugins}
 $}
 \noLine
 \UnaryInfC{$%
@@ -1593,7 +1604,7 @@ $}
 \UnaryInfC{$%
   \effectevalstep%
     {\SystemState}
-    {\spawn{\langle j, c, s \rangle}}
+    {\spawn{j}{c}{s}}
     {\SystemState'}
 $}
 \end{prooftree}

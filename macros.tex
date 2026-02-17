@@ -124,12 +124,11 @@
 
 \newcommand{\engines}{\SetOfEngines}
 \newcommand{\nodes}{\SetOfNodes}
-\newcommand{\nodeval}[3]{%
+\newcommand{\nodeval}[2]{%
 \ensuremath{%
 \langle%
     #1, % id
-    #2, % \enginemap_i,
-    #3  % \plugins_i
+    #2  % \enginemap_i
 \rangle%
 }}
 
@@ -204,9 +203,9 @@
 \newcommand{\effecttype}[1]{\ensuremath{\effect_{#1}}}
 
 \newcommand{\refeffect}[1]{\hyperref[eq:effects]{\ccon{#1}}}
-\newcommand{\send}[2]{\refeffect{Send}(#1, #2)}
+\newcommand{\send}[3]{\refeffect{Send}(#1, #2, #3)}
 \newcommand{\update}[1]{\refeffect{Update}(#1)}
-\newcommand{\spawn}[1]{\refeffect{Spawn}(#1)}
+\newcommand{\spawn}[3]{\refeffect{Spawn}(#1, #2, #3)}
 \newcommand{\mfilter}[1]{\refeffect{MFilter}(#1)}
 \newcommand{\chain}[2]{\refeffect{Chain}(#1, #2)}
 \newcommand{\terminate}{\refeffect{Terminate}}
