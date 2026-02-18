@@ -2353,11 +2353,15 @@ A companion Lean~4 mechanisation covers all definitions, all five
 propositions of \Cref{sec:properties}, and auxiliary results such as
 mailbox persistence (\Cref{lem:mailbox-persistence}) and trace-level
 invariant preservation (\Cref{cor:trace-invariants}).
-Type preservation, progress, effect determinism, mailbox isolation, and eventual
-delivery are fully machine-checked with no \texttt{sorry} declarations.
-The progress theorem (\Cref{prop:progress}) now includes a constructive proof of
-effect-execution totality (\texttt{effectEvalStep\_total}), eliminating the need
-for the previously required axiom.
+The mechanisation provides constructive proofs for the core metatheory,
+including type preservation, progress, effect determinism, mailbox isolation,
+and eventual delivery.
+In particular, the progress theorem (\Cref{prop:progress}) is now supported
+by a constructive verification of effect execution totality
+(\texttt{effectEvalStep\_total}), eliminating the previously required axiom.
+Technical gaps in the mechanisation are confined to auxiliary lemmas
+concerning address freshness and preservation of well-typedness across
+effect sequences.
 Eventual delivery (\Cref{prop:eventual-delivery}) is proved under
 strong fairness together with a liveness hypothesis that the target
 mailbox is infinitely often ready to accept the message

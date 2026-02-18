@@ -30,6 +30,15 @@ structure WellTypedState (κ : SystemState) : Prop where
       ∃ mboxSe : SomeEngine,
         κ.engineAt (κ.mailboxOf addr) = some mboxSe ∧ mboxSe.idx = se.idx ∧
         mboxSe.engine.mode = EngineMode.mail
+  /-- The `nextId` counter is strictly greater than any existing `engineId`
+      on any node. This ensures address freshness. -/
+  nextId_fresh :
+    ∀ (addr : Address),
+      κ.engineAt addr ≠ none → addr.engineId < κ.nextId
+  /-- For every engine in the system, its nodeId corresponds to an existing node. -/
+  nodes_exist :
+    ∀ (addr : Address),
+      κ.engineAt addr ≠ none → ∃ n ∈ κ.nodes, n.id = addr.nodeId
 
 /-- All messages in transit target mailbox engines (not processing engines). -/
 def MailboxIsolation (κ : SystemState) : Prop :=
