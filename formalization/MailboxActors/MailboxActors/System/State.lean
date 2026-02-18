@@ -565,6 +565,17 @@ theorem engineAt_addEngineAt_ne (κ : SystemState) (addr addr' : Address)
   | false =>
     simp [hnode]
 
+/-- If an engine exists at `addr`, then its node must exist in the system. -/
+lemma node_exists_of_engineAt (κ : SystemState) (addr : Address) :
+    κ.engineAt addr ≠ none → ∃ n ∈ κ.nodes, n.id = addr.nodeId := by
+  unfold SystemState.engineAt
+  match hfind : κ.nodes.find? (fun n => n.id == addr.nodeId) with
+  | some n =>
+    intro _
+    exact ⟨n, List.find?_mem hfind, eq_of_beq (List.find?_some hfind).1⟩
+  | none =>
+    simp
+
 /-- Adding an engine preserves node membership (by id). -/
 lemma addEngineAt_node_mem (κ : SystemState) (addr : Address) (se : SomeEngine)
     (nodeId : Nat) (h : ∃ n ∈ κ.nodes, n.id = nodeId) :

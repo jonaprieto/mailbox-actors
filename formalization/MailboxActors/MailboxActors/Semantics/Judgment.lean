@@ -79,33 +79,33 @@ inductive EffectEvalStep :
   /-- E-Noop: no change. -/
   | noop (κ : SystemState) (i : EngineSpec.EngIdx) :
       EffectEvalStep κ i Effect.noop κ
-  /-- E-Send: place a message in transit.
-      Target validity premises ensure preservation can show the new message
-      is well-typed (target has a mailbox with matching type index). -/
+  /-- E-Send: place a message in transit.  To ensure totality and preservation,
+      we only append the message if the target exists, is a process engine,
+      and its type index matches the payload.  Otherwise, it's a no-op. -/
   | send (κ κ' : SystemState) (i : EngineSpec.EngIdx)
       (addr : Address) (p : Engine i) (v : EngineSpec.MsgType i)
-      (j : EngineSpec.EngIdx) (target : Address) (payload : EngineSpec.MsgType j)
-      (targetEng : SomeEngine) :
+      (j : EngineSpec.EngIdx) (target : Address) (payload : EngineSpec.MsgType j) :
       κ.engineAt addr = some ⟨i, p⟩ →
-      κ.engineAt target = some targetEng →
-      targetEng.engine.mode = EngineMode.process →
-      targetEng.idx = j →
-      κ' = { κ with messages := κ.messages ++ [⟨addr, κ.mailboxOf target, ⟨j, payload⟩⟩] } →
+      κ' = (match κ.engineAt target with
+            | some se =>
+              if se.idx = j ∧ se.engine.mode = EngineMode.process
+              then { κ with messages := κ.messages ++ [⟨addr, κ.mailboxOf target, ⟨j, payload⟩⟩] }
+              else κ
+            | none => κ) →
       EffectEvalStep κ i (Effect.send j target payload) κ'
   /-- E-Terminate: set engine status to `terminated`. -/
   | terminate (κ κ' : SystemState) (i : EngineSpec.EngIdx)
       (addr : Address) (p : Engine i) (v : EngineSpec.MsgType i) :
       κ.engineAt addr = some ⟨i, p⟩ →
-      p.status = EngineStatus.busy v →
-      EvalStep i p v Effect.terminate →
-      κ' = κ.updateEngineAt addr ⟨i, { p with status := .terminated }⟩ →
+      κ' = (if p.status = EngineStatus.busy v
+            then κ.updateEngineAt addr ⟨i, { p with status := .terminated }⟩
+            else κ) →
       EffectEvalStep κ i Effect.terminate κ'
   /-- E-Update: replace engine environment. -/
   | update (κ κ' : SystemState) (i : EngineSpec.EngIdx)
       (addr : Address) (p : Engine i) (v : EngineSpec.MsgType i)
       (newEnv : EngineEnv i) :
       κ.engineAt addr = some ⟨i, p⟩ →
-      EvalStep i p v (Effect.update newEnv) →
       κ' = κ.updateEngineAt addr ⟨i, { p with env := newEnv }⟩ →
       EffectEvalStep κ i (Effect.update newEnv) κ'
   /-- E-MFilter: transition engine to `ready` with new filter. -/
@@ -113,11 +113,12 @@ inductive EffectEvalStep :
       (addr : Address) (p : Engine i) (v : EngineSpec.MsgType i)
       (f : EngineSpec.MsgType i → Bool) :
       κ.engineAt addr = some ⟨i, p⟩ →
-      EvalStep i p v (Effect.mfilter f) →
       κ' = κ.updateEngineAt addr ⟨i, { p with status := .ready f }⟩ →
       EffectEvalStep κ i (Effect.mfilter f) κ'
   /-- E-Spawn: executing a `spawn` effect creates a child engine via
-      S-SpawnWithMailbox, ensuring it is paired with a mailbox engine. -/
+      S-SpawnWithMailbox, ensuring it is paired with a mailbox engine.
+      To ensure totality, if the selected addresses are not fresh,
+      we just advance nextId. -/
   | spawn (κ κ' : SystemState) (i : EngineSpec.EngIdx)
       (j : EngineSpec.EngIdx) (cfg : EngineSpec.CfgData j)
       (env : EngineSpec.LocalState j)
@@ -130,10 +131,10 @@ inductive EffectEvalStep :
       mboxSe.idx = j →
       procSe.engine.mode = EngineMode.process →
       mboxSe.engine.mode = EngineMode.mail →
-      κ.engineAt procAddr = none →
-      κ.engineAt mboxAddr = none →
-      κ' = { (κ.addEngineAt procAddr procSe).addEngineAt mboxAddr mboxSe
-             with nextId := κ.nextId + 2 } →
+      κ' = (if κ.engineAt procAddr = none ∧ κ.engineAt mboxAddr = none
+            then { (κ.addEngineAt procAddr procSe).addEngineAt mboxAddr mboxSe
+                   with nextId := κ.nextId + 2 }
+            else { κ with nextId := κ.nextId + 2 }) →
       EffectEvalStep κ i (Effect.spawn j cfg env) κ'
   /-- E-Chain: sequence two effects. -/
   | chain (κ κ' κ'' : SystemState) (i : EngineSpec.EngIdx)

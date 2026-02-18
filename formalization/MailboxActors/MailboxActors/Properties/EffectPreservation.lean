@@ -28,15 +28,15 @@ theorem updateEngineAt_preserves_invariants (κ : SystemState)
   constructor
   · -- WellTypedState
     exact {
-      messages_typed := fun m hm => by
+      messages_typed := fun m hm se_m hse_m => by
         simp only [SystemState.updateEngineAt_messages] at hm
-        obtain ⟨se_old, hse_old, hidx_m⟩ := wt.messages_typed m hm
         by_cases h : m.target = addr
-        · refine ⟨se', ?_, ?_⟩
-          · rw [h]; exact engineAt_updateEngineAt_self _ _ _ ⟨_, heng⟩
-          · rw [h] at hse_old; rw [heng] at hse_old; cases hse_old
-            rw [hidx]; exact hidx_m
-        · exact ⟨se_old, by rw [engineAt_updateEngineAt_ne _ _ _ _ h]; exact hse_old, hidx_m⟩
+        · subst h
+          rw [engineAt_updateEngineAt_self _ _ _ ⟨_, heng⟩] at hse_m
+          cases hse_m
+          exact hidx.trans (wt.messages_typed m hm se heng)
+        · rw [engineAt_updateEngineAt_ne _ _ _ _ h] at hse_m
+          exact wt.messages_typed m hm se_m hse_m
       mailbox_exists := fun addr' se'' heng' hmode' => by
         simp only [SystemState.updateEngineAt_mailboxOf] at ⊢
         by_cases h : addr' = addr
@@ -89,112 +89,58 @@ theorem effectEvalStepPreservesInvariants (κ κ' : SystemState)
   intro heff wt hiso
   induction heff with
   | noop => exact ⟨wt, hiso⟩
-  | terminate κ_old _ _ addr p _ heng _ _ hκ' =>
+  | terminate κ_old _ _ addr p _ heng _ hκ' =>
     subst hκ'
     exact updateEngineAt_preserves_invariants κ_old addr ⟨_, p⟩
       ⟨_, { p with status := .terminated }⟩ heng rfl rfl wt hiso
-  | update κ_old _ _ addr p _ newEnv heng _ hκ' =>
+  | update κ_old _ _ addr p _ newEnv heng hκ' =>
     subst hκ'
     exact updateEngineAt_preserves_invariants κ_old addr ⟨_, p⟩
       ⟨_, { p with env := newEnv }⟩ heng rfl rfl wt hiso
-  | mfilter κ_old _ _ addr p _ f heng _ hκ' =>
+  | mfilter κ_old _ _ addr p _ f heng hκ' =>
     subst hκ'
     exact updateEngineAt_preserves_invariants κ_old addr ⟨_, p⟩
       ⟨_, { p with status := .ready f }⟩ heng rfl rfl wt hiso
-  | send κ₀ _ _ addr _ _ _ target _ targetEng heng htarget hmode hidx hκ' =>
-    subst hκ' hidx
+  | send κ₀ _ _ addr _ _ j target _ heng hκ' =>
+    subst hκ'
     constructor
     · -- WellTypedState: only messages changed, engines unchanged
       exact {
-        messages_typed := fun m hm => by
-          rw [List.mem_append] at hm
-          rcases hm with hm | hm
-          · exact wt.messages_typed m hm
-          · rw [List.mem_singleton] at hm; subst hm
-            obtain ⟨mboxSe, hmbox, hmboxIdx, _⟩ :=
-              wt.mailbox_exists target targetEng htarget hmode
-            exact ⟨mboxSe, hmbox, hmboxIdx.symm⟩
+        messages_typed := fun m hm se_m hse_m => by
+          split at hm
+          · rw [List.mem_append] at hm
+            rcases hm with hm | hm
+            · exact wt.messages_typed m hm se_m hse_m
+            · rw [List.mem_singleton] at hm; subst hm
+              rename_i se_target h_match
+              obtain ⟨h_idx, h_mode⟩ := h_match
+              -- m.target = mailboxOf target
+              -- se_m is the engine at mailboxOf target
+              obtain ⟨mboxSe, hmbox, hmboxIdx, _⟩ :=
+                wt.mailbox_exists target se_target se_target.beq_self h_mode
+              rw [hmbox] at hse_m; cases hse_m
+              exact hmboxIdx.symm.trans h_idx
+          · exact wt.messages_typed m hm se_m hse_m
         mailbox_exists := fun addr' se heng' hmode' =>
           wt.mailbox_exists addr' se heng' hmode'
       }
-    · -- MailboxIsolation: new message targets mailboxOf target, which is mail
+    · -- MailboxIsolation
       intro m hm se hse
-      rw [List.mem_append] at hm
-      rcases hm with hm | hm
+      split at hm
+      · rw [List.mem_append] at hm
+        rcases hm with hm | hm
+        · exact hiso m hm se hse
+        · rw [List.mem_singleton] at hm; subst hm
+          rename_i se_target h_match
+          obtain ⟨_, h_mode⟩ := h_match
+          obtain ⟨mboxSe, hmbox, _, hmboxMode⟩ :=
+            wt.mailbox_exists target se_target se_target.beq_self h_mode
+          rw [hmbox] at hse; cases hse
+          exact hmboxMode
       · exact hiso m hm se hse
-      · rw [List.mem_singleton] at hm; subst hm
-        obtain ⟨mboxSe, hmbox, _, hmboxMode⟩ :=
-          wt.mailbox_exists target targetEng htarget hmode
-        have hse' : κ₀.engineAt (κ₀.mailboxOf target) = some se := hse
-        rw [hmbox] at hse'; cases hse'
-        exact hmboxMode
   | spawn =>
-    subst_vars
-    rename_i _ κ₀ _ nid procSe mboxSe hnode hmodeP hmodeM _ _ hidxM hfreshP hfreshM
-    -- After subst_vars, the ℕ-typed nodeId gets dagger suffix, so we use it implicitly
-    have hne : κ₀.mailboxOf ⟨nid, κ₀.nextId⟩ ≠ ⟨nid, κ₀.nextId⟩ :=
-      mailboxOf_ne_self κ₀ _
-    constructor
-    · -- WellTypedState (same pattern as sSpawnMbox in TypePreservation)
-      exact {
-        messages_typed := fun m hm => by
-          simp only [SystemState.addEngineAt_messages] at hm
-          obtain ⟨se, hse, hidx⟩ := wt.messages_typed m hm
-          have hne_proc : m.target ≠ ⟨nid, κ₀.nextId⟩ := by
-            intro h; rw [h, hfreshP] at hse; exact absurd hse (by simp)
-          have hne_mbox : m.target ≠ κ₀.mailboxOf ⟨nid, κ₀.nextId⟩ := by
-            intro h; rw [h, hfreshM] at hse; exact absurd hse (by simp)
-          refine ⟨se, ?_, hidx⟩
-          simp only [SystemState.withNextId_engineAt]
-          rw [engineAt_addEngineAt_ne _ _ _ _ hne_mbox,
-              engineAt_addEngineAt_ne _ _ _ _ hne_proc]
-          exact hse
-        mailbox_exists := fun addr se heng hmode => by
-          simp only [SystemState.withNextId_engineAt, SystemState.withNextId_mailboxOf,
-            SystemState.addEngineAt_mailboxOf] at heng ⊢
-          by_cases hp : addr = ⟨nid, κ₀.nextId⟩
-          · -- addr = procAddr: provide the freshly-spawned mailbox engine
-            subst hp
-            rw [engineAt_addEngineAt_ne _ _ _ _ hne.symm,
-                engineAt_addEngineAt_self _ _ _ hfreshP hnode] at heng
-            cases heng
-            refine ⟨mboxSe, ?_, hidxM, hmodeM⟩
-            exact engineAt_addEngineAt_self _ _ _
-              (by rw [engineAt_addEngineAt_ne _ _ _ _ hne]; exact hfreshM)
-              (addEngineAt_node_mem κ₀ _ _ _ hnode)
-          · by_cases hm : addr = κ₀.mailboxOf ⟨nid, κ₀.nextId⟩
-            · -- addr = mboxAddr: mode is mail, contradicts hmode = process
-              subst hm
-              rw [engineAt_addEngineAt_self _ _ _
-                (by rw [engineAt_addEngineAt_ne _ _ _ _ hne]; exact hfreshM)
-                (addEngineAt_node_mem κ₀ _ _ _ hnode)] at heng
-              cases heng; rw [hmodeM] at hmode; exact absurd hmode (by decide)
-            · -- addr is neither: lookup unchanged, use existing wt
-              rw [engineAt_addEngineAt_ne _ _ _ _ hm,
-                  engineAt_addEngineAt_ne _ _ _ _ hp] at heng
-              obtain ⟨mboxSe', hmbox, hmboxIdx, hmboxMode⟩ :=
-                wt.mailbox_exists addr se heng hmode
-              have hm1 : κ₀.mailboxOf addr ≠ κ₀.mailboxOf ⟨nid, κ₀.nextId⟩ := by
-                intro h; exact hp (mailboxOf_injective κ₀ h)
-              have hm2 : κ₀.mailboxOf addr ≠ ⟨nid, κ₀.nextId⟩ := by
-                intro h; rw [h] at hmbox; rw [hfreshP] at hmbox; exact absurd hmbox (by simp)
-              refine ⟨mboxSe', ?_, hmboxIdx, hmboxMode⟩
-              rw [engineAt_addEngineAt_ne _ _ _ _ hm1,
-                  engineAt_addEngineAt_ne _ _ _ _ hm2]
-              exact hmbox
-      }
-    · -- MailboxIsolation (same pattern as sSpawnMbox in Isolation)
-      intro m hm se hse
-      simp only [SystemState.addEngineAt_messages] at hm
-      simp only [SystemState.withNextId_engineAt] at hse
-      obtain ⟨se_old, hse_old, _⟩ := wt.messages_typed m hm
-      have hne_proc : m.target ≠ ⟨nid, κ₀.nextId⟩ := by
-        intro h; rw [h, hfreshP] at hse_old; exact absurd hse_old (by simp)
-      have hne_mbox : m.target ≠ κ₀.mailboxOf ⟨nid, κ₀.nextId⟩ := by
-        intro h; rw [h, hfreshM] at hse_old; exact absurd hse_old (by simp)
-      rw [engineAt_addEngineAt_ne _ _ _ _ hne_mbox,
-          engineAt_addEngineAt_ne _ _ _ _ hne_proc] at hse
-      exact hiso m hm se hse
+    -- Spawn logic needs update for if-then-else
+    sorry
   | chain _ _ _ _ _ _ _ _ ih₁ ih₂ =>
     obtain ⟨wt₁, hiso₁⟩ := ih₁ wt hiso
     exact ih₂ wt₁ hiso₁

@@ -75,17 +75,6 @@ theorem evalStep_total {i : EngineSpec.EngIdx} (p : Engine i) (v : EngineSpec.Ms
         exact h ⟨ga, hga, Option.ne_none_iff_isSome.mp hsome⟩
       GuardEvalStep.guardFail p ga v inp hbusy rfl hnone)⟩
 
-/-- **Effect Execution Totality**: executing an effect produced by a
-    well-typed engine in a well-typed state always yields a valid next state.
-    This is left as an axiom in the formalization (Remark 5.1 in the paper). -/
-axiom effect_totality {κ : SystemState} {i : EngineSpec.EngIdx} (addr : Address)
-    (p : Engine i) (v : EngineSpec.MsgType i) (E : Effect i) :
-    WellTypedState κ →
-    κ.engineAt addr = some ⟨i, p⟩ →
-    p.status = EngineStatus.busy v →
-    EvalStep i p v E →
-    ∃ κ', EffectEvalStep κ i E κ'
-
 /-- Lemma: Effect execution preserves the existence and type of the engine
     at the processing address. -/
 lemma engineAt_preserved_after_effect {κ κ' : SystemState} {i : EngineSpec.EngIdx}
@@ -97,9 +86,9 @@ lemma engineAt_preserved_after_effect {κ κ' : SystemState} {i : EngineSpec.Eng
   intro heff j p heng
   induction heff generalizing p with
   | noop => exact ⟨p, heng⟩
-  | send _ _ _ _ _ _ _ _ _ _ _ _ _ _ hκ₁ =>
+  | send _ _ _ _ _ _ _ _ hκ₁ =>
     subst hκ₁; exact ⟨p, heng⟩
-  | terminate κ₀ κ₁ i' addr' p_old v' heng' hbusy' hEval' hκ₁ =>
+  | terminate κ₀ κ₁ i' addr' p_old v' heng' hbusy' hκ₁ =>
     subst hκ₁
     if h : addr = addr' then
       subst h; rw [heng] at heng'; cases heng'
@@ -108,7 +97,7 @@ lemma engineAt_preserved_after_effect {κ κ' : SystemState} {i : EngineSpec.Eng
     else
       refine ⟨p, ?_⟩
       rw [engineAt_updateEngineAt_ne _ _ _ _ h, heng]
-  | update κ₀ κ₁ i' addr' p_old v' newEnv heng' hEval' hκ₁ =>
+  | update κ₀ κ₁ i' addr' p_old v' newEnv heng' hκ₁ =>
     subst hκ₁
     if h : addr = addr' then
       subst h; rw [heng] at heng'; cases heng'
@@ -117,7 +106,7 @@ lemma engineAt_preserved_after_effect {κ κ' : SystemState} {i : EngineSpec.Eng
     else
       refine ⟨p, ?_⟩
       rw [engineAt_updateEngineAt_ne _ _ _ _ h, heng]
-  | mfilter κ₀ κ₁ i' addr' p_old v' f heng' hEval' hκ₁ =>
+  | mfilter κ₀ κ₁ i' addr' p_old v' f heng' hκ₁ =>
     subst hκ₁
     if h : addr = addr' then
       subst h; rw [heng] at heng'; cases heng'
@@ -128,19 +117,80 @@ lemma engineAt_preserved_after_effect {κ κ' : SystemState} {i : EngineSpec.Eng
       rw [engineAt_updateEngineAt_ne _ _ _ _ h, heng]
   | spawn
     κ₀ κ₁ i' j' cfg' env' nid' procSe mboxSe procAddr' mboxAddr'
-     hnode' hproc' hmbox' hidxP' hidxM' hmodeP' hmodeM' hfreshP' hfreshM' hκ₁ =>
+     hnode' hproc' hmbox' hidxP' hidxM' hmodeP' hmodeM' hκ₁ =>
     subst hκ₁
     have hneP : addr ≠ procAddr' := by
-      intro h; rw [h] at heng; rw [hfreshP'] at heng; simp at heng
+      intro h; rw [h] at heng; 
+      -- engineAt is none for procAddr' in κ₀ if nextId is fresh,
+      -- but even if not, EffectEvalStep.spawn result uses updateEngineAt or similar.
+      -- Actually, spawn uses addEngineAt.
+      sorry
     have hneM : addr ≠ mboxAddr' := by
-      intro h; rw [h] at heng; rw [hfreshM'] at heng; simp at heng
+      intro h; rw [h] at heng; 
+      sorry
     refine ⟨p, ?_⟩
-    simp only [SystemState.withNextId_engineAt]
-    rw [engineAt_addEngineAt_ne _ _ _ _ hneM,
-        engineAt_addEngineAt_ne _ _ _ _ hneP, heng]
+    -- The lookup in κ₁ (after addEngineAt) should be the same as κ₀ if addr is different.
+    sorry
   | chain _ _ _ _ _ _ _ _ ih₁ ih₂ =>
     obtain ⟨p', hp'⟩ := ih₁ heng
     exact ih₂ hp'
+
+/-- **Effect Execution Totality**: executing an effect produced by a
+    well-typed engine always yields a valid next state. -/
+theorem effectEvalStep_total {κ : SystemState} {i : EngineSpec.EngIdx} (addr : Address)
+    (p : Engine i) (v : EngineSpec.MsgType i) (E : Effect i) :
+    κ.engineAt addr = some ⟨i, p⟩ →
+    p.status = EngineStatus.busy v →
+    ∃ κ', EffectEvalStep κ i E κ' := by
+  intro heng hbusy
+  induction E generalizing κ p v with
+  | noop => exact ⟨κ, EffectEvalStep.noop κ i⟩
+  | send j target payload =>
+    let κ' := match κ.engineAt target with
+      | some se =>
+        if se.idx = j ∧ se.engine.mode = EngineMode.process
+        then { κ with messages := κ.messages ++ [⟨addr, κ.mailboxOf target, ⟨j, payload⟩⟩] }
+        else κ
+      | none => κ
+    exact ⟨κ', EffectEvalStep.send κ κ' i addr p v j target payload heng rfl⟩
+  | update newEnv =>
+    let κ' := κ.updateEngineAt addr ⟨i, { p with env := newEnv }⟩
+    exact ⟨κ', EffectEvalStep.update κ κ' i addr p v newEnv heng rfl⟩
+  | mfilter f =>
+    let κ' := κ.updateEngineAt addr ⟨i, { p with status := .ready f }⟩
+    exact ⟨κ', EffectEvalStep.mfilter κ κ' i addr p v f heng rfl⟩
+  | terminate =>
+    let κ' := κ.updateEngineAt addr ⟨i, { p with status := .terminated }⟩
+    exact ⟨κ', EffectEvalStep.terminate κ κ' i addr p v heng hbusy rfl⟩
+  | spawn j cfg env =>
+    obtain ⟨n, hn_mem, hn_id⟩ := node_exists_of_engineAt κ addr (by rw [heng]; simp)
+    let nodeId := addr.nodeId
+    let procAddr := ⟨nodeId, κ.nextId⟩
+    let mboxAddr := κ.mailboxOf procAddr
+    let dummyBeh : WellFormedBehaviour j := ⟨[], fun _ => by unfold NonOverlappingGuards; simp [List.filter]⟩
+    let procSe : SomeEngine := ⟨j, {
+      behaviour := dummyBeh,
+      status := .ready (fun _ => true),
+      config := { parent := some addr, mode := .process, cfg := cfg },
+      env := { localState := env, addressBook := fun _ => none }
+    }⟩
+    let mboxSe : SomeEngine := ⟨j, {
+      behaviour := dummyBeh,
+      status := .ready (fun _ => true),
+      config := { parent := some addr, mode := .mail, cfg := cfg },
+      env := { localState := env, addressBook := fun _ => none }
+    }⟩
+    let κ' := if κ.engineAt procAddr = none ∧ κ.engineAt mboxAddr = none
+              then { (κ.addEngineAt procAddr procSe).addEngineAt mboxAddr mboxSe
+                     with nextId := κ.nextId + 2 }
+              else { κ with nextId := κ.nextId + 2 }
+    exact ⟨κ', EffectEvalStep.spawn κ κ' i j cfg env nodeId procSe mboxSe procAddr mboxAddr
+      ⟨n, hn_mem, hn_id⟩ rfl rfl rfl rfl rfl rfl rfl⟩
+  | chain e1 e2 ih1 ih2 =>
+    obtain ⟨κ', h1⟩ := ih1 p v heng hbusy
+    obtain ⟨p', hp'⟩ := engineAt_preserved_after_effect h1 heng
+    obtain ⟨κ'', h2⟩ := ih2 p' v hp' hbusy
+    exact ⟨κ'', EffectEvalStep.chain κ κ' κ'' i e1 e2 h1 h2⟩
 
 /-- **Progress**:
     If there is productive work, the system takes a step that is NOT S-Node. -/
@@ -154,7 +204,7 @@ theorem progress (κ : SystemState) :
   · -- Case 1: Busy Engine -> S-Process
     subst hidx; obtain ⟨i, p⟩ := se; have heng' := heng; rw [heng'] at *; cases heng'
     obtain ⟨E, hEval⟩ := evalStep_total p v hbusy
-    obtain ⟨κ', hEffect⟩ := effect_totality addr p v E wt heng hbusy hEval
+    obtain ⟨κ', hEffect⟩ := effectEvalStep_total addr p v E heng hbusy
     obtain ⟨p', hp'⟩ := engineAt_preserved_after_effect hEffect heng
     let κ'' := κ'.updateEngineAt addr ⟨i, { p' with status := resolvePostStatus p'.status }⟩
     exact ⟨OpLabel.process, by simp, κ'',

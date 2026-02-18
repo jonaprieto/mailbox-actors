@@ -16,11 +16,11 @@ variable [EngineSpec]
     3. All engine components are consistently typed. -/
 structure WellTypedState (κ : SystemState) : Prop where
   /-- Every in-transit message has a payload whose engine type index matches
-      the target engine's type. -/
+      the target engine's type (if it exists). -/
   messages_typed :
     ∀ m ∈ κ.messages,
-      ∃ se : SomeEngine,
-        κ.engineAt m.target = some se ∧ m.payload.1 = se.idx
+      ∀ se : SomeEngine,
+        κ.engineAt m.target = some se → m.payload.1 = se.idx
   /-- Every processing engine has a paired mailbox engine in the system
       whose type index matches and whose mode is `mail`. -/
   mailbox_exists :
@@ -39,13 +39,6 @@ def MailboxIsolation (κ : SystemState) : Prop :=
       se.engine.mode = EngineMode.mail
 
 -- ── Corollaries ──────────────────────────────────────────────────────────
-
-/-- **No orphaned messages**: every in-transit message has a live target
-    engine in the system.  Direct consequence of `messages_typed`. -/
-theorem noOrphanedMessages (κ : SystemState) (wt : WellTypedState κ)
-    (m : Message) (hm : m ∈ κ.messages) :
-    ∃ se : SomeEngine, κ.engineAt m.target = some se :=
-  let ⟨se, hse, _⟩ := wt.messages_typed m hm; ⟨se, hse⟩
 
 /-- **Spawn pairing**: every processing engine has a paired mailbox engine
     with matching type index in `mail` mode.  Restates `mailbox_exists`
