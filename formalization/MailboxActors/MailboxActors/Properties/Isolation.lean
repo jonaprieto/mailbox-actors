@@ -57,13 +57,14 @@ theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
     subst_vars
     rename_i _ nodeId procSe mboxSe hnode _ _ _ hfreshP hfreshM
     intro m hm se hse
-    simp only [SystemState.withNextId_messages, SystemState.addEngineAt_messages] at hm
+    simp only [SystemState.addEngineAt_messages] at hm
     simp only [SystemState.withNextId_engineAt] at hse
-    obtain ⟨se_old, hse_old, _⟩ := wt.messages_typed m hm
     have hne_proc : m.target ≠ ⟨nodeId, κ.nextId⟩ := by
-      intro h; rw [h, hfreshP] at hse_old; exact absurd hse_old (by simp)
+      intro h; have := wt.nextId_messages m hm; rw [h] at this; simp at this
     have hne_mbox : m.target ≠ κ.mailboxOf ⟨nodeId, κ.nextId⟩ := by
-      intro h; rw [h, hfreshM] at hse_old; exact absurd hse_old (by simp)
+      intro h; have h₁ := wt.nextId_messages m hm
+      have h₂ : m.target.engineId = κ.nextId + 1 := by rw [h]; rfl
+      omega
     rw [engineAt_addEngineAt_ne _ _ _ _ hne_mbox,
         engineAt_addEngineAt_ne _ _ _ _ hne_proc] at hse
     exact hiso m hm se hse

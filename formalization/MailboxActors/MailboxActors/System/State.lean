@@ -572,9 +572,12 @@ lemma node_exists_of_engineAt (κ : SystemState) (addr : Address) :
   match hfind : κ.nodes.find? (fun n => n.id == addr.nodeId) with
   | some n =>
     intro _
-    exact ⟨n, List.find?_mem hfind, eq_of_beq (List.find?_some hfind).1⟩
+    refine ⟨n, List.mem_of_find?_eq_some hfind, ?_⟩
+    have := List.find?_some hfind
+    simp only [beq_iff_eq] at this
+    exact this
   | none =>
-    simp
+    simp [hfind]
 
 /-- Adding an engine preserves node membership (by id). -/
 lemma addEngineAt_node_mem (κ : SystemState) (addr : Address) (se : SomeEngine)

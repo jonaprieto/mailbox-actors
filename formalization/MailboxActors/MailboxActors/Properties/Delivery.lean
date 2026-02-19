@@ -76,11 +76,11 @@ lemma effect_preserves_messages (κ κ' : SystemState) (i : EngineSpec.EngIdx) (
   intro h m hm
   induction h
   case noop => exact hm
-  case send hκ' => rw [hκ']; simp [List.mem_append, hm]
-  case terminate hκ' => rw [hκ']; simp [SystemState.updateEngineAt_messages, hm]
+  case send hκ' => rw [hκ']; split <;> [split <;> simp [List.mem_append, hm]; exact hm]
+  case terminate hκ' => rw [hκ']; split <;> simp [SystemState.updateEngineAt_messages, hm]
   case update hκ' => rw [hκ']; simp [SystemState.updateEngineAt_messages, hm]
   case mfilter hκ' => rw [hκ']; simp [SystemState.updateEngineAt_messages, hm]
-  case spawn hκ' => rw [hκ']; simp [SystemState.addEngineAt_messages, hm]
+  case spawn hκ' => rw [hκ']; split <;> simp [SystemState.addEngineAt_messages, hm]
   case chain ih1 ih2 => exact ih2 (ih1 hm)
 
 /-- If message `m` is in the trace at step `k` and not in step `k+1`,
@@ -186,17 +186,15 @@ theorem eventualDelivery (trace : Trace) (m : Message) (n : Nat) :
     let κ' := { (trace l).updateEngineAt m.target ⟨se.idx, { se.engine with status := .busy w }⟩
                 with messages := pre ++ post }
     use l, hl_ge, κ', se, w, f, pre, post
-
   obtain ⟨k, hk_ge, hPk⟩ := hfair P n henabled
   obtain ⟨mboxEng, w, f, pre, post, hsplit, heng, hpay, hmode, hstat, hf, hnext⟩ := hPk
   
   have hnk : m ∉ (trace (k + 1)).messages := by
     rw [hnext]
-    simp
+    simp only [List.mem_append, not_or]
     have huniq_k : UniqueInTransit trace m n := huniq
     specialize huniq_k k hk_ge
     exact huniq_k pre post hsplit
-
   exact hnk (hnever (k + 1) (by omega))
 
 end MailboxActors

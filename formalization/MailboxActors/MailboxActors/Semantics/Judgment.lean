@@ -95,11 +95,11 @@ inductive EffectEvalStep :
       EffectEvalStep κ i (Effect.send j target payload) κ'
   /-- E-Terminate: set engine status to `terminated`. -/
   | terminate (κ κ' : SystemState) (i : EngineSpec.EngIdx)
-      (addr : Address) (p : Engine i) (v : EngineSpec.MsgType i) :
+      (addr : Address) (p : Engine i) :
       κ.engineAt addr = some ⟨i, p⟩ →
-      κ' = (if p.status = EngineStatus.busy v
-            then κ.updateEngineAt addr ⟨i, { p with status := .terminated }⟩
-            else κ) →
+      κ' = (match p.status with
+            | .busy _ => κ.updateEngineAt addr ⟨i, { p with status := .terminated }⟩
+            | _ => κ) →
       EffectEvalStep κ i Effect.terminate κ'
   /-- E-Update: replace engine environment. -/
   | update (κ κ' : SystemState) (i : EngineSpec.EngIdx)
