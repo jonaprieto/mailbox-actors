@@ -28,11 +28,10 @@
 \section{Introduction}
 
 Actor models provide a foundational framework for concurrent and distributed
-computation. In these models, actors are independent computational units that
-communicate exclusively via asynchronous message passing. The reception of
-messages is handled by a \emph{mailbox}, a dedicated buffer that stores incoming
-messages until the actor is ready to process
-them~\cite{Hewitt1973,Agha1986,foundation97agha}.
+computation~\cite{Hewitt1973,Agha1986,foundation97agha}. In these models,
+actors are independent computational units that communicate exclusively via
+asynchronous message passing. Incoming messages are typically buffered in a
+\emph{mailbox} until the recipient is ready to process them.
 
 In most formalisations of the actor model, the mailbox is treated either as an
 opaque runtime primitive or as a passive data structure internal to the actor.
