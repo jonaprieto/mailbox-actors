@@ -273,7 +273,7 @@ strategy based on non-overlapping guards in \Cref{sec:behavior-eval-rules}.
 All type families in the model are indexed by a finite type of engine type
 indices, which we now introduce.
 
-\begin{definition}[Engine Type Index]\label{def:engine-type-index}%
+\begin{definition}[Engine Type Index\formalized{Basic.lean}{EngineSpec}]\label{def:engine-type-index}%
 We postulate a finite type $\typing{\EngIdx}{\U}$ of \textbf{engine type
 indices}. For each $\typing{i}{\EngIdx}$, the system defines the associated
 type families $\msgtype{i}$, $\configtype{i}$, $\envtype{i}$, and
@@ -320,8 +320,8 @@ contains sender and recipient identifiers along with a typed payload.
 
 \subsection{Addresses}\label{sec:addresses-and-names}
 
-\begin{definition}[Address]%
-\label{def:address}
+\begin{definition}[Address\formalized{Basic.lean}{Address}]%
+\label{def:address}%
 The \textbf{address} of an engine is a pair $\loc{n}{\iota}$ of type
 $\Address$ where $n$ is the node identifier and $\iota$ is the engine's unique
 identifier within that node. Formally,
@@ -335,7 +335,7 @@ identifier within that node. Formally,
 Engines communicate via typed messages. The type system ensures that every
 message payload conforms to the target engine's interface.
 
-\begin{definition}[Message Interface]\label{def:message-interface}%
+\begin{definition}[Message Interface\formalized{Engine/Message.lean}{TotalMsg}]\label{def:message-interface}%
 For each $\typing{i}{\EngIdx}$, the \textbf{message interface} $\msgtype{i}$ is
 a type whose constructors, called \textbf{message tags}, wrap payload types that
 engines of type $i$ can process. Each message tag carries a name describing its
@@ -349,7 +349,7 @@ engine type index $i$ fixes its message interface.
 Type-safe communication is ensured by how messages are defined: there is no way
 to construct an ill-formed message.
 
-\begin{definition}[Message]\label{def:messages}
+\begin{definition}[Message\formalized{Engine/Message.lean}{Message}]\label{def:messages}%
 A \textbf{message} is a triple $\langle s, t, v \rangle$ denoted
 $\msgpacket{s}{t}{v}$ where:
 \begin{itemize}
@@ -376,7 +376,7 @@ We now define the components that constitute an engine. For each engine type
 index $\typing{i}{\EngIdx}$, these components are given as type families
 indexed by $i$.
 
-\begin{definition}[Engine Lifecycle]\label{def:engine-status}%
+\begin{definition}[Engine Lifecycle\formalized{Engine/Status.lean}{EngineStatus}]\label{def:engine-status}%
 For each $\typing{i}{\EngIdx}$, the \textbf{status} of an engine of type $i$ is
 a term of type $\EngineStatus{i}$, determining the engine's operational state
 within its lifecycle.
@@ -422,7 +422,7 @@ subsequently removed from the system.
 
 We distinguish between two operational modes of engines.
 
-\begin{definition}[Operational Mode]\label{def:engine-mode}
+\begin{definition}[Operational Mode\formalized{Engine/Mode.lean}{EngineMode}]\label{def:engine-mode}%
 The \textbf{operational mode} of an engine is of type $\EngineMode$,
 \begin{equation}\label{eq:engine-mode}
 \typedef{\EngineMode}
@@ -437,7 +437,7 @@ system's message-passing mechanism treats engines differently based on their
 mode: messages sent to \process{} engines are internally routed to their paired
 \mail{} engines, which manage message storage and delivery.
 
-\begin{definition}[Configuration]\label{def:engine-configuration}%
+\begin{definition}[Configuration\formalized{Engine/Config.lean}{EngineConfig}]\label{def:engine-configuration}%
 For each $\typing{i}{\EngIdx}$, we postulate a type $\typing{C_i}{\U}$ of
 engine-type-specific configuration data. The \textbf{configuration} of an
 engine of type $i$ is a tuple $\configval{r}{\mode}{c}$ of type
@@ -463,7 +463,7 @@ The type family of configurations is
 For an engine $p$ of type $i$, we write $\config{p}$ for its configuration
 value and $\configtype{i}$ for the type.
 
-\begin{definition}[Execution Environment]\label{def:engine-environment}%
+\begin{definition}[Execution Environment\formalized{Engine/Env.lean}{EngineEnv}]\label{def:engine-environment}%
 For each $\typing{i}{\EngIdx}$, we postulate a type $\typing{L_i}{\U}$ for
 the local state. The execution \textbf{environment} of an engine of type $i$
 is a pair $\localenvval{s}{m}$ of type $\envtype{i}$, where:
@@ -495,7 +495,7 @@ the context of the engine's environment and configuration. If a guard is
 satisfied, its associated action produces an \emph{effect}: a command to the
 system.
 
-\begin{definition}[Effect System]\label{def:effects}%
+\begin{definition}[Effect System\formalized{Engine/Effect.lean}{Effect}]\label{def:effects}%
 For each $\typing{i}{\EngIdx}$, an \textbf{effect} triggered by an engine of
 type $i$ is a term of type $\effecttype{i}$. Each effect represents a primitive
 operation that the issuing engine requests the system to execute.
@@ -548,7 +548,7 @@ actions $c_k$, which return effects of type $\effecttype{i}$.}
 Effects serve as the declarative interface specifying what an engine can do,
 without exposing how the behaviour computes its response.
 
-\begin{definition}[Guard]\label{def:guards}%
+\begin{definition}[Guard\formalized{Engine/Guard.lean}{GuardInput}]\label{def:guards}%
 Given a type $\returntype$, a \textbf{guard} for an engine of type $i$ is a
 function of type $\In{i} \to \Option{\returntype}$ where
 \begin{equation}\label{eq:guard-type-in}
@@ -574,7 +574,7 @@ separate guard-match assumption in semantic rules.
 
 Together, a guard and an action induce a function of type $\In{i} \to \Out{i}$.
 
-\begin{definition}[Guarded Action]\label{def:guarded-action}%
+\begin{definition}[Guarded Action\formalized{Engine/Guard.lean}{GuardedAction}]\label{def:guarded-action}%
 Given a guard $\guard{i}$ and an action $\action{i}$ for an engine of type $i$,
 the \textbf{guarded action} $\guard{i} \odot \action{i}$ is the function of
 type $\In{i} \to \Out{i}$ defined by
@@ -595,7 +595,7 @@ type $\In{i} \to \Out{i}$ defined by
 \end{definition}
 
 
-\begin{definition}[Engine Behaviour]\label{def:engine-behaviour}%
+\begin{definition}[Engine Behaviour\formalized{Engine/Behaviour.lean}{Behaviour}]\label{def:engine-behaviour}%
 A \textbf{behaviour} for an engine of type $i$ is a list of guarded action
 structures, of type $\behaviourtype{i}$, where
 \begin{equation}
@@ -612,7 +612,7 @@ structures, of type $\behaviourtype{i}$, where
 To ensure deterministic evaluation, we require that behaviours satisfy a
 well-formedness condition.
 
-\begin{definition}[Non-Overlapping Guards]\label{def:non-overlapping-guards}%
+\begin{definition}[Non-Overlapping Guards\formalized{Engine/Behaviour.lean}{NonOverlappingGuards}]\label{def:non-overlapping-guards}%
 A behaviour $\typing{b}{\behaviourtype{i}}$ has \textbf{non-overlapping guards}
 if for every input $\typing{x}{\In{i}}$, at most one guarded action in $b$
 produces a non-$\noop$ effect. That is, for all
@@ -620,7 +620,7 @@ $\guardedactionval{g_j}{a_j}, \guardedactionval{g_k}{a_k} \in b$ with $j \neq k$
 if $g_j(x) = \some{r}$ then $g_k(x) = \none$.
 \end{definition}
 
-\begin{definition}[Well-Formed Behaviour]\label{def:well-formed-behaviour}%
+\begin{definition}[Well-Formed Behaviour\formalized{Engine/Behaviour.lean}{WellFormedBehaviour}]\label{def:well-formed-behaviour}%
 A behaviour $\typing{b}{\behaviourtype{i}}$ is \textbf{well-formed} if it has
 non-overlapping guards (\Cref{def:non-overlapping-guards}).
 Throughout this paper, all behaviours are assumed to be well-formed.
@@ -646,7 +646,7 @@ system on actions to take. Unlike actor-as-objects and actors-as-processes
 models~\cite{taxonomy-of-actor-models}, engines are characterised by their
 typed components and the declarative nature of their behaviour.
 
-\begin{definition}[Engine Type]\label{def:engine-type}%
+\begin{definition}[Engine Type\formalized{Engine/Engine.lean}{Engine}]\label{def:engine-type}%
 For each $\typing{i}{\EngIdx}$, the \textbf{engine type} $\enginetype{i}$
 specifies a message interface and a well-formed behaviour
 (\Cref{def:well-formed-behaviour}):
@@ -662,7 +662,7 @@ specifies a message interface and a well-formed behaviour
   \end{equation}
 \end{definition}
 
-\begin{definition}[Engine]\label{def:engine}%
+\begin{definition}[Engine\formalized{Engine/Engine.lean}{Engine}]\label{def:engine}%
 An \textbf{engine} of type $\enginetype{i}$ is a tuple
 $\engineval{\msgtype{i}}{\behaviourtype{i}}{o}{c}{s}$, where:
 \begin{itemize}
@@ -687,7 +687,7 @@ mailbox engines, they may specify custom initial configurations and
 behaviours during processing engine creation. The default mailbox behaviour
 implements a first-in-first-out queue.
 
-\begin{definition}[Mailbox Engine]\label{def:mailbox-engine}%
+\begin{definition}[Mailbox Engine\formalized{Engine/Engine.lean}{Engine.isMailbox}]\label{def:mailbox-engine}%
 A \emph{mailbox engine} $m$ for a processing engine $p$ of type $i$ is a
 system-configured engine satisfying:
 \begin{itemize}
@@ -758,7 +758,7 @@ behaviour, while the processing engine focuses on its computational tasks.
 
 \subsection{Nodes}\label{sec:nodes}
 
-\begin{definition}[Node]\label{def:node}%
+\begin{definition}[Node\formalized{System/Node.lean}{Node}]\label{def:node}%
 A \textbf{node} in $\SetOfNodes$ is a pair
 $\nodeval{n_i}{\enginemap_i}$ where $\node{i}$ is the node's
 unique identifier and $\enginemap_i$ maps local identifiers to engine instances.
@@ -778,7 +778,7 @@ fixed throughout the system's lifetime and constitute the typing context.
 The system structure resembles a Kripke model where states evolve via
 transition rules.
 
-\begin{definition}[System State]\label{def:state}%
+\begin{definition}[System State\formalized{System/State.lean}{SystemState}]\label{def:state}%
 A \textbf{system state} $\SystemState$ is a tuple
 $\systemval{\SetOfNodes}{\SetOfMessages}{\SetOfPlugins}$ where:
 \begin{itemize}
@@ -844,7 +844,7 @@ yields state $\SystemState'$.
 
 \subsection{System-level Initialisation}\label{sec:creation-rules}
 
-\begin{definition}[\srule{Node}]\label{rule:s-Node}
+\begin{definition}[\srule{Node}\formalized{Semantics/Judgment.lean}{OpStep.sNode}]\label{rule:s-Node}%
 A new node $n$ with fresh identifier $\iota$ and an empty engine map is added
 to the set of nodes $\SetOfNodes$.
 \begin{prooftree}
@@ -880,7 +880,7 @@ Since every processing engine is paired with a mailbox engine
 (\sruleref{SpawnWithMailbox}), the shared setup logic is factored into
 the auxiliary rule \sruleref{EngineSpawn}.
 
-\begin{definition}[\srule{EngineSpawn}\textnormal{ --- auxiliary}]\label{rule:s-EngineSpawn}
+\begin{definition}[\srule{EngineSpawn}\textnormal{ --- auxiliary}\formalized{Semantics/Judgment.lean}{OpStep}]\label{rule:s-EngineSpawn}%
 Given a node $\node{i}$, an engine type index $k$, and an optional parent
 address $\pi$, this rule creates a new engine with fresh identifier $\iota$,
 initialises its configuration $\config{\new}$ and environment $\localenv{\new}$
@@ -976,7 +976,7 @@ $}
 }%
 \end{definition}
 
-\begin{definition}[\srule{SpawnWithMailbox}]\label{rule:s-SpawnWithMailbox}
+\begin{definition}[\srule{SpawnWithMailbox}\formalized{Semantics/Judgment.lean}{OpStep.sSpawnMbox}]\label{rule:s-SpawnWithMailbox}%
 For engine type $k$ on node $\node{i}$, this rule invokes
 \sruleref{EngineSpawn} twice: once to create the processing engine (with fresh
 identifier $\iota_p$) and once to create its paired mailbox engine (with fresh
@@ -1024,7 +1024,7 @@ $c_m, s_m$ are the initial mailbox configuration and state.
 To prevent zombie engine instances---engines in the $\terminated$ state---the
 system removes them.
 
-\begin{definition}[\srule{Clean}]\label{rule:s-Clean}
+\begin{definition}[\srule{Clean}\formalized{Semantics/Judgment.lean}{OpStep.sClean}]\label{rule:s-Clean}%
 An engine $p$ on node $\node{i}$ whose status is $\terminated$ is removed
 from $\node{i}$'s engine map $\enginemap_i$.
 \begin{prooftree}
@@ -1072,7 +1072,7 @@ The message-passing mechanism supports asynchronous communication with
 non-blocking sends, mailbox isolation with eventual delivery, and explicit
 lifecycle management.
 
-\begin{definition}[\mrule{Send}]\label{rule:m-Send}
+\begin{definition}[\mrule{Send}\formalized{Semantics/Judgment.lean}{OpStep.mSend}]\label{rule:m-Send}%
 A sender engine $\engine{s}$ dispatches a message with payload
 $\typing{v}{\msgtype{t}}$ to a target processing engine $\engine{t}$. The
 payload is wrapped in the $\append$ constructor and placed in transit,
@@ -1117,7 +1117,7 @@ $}
 
 The \mruleref{Send} rule is the only way to add a message to $\SetOfMessages$.
 
-\begin{definition}[\mrule{Enqueue}]\label{rule:m-Enqueue}
+\begin{definition}[\mrule{Enqueue}\formalized{Semantics/Judgment.lean}{OpStep.mEnqueue}]\label{rule:m-Enqueue}%
 An in-transit message $m$ addressed to a mailbox engine $\mailbox{t}$ is
 consumed from $\SetOfMessages$, transitioning $\mailbox{t}$ from $\ready{f}$
 to $\busy{w}$. The mailbox engine then processes $w$ through its behaviour
@@ -1175,7 +1175,7 @@ $}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\mrule{Dequeue}]\label{rule:m-Dequeue}
+\begin{definition}[\mrule{Dequeue}\formalized{Semantics/Judgment.lean}{OpStep.mDequeue}]\label{rule:m-Dequeue}%
 When a processing engine $p$ is in state $\ready{f}$ and its mailbox contains
 a wrapped message $\typing{w}{\msgtype{\mailbox{p}}}$ that unwraps to a
 payload $\typing{v}{\msgtype{p}}$ accepted by filter $f$, the wrapped message
@@ -1275,7 +1275,7 @@ mailbox until the filter is updated or the engine is terminated.
 This subsection formalises how an engine evaluates its guarded actions in
 response to a message.
 
-\begin{definition}[\brule{GuardedActionEval}]\label{rule:b-GuardedActionEval}
+\begin{definition}[\brule{GuardedActionEval}\formalized{Semantics/Judgment.lean}{GuardEvalStep.guardMatch}]\label{rule:b-GuardedActionEval}%
 For an engine $p$ processing message $\typing{v}{\msgtype{p}}$, a guarded
 action $\guardedactionval{g}{a} \in \behaviour{p}$ is evaluated: if guard $g$
 accepts $v$ (returning $\some{r}$), then action $a$ is applied to produce an
@@ -1319,7 +1319,7 @@ $}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\brule{NoMatchingGuard}]\label{rule:b-NoMatchingGuard}
+\begin{definition}[\brule{NoMatchingGuard}\formalized{Semantics/Judgment.lean}{GuardEvalStep.guardFail}]\label{rule:b-NoMatchingGuard}%
 For a guarded action $\guardedactionval{g}{a} \in \behaviour{p}$, if guard $g$
 rejects message $v$ (returning $\none$), the action produces $\noop$.
 \begin{prooftree}
@@ -1360,7 +1360,7 @@ $}
 
 \paragraph{Guard Selection Strategy}
 
-\begin{definition}[\brule{GuardStrategy}]\label{rule:b-GuardStrategy}
+\begin{definition}[\brule{GuardStrategy}\formalized{Semantics/Judgment.lean}{EvalStep.guardStrategy}]\label{rule:b-GuardStrategy}%
 Under the non-overlapping guard assumption
 (\Cref{def:non-overlapping-guards}), engine $p$ processing message $v$
 selects the unique guarded action $\guardedaction{i}$ whose guard produces a
@@ -1413,7 +1413,7 @@ $}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\brule{AllGuardsFail}]\label{rule:b-AllGuardsFail}
+\begin{definition}[\brule{AllGuardsFail}\formalized{Semantics/Judgment.lean}{EvalStep.allGuardsFail}]\label{rule:b-AllGuardsFail}%
 If every guarded action $\guardedaction{j}$ in $\behaviour{p}$ produces
 $\noop$ for message $v$, the overall behaviour evaluation yields $\noop$.
 \begin{prooftree}
@@ -1461,7 +1461,7 @@ $\effectevalstep{\SystemState}{E}{\SystemState'}$
 states that executing $E$ in $\SystemState$ produces $\SystemState'$. This
 judgment is defined by case analysis on $E$.
 
-\begin{definition}[\erule{Send}]\label{rule:e-Send}
+\begin{definition}[\erule{Send}\formalized{Semantics/Judgment.lean}{EffectEvalStep}]\label{rule:e-Send}%
 Executing a $\send{j}{l_t}{v}$ effect appends message~$v$ to the in-transit
 list, addressed to the mailbox of the target engine at~$l_t$.  The target
 validity premises---that $\engine{t}$ exists, is in \process mode, and has a
@@ -1498,7 +1498,7 @@ $}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\erule{Update}]\label{rule:e-Update}
+\begin{definition}[\erule{Update}\formalized{Semantics/Judgment.lean}{EffectEvalStep.update}]\label{rule:e-Update}%
 Executing an $\update{s}$ effect replaces engine $p$'s execution environment
 with the value $\typing{s}{\envtype{p}}$.
 \begin{prooftree}
@@ -1531,7 +1531,7 @@ $}
 \end{definition}
 
 
-\begin{definition}[\erule{MFilter}]\label{rule:e-MFilter}
+\begin{definition}[\erule{MFilter}\formalized{Semantics/Judgment.lean}{EffectEvalStep.mfilter}]\label{rule:e-MFilter}%
 Executing an $\mfilter{f}$ effect sets engine $p$'s message filter to
 $\typing{f}{\msgtype{p} \to \Bool}$, transitioning it from $\busy{v}$ to
 $\ready{f}$.
@@ -1568,7 +1568,7 @@ default return to $\ready{\lambda\_.\mathsf{tt}}$ in \sruleref{Process}.
   \end{definition}
 
 
-\begin{definition}[\erule{Spawn}]\label{rule:e-Spawn}
+\begin{definition}[\erule{Spawn}\formalized{Semantics/Judgment.lean}{EffectEvalStep}]\label{rule:e-Spawn}%
 Executing a $\spawn{j}{c}{s}$ effect on node $\node{i}$
 creates a child engine of type $\typing{j}{\EngIdx}$ with initial
 configuration $c$ and environment $s$, delegating to
@@ -1606,7 +1606,7 @@ $}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\erule{Chain}]\label{rule:e-Chain}
+\begin{definition}[\erule{Chain}\formalized{Semantics/Judgment.lean}{EffectEvalStep.chain}]\label{rule:e-Chain}%
 Executing a $\chain{\mathit{eff}_1}{\mathit{eff}_2}$ effect sequences two
 sub-effects: $\mathit{eff}_1$ is executed in state $\SystemState$ yielding
 $\SystemState'$, then $\mathit{eff}_2$ in $\SystemState'$ yielding
@@ -1637,7 +1637,7 @@ $}
 \end{prooftree}
 \end{definition}
 
-\begin{definition}[\erule{Terminate}]\label{rule:e-Terminate}
+\begin{definition}[\erule{Terminate}\formalized{Semantics/Judgment.lean}{EffectEvalStep.terminate}]\label{rule:e-Terminate}%
 Executing a $\terminate$ effect sets engine $p$'s status to $\terminated$.
 \begin{prooftree}
 \AxiomC{$\effectpremise{p}{v}$}
@@ -1670,7 +1670,7 @@ $}
 The \sruleref{Clean} rule subsequently removes the engine from the system.
 \end{definition}
 
-\begin{definition}[\erule{Noop}]\label{rule:e-Noop}
+\begin{definition}[\erule{Noop}\formalized{Semantics/Judgment.lean}{EffectEvalStep.noop}]\label{rule:e-Noop}%
 Executing a $\noop$ effect leaves the system state $\SystemState$ unchanged.
   \begin{prooftree}
   \AxiomC{$\effectpremise{p}{v}$}
@@ -1695,7 +1695,7 @@ Executing a $\noop$ effect leaves the system state $\SystemState$ unchanged.
 The \sruleref{Process} rule ties together behaviour evaluation, effect
 execution, and status management into a single system-level transition.
 
-\begin{definition}[\srule{Process}]\label{rule:s-Process}
+\begin{definition}[\srule{Process}\formalized{Semantics/Judgment.lean}{ProcessStep.process}]\label{rule:s-Process}%
 When a processing engine is in the $\busy{m}$ state, its behaviour is evaluated
 against message $m$ to produce an effect $E$, the effect is executed, and the
 engine returns to the ready state.
@@ -2031,7 +2031,7 @@ These invariants ensure that the system's structural properties---such as
 mailbox pairing and message delivery targets---are preserved during
 evolution.
 
-\begin{proposition}[Type Preservation]\label{prop:type-preservation}
+\begin{proposition}[Type Preservation\formalized{Properties/TypePreservation.lean}{typePreservation}]\label{prop:type-preservation}%
 If $\sysstep{\SystemState}{\SystemState'}$ and $\SystemState$ is well-typed,
 then $\SystemState'$ is well-typed.
 \end{proposition}
@@ -2059,7 +2059,7 @@ preserves the status set by the effect. \sruleref{Clean} removes an engine
 without affecting others.
 \end{proof}
 
-\begin{proposition}[Progress]\label{prop:progress}
+\begin{proposition}[Progress\formalized{Properties/Progress.lean}{progress}]\label{prop:progress}%
 A well-typed system state $\SystemState$ in which either
 (i)~$\SetOfMessages \neq \emptyset$, or
 (ii)~there exists an engine in state $\busy{m}$,
@@ -2088,7 +2088,7 @@ $\effectevalstep{\SystemState}{E}{\SystemState'}$ exists, and
 $\equal{\status{p}}{\terminated}$ and \sruleref{Clean} applies.
 \end{proof}
 
-\begin{proposition}[Effect Determinism]\label{prop:effect-determinism}
+\begin{proposition}[Effect Determinism\formalized{Properties/Determinism.lean}{effectDeterminism}]\label{prop:effect-determinism}%
 For any engine $p$ with a well-formed behaviour
 (\Cref{def:well-formed-behaviour}) in state $\busy{v}$,
 the judgment $\evalstep{p}{v}{E}$ determines $E$ uniquely.
@@ -2104,7 +2104,7 @@ functions. If no guard matches, \bruleref{AllGuardsFail} yields $\noop$. These
 two cases are exhaustive and mutually exclusive, so $E$ is uniquely determined.
 \end{proof}
 
-\begin{proposition}[Mailbox Isolation]\label{prop:mailbox-isolation}
+\begin{proposition}[Mailbox Isolation\formalized{Properties/Isolation.lean}{mailboxIsolation}]\label{prop:mailbox-isolation}%
 A processing engine never directly receives a message from $\SetOfMessages$.
 All messages are mediated by the corresponding mailbox engine.
 \end{proposition}
@@ -2151,7 +2151,7 @@ By induction on $k$, applying
 \Cref{prop:type-preservation,prop:mailbox-isolation} at each successor step.
 \end{proof}
 
-\begin{proposition}[Eventual Delivery]\label{prop:eventual-delivery}
+\begin{proposition}[Eventual Delivery\formalized{Properties/Delivery.lean}{eventualDelivery}]\label{prop:eventual-delivery}%
 Let $\sigma$ be an execution trace with predicate-level strong
 fairness (TLA$^{+}$-style): for every binary predicate $P$ on states, if
 $P$ is infinitely often enabled from step $n$ onwards (i.e.\ for every

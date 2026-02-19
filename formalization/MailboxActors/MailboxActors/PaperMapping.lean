@@ -35,9 +35,11 @@ open MailboxActors
 -- ============================================================================
 
 /- Definition 1 — Engine Type Index and parametric context -/
+-- File: Basic.lean
 #check @EngineSpec
 
 /- Definition 2 — Address -/
+-- File: Basic.lean
 #check @Address
 
 -- ============================================================================
@@ -45,12 +47,15 @@ open MailboxActors
 -- ============================================================================
 
 /- Definition 3 — TotalMsg (equation (3): Σ (i : 𝕀). Msg_i) -/
+-- File: Engine/Message.lean
 #check @TotalMsg
 
 /- Definition 4 — Message packet -/
+-- File: Engine/Message.lean
 #check @Message
 
 /- Definition 5 — Append wrapper -/
+-- File: Engine/Message.lean
 #check @MailboxActors.Append
 
 -- ============================================================================
@@ -58,36 +63,47 @@ open MailboxActors
 -- ============================================================================
 
 /- Definition 6 — Engine lifecycle status -/
+-- File: Engine/Status.lean
 #check @EngineStatus
 
 /- Definition 7 — Engine mode -/
+-- File: Engine/Mode.lean
 #check @EngineMode
 
 /- Definition 8 — Engine configuration -/
+-- File: Engine/Config.lean
 #check @EngineConfig
 
 /- Definition 9 — Execution environment -/
+-- File: Engine/Env.lean
 #check @EngineEnv
 
 /- Definition 10 — Effect system -/
+-- File: Engine/Effect.lean
 #check @Effect
 
 /- Definition 11 — Guard input -/
+-- File: Engine/Guard.lean
 #check @GuardInput
 
 /- Definition 13 — Guarded action -/
+-- File: Engine/Guard.lean
 #check @GuardedAction
 
 /- Composite operation g ⊙ a -/
+-- File: Engine/Guard.lean
 #check @GuardedAction.apply
 
 /- Definition 14 — Behaviour -/
+-- File: Engine/Behaviour.lean
 #check @Behaviour
 
 /- Definition 15 — Non-overlapping guards -/
+-- File: Engine/Behaviour.lean
 #check @NonOverlappingGuards
 
 /- Well-Formed Behaviour (bundles behaviour + non-overlapping proof) -/
+-- File: Engine/Behaviour.lean
 #check @WellFormedBehaviour
 
 -- ============================================================================
@@ -95,9 +111,11 @@ open MailboxActors
 -- ============================================================================
 
 /- Definition 17 — Engine (5-tuple) -/
+-- File: Engine/Engine.lean
 #check @Engine
 
 /- Definition 18 — Mailbox engine predicates -/
+-- File: Engine/Engine.lean
 #check @Engine.isMailbox
 #check @Engine.isProcessing
 
@@ -106,9 +124,11 @@ open MailboxActors
 -- ============================================================================
 
 /- Definition 19 — Node -/
+-- File: System/Node.lean
 #check @Node
 
 /- Definition 20 — System state κ = (N, M, Ω) -/
+-- File: System/State.lean
 #check @SystemState
 
 -- ============================================================================
@@ -123,16 +143,19 @@ open MailboxActors
 -- ============================================================================
 
 /- Judgment Form 3 — Guarded action evaluation -/
+-- File: Semantics/Judgment.lean
 #check @GuardEvalStep
 #check @GuardEvalStep.guardMatch   /- Definition 25 — B-GuardedActionEval -/
 #check @GuardEvalStep.guardFail    /- Definition 26 — B-NoMatchingGuard -/
 
 /- Judgment Form 2 — Behaviour evaluation -/
+-- File: Semantics/Judgment.lean
 #check @EvalStep
 #check @EvalStep.guardStrategy     /- Definition 28 — B-GuardStrategy -/
 #check @EvalStep.allGuardsFail     /- Definition 29 — B-AllGuardsFail -/
 
 /- Judgment Form 4 — Effect execution -/
+-- File: Semantics/Judgment.lean
 #check @EffectEvalStep
 #check @EffectEvalStep.noop        /- Definition 39 — E-Noop -/
 #check @EffectEvalStep.terminate   /- Definition 37 — E-Terminate -/
@@ -141,6 +164,7 @@ open MailboxActors
 #check @EffectEvalStep.chain       /- Definition 36 — E-Chain -/
 
 /- Judgment Form 1 — System-level operations -/
+-- File: Semantics/Judgment.lean
 #check @OpStep
 #check @OpStep.sNode               /- Definition 21 — S-Node -/
 #check @OpStep.sClean              /- Definition 24 — S-Clean -/
@@ -149,10 +173,12 @@ open MailboxActors
 #check @OpStep.mDequeue            /- Definition 32 — M-Dequeue -/
 
 /- Judgment Form 5 — Engine processing -/
+-- File: Semantics/Judgment.lean
 #check @ProcessStep
 #check @ProcessStep.process        /- Definition 40 — S-Process -/
 
 /- Top-level system step -/
+-- File: Semantics/Judgment.lean
 #check @SysStep
 
 -- ============================================================================
@@ -160,24 +186,30 @@ open MailboxActors
 -- ============================================================================
 
 /- Proposition 1 — Type Preservation -/
+-- File: Properties/TypePreservation.lean
 #check @typePreservation
 
 /- Proposition 2 — Progress -/
+-- File: Properties/Progress.lean
 #check @progress
 
 /- Proposition 3 — Effect Determinism -/
+-- File: Properties/Determinism.lean
 #check @effectDeterminism
 
 /- Proposition 4 — Mailbox Isolation -/
+-- File: Properties/Isolation.lean
 #check @mailboxIsolation
 
 /- Proposition 5 — Eventual Delivery -/
+-- File: Properties/Delivery.lean
 #check @eventualDelivery
 
 -- ============================================================================
 -- § Example: Causal Delivery Mailbox (Paper §3.6, §4.9)
 -- ============================================================================
 
+-- File: Examples/CausalMailbox.lean
 #check @Examples.CausalMailbox.PubSubIdx
 #check @Examples.CausalMailbox.TopicMsg
 #check @Examples.CausalMailbox.CausalState

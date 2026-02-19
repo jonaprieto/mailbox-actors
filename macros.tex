@@ -284,3 +284,28 @@
 
 %% DSL notation
 \newcommand{\letin}[2]{\ensuremath{\mathsf{let}\ \defequal{#1}{#2}}}
+
+%% =====================================================================
+%% Formalization links — clickable icon linking to Lean 4 source
+%% =====================================================================
+
+\IfFileExists{fontawesome5.sty}{%
+  \usepackage{fontawesome5}%
+  \newcommand{\formalicon}{\faCode}%
+}{%
+  \newcommand{\formalicon}{\textsf{\bfseries L4}}%
+}
+
+\newcommand{\formalurl}[1]{%
+  \ifdefempty{\formalcommit}%
+    {\formalrepo/blob/\formalbranch/\formalbasepath/#1}%
+    {\formalrepo/blob/\formalcommit/\formalbasepath/#1}%
+}
+
+\newcommand{\formalized}[2]{%
+  \href{\formalurl{#1}}%
+    {\texorpdfstring
+      {\,\raisebox{0.1ex}{\scriptsize\color{anoma}\formalicon}}%
+      {Lean 4: #2}%
+    }%
+}
