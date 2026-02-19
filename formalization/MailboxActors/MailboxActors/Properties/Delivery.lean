@@ -115,7 +115,7 @@ lemma message_removal (trace : Trace) (hexec : IsExecution trace) (m : Message) 
       rw [hκ'] at hnk; simp [List.mem_append] at hnk
       have hmem : m ∈ pre ++ post := by
         rw [hmsg] at hk
-        simp [List.mem_append, List.mem_cons] at hk
+        simp only [List.mem_append, List.mem_cons] at hk
         rcases hk with h | h | h
         · exact List.mem_append.mpr (Or.inl h)
         · contradiction

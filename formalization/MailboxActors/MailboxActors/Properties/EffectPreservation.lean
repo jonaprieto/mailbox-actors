@@ -74,7 +74,7 @@ theorem updateEngineAt_preserves_invariants (κ : SystemState)
         · rw [engineAt_updateEngineAt_ne _ _ _ _ h] at hne
           exact wt.nextId_fresh addr' hne
       nextId_messages := fun m hm => by
-        simp only [SystemState.updateEngineAt_messages, SystemState.updateEngineAt_nextId]
+        simp only [SystemState.updateEngineAt_nextId]
         exact wt.nextId_messages m hm
       nodes_exist := fun addr' hne => by
         have hne' : κ.engineAt addr' ≠ none := by

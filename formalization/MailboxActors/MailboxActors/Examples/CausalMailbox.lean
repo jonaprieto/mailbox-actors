@@ -233,7 +233,7 @@ theorem findCascade_deps_met (pending : List (MsgHash × TopicMsg))
     only released to subscribers when their causal predecessors have
     already been delivered. -/
 theorem causalAction_preserves_invariant
-    (inp : GuardInput PubSubIdx.broker) (h : causalGuard inp = some ()) :
+    (inp : GuardInput PubSubIdx.broker) (_h : causalGuard inp = some ()) :
     let q := inp.env.localState
     CausalInvariant q →
     -- The resulting Effect (via chain/update) produces states

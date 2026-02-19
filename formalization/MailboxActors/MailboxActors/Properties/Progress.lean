@@ -127,7 +127,8 @@ lemma engineAt_preserved_after_effect {κ κ' : SystemState} {i : EngineSpec.Eng
     else
       refine ⟨p, ?_⟩
       rw [engineAt_updateEngineAt_ne _ _ _ _ h, heng]
-  | spawn κ₀ _ _ j' cfg' env' nid' procSe mboxSe _ _ hnode' hproc' hmbox' hidxP' hidxM' hmodeP' hmodeM' hκ₁ =>
+  | spawn κ₀ _ _ j' cfg' env' nid' procSe mboxSe _ _
+      hnode' hproc' hmbox' hidxP' hidxM' hmodeP' hmodeM' hκ₁ =>
     subst hκ₁; subst hproc'; subst hmbox'
     split
     · rename_i hfresh
@@ -144,7 +145,8 @@ lemma engineAt_preserved_after_effect {κ κ' : SystemState} {i : EngineSpec.Eng
     · exact ⟨p, heng⟩
   | chain _ _ _ _ _ _ _ _ ih₁ ih₂ =>
     obtain ⟨p', hp'⟩ := ih₁ wt hiso heng
-    obtain ⟨wt', hiso'⟩ := effectEvalStepPreservesInvariants _ _ _ _ ‹EffectEvalStep _ _ _ _› wt hiso
+    obtain ⟨wt', hiso'⟩ :=
+      effectEvalStepPreservesInvariants _ _ _ _ ‹EffectEvalStep _ _ _ _› wt hiso
     exact ih₂ wt' hiso' hp'
 
 /-- **Effect Execution Totality**: executing an effect produced by a

@@ -65,14 +65,14 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
         rw [engineAt_removeEngineAt_ne κ addr (κ.mailboxOf addr') hmboxNe]
         exact hmbox
       nextId_fresh := fun addr' hne => by
-        simp
+        simp only [SystemState.removeEngineAt_nextId]
         have hne' : κ.engineAt addr' ≠ none := by
           by_cases h_eq : addr' = addr
           · exfalso; rw [h_eq, engineAt_removeEngineAt_self] at hne; exact hne rfl
           · rwa [engineAt_removeEngineAt_ne _ _ _ h_eq] at hne
         exact wt.nextId_fresh addr' hne'
       nextId_messages := fun m hm => by
-        simp
+        simp only [SystemState.removeEngineAt_nextId]
         exact wt.nextId_messages m hm
       nodes_exist := fun addr' hne => by
         have hne' : κ.engineAt addr' ≠ none := by
@@ -154,7 +154,7 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
         · rw [engineAt_updateEngineAt_ne _ _ _ _ h] at hne
           exact wt.nextId_fresh addr' hne
       nextId_messages := fun m' hm' => by
-        simp; have hm'_old : m' ∈ κ.messages := by
+        simp only [SystemState.updateEngineAt_nextId]; have hm'_old : m' ∈ κ.messages := by
           rw [hmsg]; simp only [List.mem_append, List.mem_cons] at hm' ⊢; tauto
         exact wt.nextId_messages m' hm'_old
       nodes_exist := fun addr' hne => by

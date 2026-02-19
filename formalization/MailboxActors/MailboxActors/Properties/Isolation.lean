@@ -112,9 +112,9 @@ theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
     a terminated processing engine, its paired mailbox engine survives.
     This prevents in-flight messages from being orphaned. -/
 theorem mailboxPersistence (κ : SystemState) (addr : Address) (se : SomeEngine)
-    (heng : κ.engineAt addr = some se)
-    (hmode : se.engine.mode = EngineMode.process)
-    (hterm : se.engine.status = EngineStatus.terminated) :
+    (_heng : κ.engineAt addr = some se)
+    (_hmode : se.engine.mode = EngineMode.process)
+    (_hterm : se.engine.status = EngineStatus.terminated) :
     (κ.removeEngineAt addr).engineAt (κ.mailboxOf addr) =
       κ.engineAt (κ.mailboxOf addr) := by
   exact engineAt_removeEngineAt_ne κ addr (κ.mailboxOf addr) (mailboxOf_ne_self κ addr)

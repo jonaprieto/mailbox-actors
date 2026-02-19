@@ -37,7 +37,7 @@ lemma mailboxOf_injective (κ : SystemState) {addr addr' : Address}
     (h : κ.mailboxOf addr = κ.mailboxOf addr') : addr = addr' := by
   have h1 : (κ.mailboxOf addr).nodeId = (κ.mailboxOf addr').nodeId := by rw [h]
   have h2 : (κ.mailboxOf addr).engineId = (κ.mailboxOf addr').engineId := by rw [h]
-  simp [SystemState.mailboxOf] at h1 h2
+  simp only [SystemState.mailboxOf, Nat.add_right_cancel_iff] at h1 h2
   cases addr; cases addr'; simp only [Address.mk.injEq]; exact ⟨h1, h2⟩
 
 /-- Look up an engine globally by its address. -/
@@ -123,6 +123,7 @@ def SystemState.updateEngineAt (κ : SystemState) (addr : Address)
 
 -- ── BEq helper ──
 
+omit [EngineSpec] in
 private lemma beq_false_of_ne [BEq α] [LawfulBEq α] {a b : α} (h : a ≠ b) :
     (a == b) = false := by
   match h' : a == b with
@@ -143,10 +144,10 @@ private lemma map_find_setEngine_self (engines : EngineMap) (id : Nat)
     simp only [List.map_cons, List.find?_cons]
     match he : e.1 == id with
     | true =>
-      simp only [he, ↓reduceIte, beq_self_eq_true]
+      simp only [↓reduceIte, beq_self_eq_true]
     | false =>
       simp only [he, ↓reduceIte, Bool.false_eq_true]
-      simp only [List.find?_cons, he, Bool.false_eq_true, ↓reduceIte] at h
+      simp only [List.find?_cons, he] at h
       exact ih h
 
 private lemma map_find_setEngine_ne (engines : EngineMap) (id id' : Nat)
@@ -159,12 +160,12 @@ private lemma map_find_setEngine_ne (engines : EngineMap) (id id' : Nat)
     simp only [List.map_cons, List.find?_cons]
     match he : e.1 == id with
     | true =>
-      simp only [he, ↓reduceIte]
+      simp only [↓reduceIte]
       have hne : (id == id') = false := beq_false_of_ne (Ne.symm h)
-      simp only [hne, Bool.false_eq_true, ↓reduceIte]
+      simp only [hne]
       have : (e.1 == id') = false := by
         rw [eq_of_beq he]; exact beq_false_of_ne (Ne.symm h)
-      simp only [this, Bool.false_eq_true, ↓reduceIte]
+      simp only [this]
       exact ih
     | false =>
       match he' : e.1 == id' with
@@ -195,7 +196,7 @@ private lemma engineAt_updateEngineAt_aux (nodes : List Node)
     simp only [List.map_cons, List.find?_cons]
     match hn : n.id == nodeId with
     | true =>
-      simp only [hn, ↓reduceIte]
+      simp only [↓reduceIte]
       match ht : n.id == targetNodeId with
       | true =>
         have hnt : (nodeId == targetNodeId) = true := by
@@ -240,7 +241,7 @@ theorem engineAt_updateEngineAt_ne (κ : SystemState) (addr addr' : Address)
   rw [engineAt_updateEngineAt_aux]
   match hnode : addr.nodeId == addr'.nodeId with
   | true =>
-    simp only [hnode, ↓reduceIte]
+    simp only [↓reduceIte]
     cases hfind : κ.nodes.find? (fun n => n.id == addr'.nodeId) with
     | none => rfl
     | some node =>
@@ -252,7 +253,7 @@ theorem engineAt_updateEngineAt_ne (κ : SystemState) (addr addr' : Address)
         simp only [Address.mk.injEq]; dsimp only at *
         exact ⟨(eq_of_beq hnode).symm, heq⟩) h
   | false =>
-    simp [hnode]
+    simp
 
 -- ============================================================================
 -- § Engine Removal Operations
@@ -288,10 +289,10 @@ private lemma filter_find_removeEngine_self (engines : EngineMap) (id : Nat) :
     simp only [List.filter_cons]
     match he : e.1 == id with
     | true =>
-      simp only [he, Bool.not_true, ↓reduceIte]
+      simp only [Bool.not_true]
       exact ih
     | false =>
-      simp only [he, Bool.not_false, ↓reduceIte, List.find?_cons, he]
+      simp only [Bool.not_false, ↓reduceIte, List.find?_cons, he]
       exact ih
 
 private lemma filter_find_removeEngine_ne (engines : EngineMap) (id id' : Nat)
@@ -304,17 +305,16 @@ private lemma filter_find_removeEngine_ne (engines : EngineMap) (id id' : Nat)
     simp only [List.filter_cons, List.find?_cons]
     match he : e.1 == id with
     | true =>
-      simp only [he, Bool.not_true, ↓reduceIte]
+      simp only [Bool.not_true]
       have : (e.1 == id') = false := by
         rw [eq_of_beq he]; exact beq_false_of_ne (Ne.symm h)
-      simp only [this, Bool.false_eq_true, ↓reduceIte]
+      simp only [this]
       exact ih
     | false =>
-      simp only [he, Bool.not_false, ↓reduceIte, List.find?_cons]
+      simp only [Bool.not_false, ↓reduceIte, List.find?_cons]
       match he' : e.1 == id' with
-      | true => simp only [he']
+      | true => rfl
       | false =>
-        simp only [he', Bool.false_eq_true, ↓reduceIte]
         exact ih
 
 -- ── System-level engineAt after removeEngineAt ──
@@ -341,7 +341,7 @@ private lemma engineAt_removeEngineAt_aux (nodes : List Node)
     simp only [List.map_cons, List.find?_cons]
     match hn : n.id == nodeId with
     | true =>
-      simp only [hn, ↓reduceIte]
+      simp only [↓reduceIte]
       match ht : n.id == targetNodeId with
       | true =>
         have hnt : (nodeId == targetNodeId) = true := by
@@ -381,7 +381,7 @@ theorem engineAt_removeEngineAt_ne (κ : SystemState) (addr addr' : Address)
   rw [engineAt_removeEngineAt_aux]
   match hnode : addr.nodeId == addr'.nodeId with
   | true =>
-    simp only [hnode, ↓reduceIte]
+    simp only [↓reduceIte]
     cases hfind : κ.nodes.find? (fun n => n.id == addr'.nodeId) with
     | none => rfl
     | some node =>
@@ -393,7 +393,7 @@ theorem engineAt_removeEngineAt_ne (κ : SystemState) (addr addr' : Address)
         simp only [Address.mk.injEq]; dsimp only at *
         exact ⟨(eq_of_beq hnode).symm, heq⟩) h
   | false =>
-    simp [hnode]
+    simp
 
 -- ============================================================================
 -- § Engine Addition Operations
@@ -445,14 +445,14 @@ private lemma append_find_addEngine_self (engines : EngineMap) (id : Nat)
     (h : engines.find? (fun p => p.1 == id) = none) :
     (engines ++ [(id, se)]).find? (fun p => p.1 == id) = some (id, se) := by
   induction engines with
-  | nil => simp [beq_self_eq_true]
+  | nil => simp
   | cons e es ih =>
     simp only [List.find?_cons] at h
     match he : e.1 == id with
     | true => simp [he] at h
     | false =>
-      simp only [he, Bool.false_eq_true, ↓reduceIte] at h
-      simp only [List.cons_append, List.find?_cons, he, Bool.false_eq_true, ↓reduceIte]
+      simp only [he] at h
+      simp only [List.cons_append, List.find?_cons, he]
       exact ih h
 
 private lemma append_find_addEngine_ne (engines : EngineMap) (id id' : Nat)
@@ -469,7 +469,6 @@ private lemma append_find_addEngine_ne (engines : EngineMap) (id id' : Nat)
     match he : e.1 == id' with
     | true => rfl
     | false =>
-      simp only [he, Bool.false_eq_true, ↓reduceIte]
       exact ih
 
 -- ── System-level engineAt after addEngineAt ──
@@ -496,7 +495,7 @@ private lemma engineAt_addEngineAt_aux (nodes : List Node)
     simp only [List.map_cons, List.find?_cons]
     match hn : n.id == nodeId with
     | true =>
-      simp only [hn, ↓reduceIte]
+      simp only [↓reduceIte]
       match ht : n.id == targetNodeId with
       | true =>
         have hnt : (nodeId == targetNodeId) = true := by
@@ -551,7 +550,7 @@ theorem engineAt_addEngineAt_ne (κ : SystemState) (addr addr' : Address)
   rw [engineAt_addEngineAt_aux]
   match hnode : addr.nodeId == addr'.nodeId with
   | true =>
-    simp only [hnode, ↓reduceIte]
+    simp only [↓reduceIte]
     cases hfind : κ.nodes.find? (fun n => n.id == addr'.nodeId) with
     | none => rfl
     | some node =>
@@ -563,7 +562,7 @@ theorem engineAt_addEngineAt_ne (κ : SystemState) (addr addr' : Address)
         simp only [Address.mk.injEq]; dsimp only at *
         exact ⟨(eq_of_beq hnode).symm, heq⟩) h
   | false =>
-    simp [hnode]
+    simp
 
 /-- If an engine exists at `addr`, then its node must exist in the system. -/
 lemma node_exists_of_engineAt (κ : SystemState) (addr : Address) :
