@@ -677,15 +677,15 @@ and behaviour in the tuple representation, highlighting the engine's type.
 
 \subsection{Mailbox Engines}\label{sec:mailbox-engines}
 
-As established in \Cref{def:engine-mode}, the system includes two kinds of
-engines: processing engines (mode $\process$) and mailbox engines (mode
-$\mail$). A mailbox engine is itself an engine---a native actor in the
-system---with its own configuration, environment, and behaviour. The system
-automatically creates a mailbox engine when a processing engine is spawned
-(\Cref{sec:creation-rules}). Users cannot directly create mailbox engines,
-though they may provide custom configuration, environment, and behaviour for
-the mailbox at the moment of processing engine creation. The default mailbox
-operates as a first-in-first-out queue.
+The system distinguishes between processing engines (mode $\process$) and
+mailbox engines (mode $\mail$), as defined in \Cref{def:engine-mode}. While
+a mailbox engine is a first-class actor with its own configuration and
+behaviour, it is typically managed by the system: a dedicated mailbox is
+automatically paired with each processing engine upon creation
+(\Cref{sec:creation-rules}). Although users cannot directly instantiate
+mailbox engines, they may specify custom initial configurations and
+behaviours during processing engine creation. The default mailbox behaviour
+implements a first-in-first-out queue.
 
 \begin{definition}[Mailbox Engine]\label{def:mailbox-engine}%
 A \emph{mailbox engine} $m$ for a processing engine $p$ of type $i$ is a
@@ -768,18 +768,15 @@ For a node with identifier $n_i$, we write $\SetOfEngines_i$ for the set of
 engines on that node (the values of $\enginemap_i$), and $\alpha_i$ for the
 mapping from engine instances to their addresses.
 
-\subsection{System}\label{sec:system}%
+\subsection{System and State}\label{sec:system}%
 
 The system is a collection of interacting engines residing in nodes. For each
 $\typing{i}{\EngIdx}$, the system defines a message interface $\msgtype{i}$,
 configuration type $\configtype{i}$, environment type $\envtype{i}$, behaviour
 type $\behaviourtype{i}$, and engine type $\enginetype{i}$. These types are
 fixed throughout the system's lifetime and constitute the typing context.
-
-The system structure resembles a Kripke model. We define the possible system
-states and then specify transition rules governing the system's evolution.
-
-\subsection{System State}\label{sec:state}%
+The system structure resembles a Kripke model where states evolve via
+transition rules.
 
 \begin{definition}[System State]\label{def:state}%
 A \textbf{system state} $\SystemState$ is a tuple
@@ -1965,22 +1962,11 @@ The cascade in Step~6 illustrates why first-class mailbox actors are
 essential: a passive data structure could not conditionally release buffered
 messages upon the arrival of their dependencies.
 
-\subsection{System State Transition Rules}\label{sec:system-state-transition-rules}
-
-The inference rules above collectively govern system state transitions. Every
-system-level operation induces a state transition:
-\begin{equation}
-\opstep%
-  {\SystemState, \cdots}
-  {op}
-  {\SystemState'}%
-\quad \text{implies}%
-\quad \sysstep%
-        {\SystemState}
-        {\SystemState'}
-\end{equation}
-for any operation $\mathsf{op}$. \Cref{fig:state-transition-rules}
-summarises all rules.
+The inference rules presented above collectively govern the system's
+evolution. Every system-level operation $\mathsf{op}$ induces a state
+transition $\sysstep{\SystemState}{\SystemState'}$.
+\Cref{fig:state-transition-rules} provides a summary of all rules organised
+by judgment form.
 
 \begin{figure}[h]
   \centering
@@ -2024,28 +2010,26 @@ deferred to an extended version; here we provide proof sketches.
 
 We first define well-typedness of system states. A system state
 $\SystemState = (\SetOfNodes, \SetOfMessages, \SetOfPlugins)$ is
-\emph{well-typed} if:
+\emph{well-typed} if it satisfies the following invariants:
 \begin{enumerate}
-  \item every engine $p \in \SetOfEngines$ of type $\enginetype{i}$ has
+  \item \textbf{Component Typing:} Every engine $p \in \SetOfEngines$ of type
+  $\enginetype{i}$ has correctly typed components:
   $\typing{\status{p}}{\EngineStatus{i}}$,
   $\typing{\config{p}}{\configtype{i}}$, and
-  $\typing{\localenv{p}}{\envtype{i}}$;
-  \item every message $\msgpacket{s}{t}{v} \in \SetOfMessages$ satisfies
-  $\typing{v}{\msgtype{t}}$; and
-  \item for every processing engine $p$, the function $\mailboxOfname$ returns
-  a valid mailbox engine address;
-  \item the counter $\SetOfPlugins$ is strictly greater than any existing node
-  or engine identifier (\emph{address freshness}); and
-  \item all in-transit messages target addresses $\loc{n}{\iota}$ where
-  $\iota < \SetOfPlugins$ (\emph{message freshness}).
+  $\typing{\localenv{p}}{\envtype{i}}$.
+  \item \textbf{Message Typing:} Every message $\msgpacket{s}{t}{v} \in \SetOfMessages$
+  is well-typed with respect to its target, i.e., $\typing{v}{\msgtype{t}}$.
+  \item \textbf{Spawn Pairing:} Every processing engine $p$ is paired with a
+  live mailbox engine $\mailboxOf{p}$ of matching type index in mail mode.
+  \item \textbf{Address Freshness:} The counter $\SetOfPlugins$ is strictly
+  greater than any existing node or engine identifier.
+  \item \textbf{Message Integrity:} All in-transit messages target live
+  engines (no orphaned messages), ensuring their addresses are valid and
+  precede $\SetOfPlugins$.
 \end{enumerate}
-Well-typedness entails two structural properties.
-First, every in-transit message has a live target: if
-$\msgpacket{s}{t}{v} \in \SetOfMessages$, then the engine at address~$t$
-exists (\emph{no orphaned messages}).
-Second, every processing engine~$p$ has a paired mailbox engine
-$\mailboxOf{p}$ with matching type index in mail mode (\emph{spawn pairing}).
-Both follow directly from the definition and are used in the proofs below.
+These invariants ensure that the system's structural properties---such as
+mailbox pairing and message delivery targets---are preserved during
+evolution.
 
 \begin{proposition}[Type Preservation]\label{prop:type-preservation}
 If $\sysstep{\SystemState}{\SystemState'}$ and $\SystemState$ is well-typed,
