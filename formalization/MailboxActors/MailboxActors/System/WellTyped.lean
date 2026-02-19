@@ -35,6 +35,10 @@ structure WellTypedState (κ : SystemState) : Prop where
   nextId_fresh :
     ∀ (addr : Address),
       κ.engineAt addr ≠ none → addr.engineId < κ.nextId
+  /-- All messages in transit target addresses that were created before the
+      current `nextId`. -/
+  nextId_messages :
+    ∀ m ∈ κ.messages, m.target.engineId < κ.nextId
   /-- For every engine in the system, its nodeId corresponds to an existing node. -/
   nodes_exist :
     ∀ (addr : Address),

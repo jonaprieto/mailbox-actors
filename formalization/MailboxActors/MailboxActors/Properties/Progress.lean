@@ -151,10 +151,9 @@ theorem effectEvalStep_total {κ : SystemState} {i : EngineSpec.EngIdx} (addr : 
     (p : Engine i) (v : EngineSpec.MsgType i) (E : Effect i) :
     WellTypedState κ →
     κ.engineAt addr = some ⟨i, p⟩ →
-    p.status = EngineStatus.busy v →
     ∃ κ', EffectEvalStep κ i E κ' := by
-  intro wt heng hbusy
-  induction E generalizing κ p v with
+  intro wt heng
+  induction E generalizing κ p with
   | noop => exact ⟨κ, EffectEvalStep.noop κ i⟩
   | send j target payload =>
     let κ' := match κ.engineAt target with
@@ -200,20 +199,12 @@ theorem effectEvalStep_total {κ : SystemState} {i : EngineSpec.EngIdx} (addr : 
     exact ⟨κ', EffectEvalStep.spawn κ κ' i j cfg env nodeId procSe mboxSe procAddr mboxAddr
       ⟨n, hn_mem, hn_id⟩ rfl rfl rfl rfl rfl rfl rfl⟩
   | chain e1 e2 ih1 ih2 =>
-    obtain ⟨κ', h1⟩ := ih1 wt p v heng hbusy
+    obtain ⟨κ', h1⟩ := ih1 wt p heng
     obtain ⟨p', hp'⟩ := engineAt_preserved_after_effect wt h1 heng
-    -- Mailbox isolation is not strictly needed for totality, but wt is.
-    -- We can provide a dummy isolation since it's not used by effectEvalStep_total.
     have hiso_dummy : MailboxIsolation κ := fun _ _ _ _ => .mail
     obtain ⟨wt', _⟩ := effectEvalStepPreservesInvariants _ _ _ _ h1 wt hiso_dummy
-    obtain ⟨κ'', h2⟩ := ih2 wt' p' v hp' hbusy -- status might have changed, but ih2 generalize over busy
-    -- Wait, ih2 needs hbusy for e2... 
-    -- If e1 was terminate, p'.status is terminated. 
-    -- But EffectEvalStep.terminate now handles non-busy.
-    -- Our induction hypothesis ih2: ∀ κ p v, wt → heng → hbusy → ...
-    -- We need to satisfy hbusy for ih2.
-    -- Actually, we can rephrase effectEvalStep_total to not require hbusy.
-    sorry
+    obtain ⟨κ'', h2⟩ := ih2 wt' p' hp'
+    exact ⟨κ'', EffectEvalStep.chain κ κ' κ'' i e1 e2 h1 h2⟩
 
 /-- **Progress**:
     If there is productive work, the system takes a step that is NOT S-Node. -/
@@ -227,7 +218,7 @@ theorem progress (κ : SystemState) :
   · -- Case 1: Busy Engine -> S-Process
     subst hidx; obtain ⟨i, p⟩ := se; have heng' := heng; rw [heng'] at *; cases heng'
     obtain ⟨E, hEval⟩ := evalStep_total p v hbusy
-    obtain ⟨κ', hEffect⟩ := effectEvalStep_total addr p v E wt heng hbusy
+    obtain ⟨κ', hEffect⟩ := effectEvalStep_total addr p v E wt heng
     obtain ⟨p', hp'⟩ := engineAt_preserved_after_effect wt hEffect heng
     let κ'' := κ'.updateEngineAt addr ⟨i, { p' with status := resolvePostStatus p'.status }⟩
     exact ⟨OpLabel.process, by simp, κ'',

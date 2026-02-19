@@ -33,6 +33,8 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
         exact ⟨mboxSe, by rw [key]; exact hmbox, hmboxIdx, hmboxMode⟩
       nextId_fresh := fun addr hne => by
         simp; rw [key] at hne; have := wt.nextId_fresh addr hne; omega
+      nextId_messages := fun m hm => by
+        simp; have := wt.nextId_messages m hm; omega
       nodes_exist := fun addr hne => by
         rw [key] at hne; obtain ⟨n, hn, hid⟩ := wt.nodes_exist addr hne
         refine ⟨n, List.mem_append.mpr (Or.inl hn), hid⟩
@@ -63,18 +65,25 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
         rw [engineAt_removeEngineAt_ne κ addr (κ.mailboxOf addr') hmboxNe]
         exact hmbox
       nextId_fresh := fun addr' hne => by
-        simp; rw [SystemState.engineAt, SystemState.removeEngineAt] at hne
-        -- lookup in nodes.map filter ...
-        -- If it exists in κ.removeEngineAt, it exists in κ.
-        have : κ.engineAt addr' ≠ none := by
-          intro habs; 
-          -- engineAt_removeEngineAt_ne or similar
-          sorry
-        exact wt.nextId_fresh addr' this
+        simp; rw [SystemState.removeEngineAt_nextId]
+        have hne' : κ.engineAt addr' ≠ none := by
+          by_contra h; apply hne
+          rw [engineAt_removeEngineAt_ne]
+          · exact h
+          · intro h_eq; subst h_eq
+            rw [engineAt_removeEngineAt_self]
+        exact wt.nextId_fresh addr' hne'
+      nextId_messages := fun m hm => by
+        simp; rw [SystemState.removeEngineAt_nextId]
+        exact wt.nextId_messages m (by rw [SystemState.removeEngineAt_messages] at hm; exact hm)
       nodes_exist := fun addr' hne => by
-        -- lookup in κ.removeEngineAt implies lookup in κ
-        have : κ.engineAt addr' ≠ none := sorry
-        obtain ⟨n, hn, hid⟩ := wt.nodes_exist addr' this
+        have hne' : κ.engineAt addr' ≠ none := by
+          by_contra h; apply hne
+          rw [engineAt_removeEngineAt_ne]
+          · exact h
+          · intro h_eq; subst h_eq
+            rw [engineAt_removeEngineAt_self]
+        obtain ⟨n, hn, hid⟩ := wt.nodes_exist addr' hne'
         refine ⟨_, ?_, hid⟩
         simp only [SystemState.removeEngineAt]
         apply List.mem_map.mpr
@@ -98,6 +107,12 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
       mailbox_exists := fun addr se heng hmode' =>
         wt.mailbox_exists addr se heng hmode'
       nextId_fresh := wt.nextId_fresh
+      nextId_messages := fun m hm => by
+        rw [List.mem_append] at hm
+        rcases hm with hm | hm
+        · exact wt.nextId_messages m hm
+        · rw [List.mem_singleton] at hm; subst hm
+          exact wt.nextId_fresh target (by rw [htarget]; simp)
       nodes_exist := wt.nodes_exist
     }
   -- ── M-Enqueue: deliver message, mailbox ready→busy ─────────────────────
@@ -141,6 +156,10 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
         · subst h; exact wt.nextId_fresh _ (by rw [heng]; simp)
         · rw [engineAt_updateEngineAt_ne _ _ _ _ h] at hne
           exact wt.nextId_fresh addr' hne
+      nextId_messages := fun m' hm' => by
+        simp; have hm'_old : m' ∈ κ.messages := by
+          rw [hmsg]; simp only [List.mem_append, List.mem_cons] at hm' ⊢; tauto
+        exact wt.nextId_messages m' hm'_old
       nodes_exist := fun addr' hne => by
         simp only [SystemState.withMessages_engineAt] at hne
         by_cases h : addr' = m.target
@@ -162,20 +181,11 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
     exact {
       messages_typed := fun m hm se_m hse_m => by
         simp only [SystemState.withNextId_messages, SystemState.addEngineAt_messages] at hm
+        have h_tid := wt.nextId_messages m hm
         have hne_proc : m.target ≠ ⟨nodeId, κ.nextId⟩ := by
-          intro h; subst h; have := wt.nextId_fresh ⟨nodeId, κ.nextId⟩ (by
-            -- m.target exists in messages, so it must have existed in κ.engineAt?
-            -- No, messages_typed only says IF it exists.
-            -- But isolation and well-typedness together imply messages target live engines.
-            -- Actually, messages in κ.messages existed in κ.
-            -- We need a lemma that messages only target engines that exist in the state.
-            -- Wait, my new WellTypedState doesn't require that anymore!
-            -- So hne_proc might be false if a message targets a future address.
-            -- BUT, nextId is strictly increasing. So m.target.engineId < κ.nextId.
-            -- We need an invariant: ∀ m ∈ messages, m.target.engineId < κ.nextId.
-            sorry
-          )
-        have hne_mbox : m.target ≠ κ.mailboxOf ⟨nodeId, κ.nextId⟩ := sorry
+          intro h; simp [h] at h_tid; omega
+        have hne_mbox : m.target ≠ κ.mailboxOf ⟨nodeId, κ.nextId⟩ := by
+          intro h; simp [SystemState.mailboxOf, h] at h_tid; omega
         simp only [SystemState.withNextId_engineAt] at hse_m
         rw [engineAt_addEngineAt_ne _ _ _ _ hne_mbox,
             engineAt_addEngineAt_ne _ _ _ _ hne_proc] at hse_m
@@ -230,6 +240,9 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
             obtain ⟨n, hn, hid⟩ := wt.nodes_exist addr hne_m
             refine ⟨_, ?_, hid⟩
             exact addEngineAt_node_mem κ _ _ _ (addEngineAt_node_mem κ _ _ _ ⟨n, hn, hid⟩)
+      nextId_messages := fun m hm => by
+        simp only [SystemState.withNextId_messages, SystemState.addEngineAt_messages] at hm
+        have := wt.nextId_messages m hm; simp; omega
     }
   -- ── S-Process: engine processes a message ───────────────────────────────
   | sProcess _ _ _ _ _ _ _ _ _ _ heff hresolve =>
@@ -303,6 +316,9 @@ theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
           · rw [engineAt_updateEngineAt_ne _ _ _ _ h1,
                 engineAt_updateEngineAt_ne _ _ _ _ h2] at hne_m
             exact wt.nextId_fresh addr' hne_m
+      nextId_messages := fun m hm => by
+        simp only [SystemState.updateEngineAt_messages] at hm
+        exact wt.nextId_messages m hm
       nodes_exist := fun addr' hne_m => by
         by_cases h1 : addr' = κ.mailboxOf procAddr
         · subst h1; exact wt.nodes_exist _ (by rw [hmbox]; simp)

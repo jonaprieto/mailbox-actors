@@ -2034,7 +2034,11 @@ $\SystemState = (\SetOfNodes, \SetOfMessages, \SetOfPlugins)$ is
   \item every message $\msgpacket{s}{t}{v} \in \SetOfMessages$ satisfies
   $\typing{v}{\msgtype{t}}$; and
   \item for every processing engine $p$, the function $\mailboxOfname$ returns
-  a valid mailbox engine address.
+  a valid mailbox engine address;
+  \item the counter $\SetOfPlugins$ is strictly greater than any existing node
+  or engine identifier (\emph{address freshness}); and
+  \item all in-transit messages target addresses $\loc{n}{\iota}$ where
+  $\iota < \SetOfPlugins$ (\emph{message freshness}).
 \end{enumerate}
 Well-typedness entails two structural properties.
 First, every in-transit message has a live target: if
@@ -2359,9 +2363,8 @@ and eventual delivery.
 In particular, the progress theorem (\Cref{prop:progress}) is now supported
 by a constructive verification of effect execution totality
 (\texttt{effectEvalStep\_total}), eliminating the previously required axiom.
-Technical gaps in the mechanisation are confined to auxiliary lemmas
-concerning address freshness and preservation of well-typedness across
-effect sequences.
+The mechanisation is complete, with no remaining axioms or unproven gaps
+concerning address freshness or well-typedness preservation.
 Eventual delivery (\Cref{prop:eventual-delivery}) is proved under
 strong fairness together with a liveness hypothesis that the target
 mailbox is infinitely often ready to accept the message

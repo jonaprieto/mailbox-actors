@@ -73,6 +73,9 @@ theorem updateEngineAt_preserves_invariants (κ : SystemState)
         · rw [h] at hne ⊢; exact wt.nextId_fresh addr (by rw [heng]; simp)
         · rw [engineAt_updateEngineAt_ne _ _ _ _ h] at hne
           exact wt.nextId_fresh addr' hne
+      nextId_messages := fun m hm => by
+        simp only [SystemState.updateEngineAt_messages, SystemState.updateEngineAt_nextId]
+        exact wt.nextId_messages m hm
       nodes_exist := fun addr' hne => by
         by_cases h : addr' = addr
         · subst h
@@ -148,6 +151,15 @@ theorem effectEvalStepPreservesInvariants (κ κ' : SystemState)
         mailbox_exists := fun addr' se heng' hmode' =>
           wt.mailbox_exists addr' se heng' hmode'
         nextId_fresh := wt.nextId_fresh
+        nextId_messages := fun m hm => by
+          split at hm
+          · rw [List.mem_append] at hm
+            rcases hm with hm | hm
+            · exact wt.nextId_messages m hm
+            · rw [List.mem_singleton] at hm; subst hm
+              rename_i se_target _
+              exact wt.nextId_fresh target (by rw [se_target.2]; simp)
+          · exact wt.nextId_messages m hm
         nodes_exist := wt.nodes_exist
       }
     · -- MailboxIsolation
@@ -224,6 +236,9 @@ theorem effectEvalStepPreservesInvariants (κ κ' : SystemState)
               · rw [engineAt_addEngineAt_ne _ _ _ _ hm,
                     engineAt_addEngineAt_ne _ _ _ _ hp] at hne_m
                 have := wt.nextId_fresh addr hne_m; simp; omega
+          nextId_messages := fun m hm => by
+            simp only [SystemState.addEngineAt_messages] at hm
+            have := wt.nextId_messages m hm; simp; omega
           nodes_exist := fun addr hne_m => by
             simp only [SystemState.withNextId_engineAt] at hne_m
             by_cases hp : addr = procAddr
@@ -263,6 +278,7 @@ theorem effectEvalStepPreservesInvariants (κ κ' : SystemState)
           messages_typed := wt.messages_typed,
           mailbox_exists := wt.mailbox_exists,
           nextId_fresh := fun addr hne => by simp; have := wt.nextId_fresh addr hne; omega,
+          nextId_messages := fun m hm => by simp; have := wt.nextId_messages m hm; omega,
           nodes_exist := wt.nodes_exist
         }
       · exact hiso
