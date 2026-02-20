@@ -6,6 +6,28 @@ All domain-specific types (crypto, identity, storage, network, time)
 are kept opaque so the specification is independent of concrete
 representations. Each field carries `DecidableEq` so that
 message types can derive `DecidableEq`/`BEq`.
+
+## Type categories
+
+- **Crypto** (4): `Signature`, `Ciphertext`, `Plaintext`, `Signable`
+- **Identity** (3): `ExternalIdentity`, `Backend`, `IdentityName`
+- **Evidence** (3): `SignEvidence`, `ReadEvidence`, `NameEvidence`
+- **Ordering** (5): `KVSKey`, `KVSDatum`, `TxFingerprint`, `Executable`, `ProgramState`
+- **Storage** (4): `StorageKey`, `StorageValue`, `ChunkID`, `Chunk`
+- **Network** (4): `NodeID`, `TransportAddr`, `TopicID`, `ByteString`
+- **Time** (1): `Epoch`
+
+## Abstract operations
+
+Operations are carried as fields so that engine behaviours can
+perform meaningful state transitions without fixing concrete types:
+
+- `fingerprintSucc` / `fingerprintZero` / `fingerprintLe` —
+  Gensym-based transaction ordering in the mempool worker.
+- `initProgramState` — Initialize executor program state from an executable.
+- `sign` / `decrypt_` / `encrypt_` / `verify_` —
+  Cryptographic primitives used by the Identity subsystem engines.
+- `serializeMsg` — Network serialization (identity for now).
 -/
 
 namespace MailboxActors.Examples.Anoma
@@ -45,6 +67,18 @@ structure AnomaTypes where
   ByteString      : Type
   -- Time
   Epoch           : Type
+  -- Operations for Ordering (gensym-based fingerprinting)
+  fingerprintSucc  : TxFingerprint → TxFingerprint
+  fingerprintZero  : TxFingerprint
+  fingerprintLe    : TxFingerprint → TxFingerprint → Bool
+  initProgramState : Executable → ProgramState
+  -- Operations for Identity (crypto primitives)
+  sign             : Backend → Signable → Signature
+  decrypt_         : Backend → Ciphertext → Plaintext
+  encrypt_         : Backend → ExternalIdentity → Plaintext → Ciphertext
+  verify_          : Backend → ExternalIdentity → Signable → Signature → Bool
+  -- Operations for Network
+  serializeMsg     : ByteString → ByteString
   -- DecidableEq instances for all types
   [decEqSignature       : DecidableEq Signature]
   [decEqCiphertext      : DecidableEq Ciphertext]

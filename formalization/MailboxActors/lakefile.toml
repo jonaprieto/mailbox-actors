@@ -14,5 +14,10 @@ name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.28.0-rc1"
 
+[[require]]
+name = "verso"
+scope = "leanprover"
+rev = "v4.28.0-rc1"
+
 [[lean_lib]]
 name = "MailboxActors"

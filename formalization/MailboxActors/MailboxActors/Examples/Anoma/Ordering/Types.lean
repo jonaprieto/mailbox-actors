@@ -1,72 +1,32 @@
-import MailboxActors.Examples.Anoma.EngIdx
+import MailboxActors.Examples.Anoma.Ordering.TxOrdering.Types
+import MailboxActors.Examples.Anoma.Ordering.Shard.Types
+import MailboxActors.Examples.Anoma.Ordering.Executor.Types
 
 /-!
-# Ordering Subsystem — Message, Config, and State Types
+# Ordering Subsystem — Types
 
-Engines: `txOrdering`, `shard`, `executor`.
+Re-exports all type definitions for the three Ordering subsystem engines.
+
+## Architecture
+
+The ordering subsystem implements transaction ordering using
+gensym-based fingerprinting and DAG-based multi-version concurrency
+control (MVCC).
+
+### Transaction lifecycle
+
+1. A `submitTx` message arrives at the **TxOrdering** (mempool worker) engine.
+2. The worker assigns a unique fingerprint via the gensym counter,
+   adds the transaction to `pendingLocks`, and spawns an **Executor** engine.
+3. The worker sends `acquireLock` messages to the relevant **Shard** engines.
+4. Each shard adds a `KeyAccess` entry to its DAG and replies with `lockAcquired`.
+5. The executor receives `readReply` messages from shards as data becomes available.
+6. When the executor completes, it sends `executorFinished` to the mempool worker.
+
+### Key types
+
+- `ReadStatus` / `WriteStatus` — Track per-key access states in the shard DAG.
+- `KeyAccess` — Combined read/write status for a single key at a given transaction.
+- `TxOrderingState.nextFingerprint` — Gensym counter for ordering.
+- `ExecutorCfg` — Access rights (lazy/eager reads, will/may writes).
 -/
-
-namespace MailboxActors.Examples.Anoma.Ordering
-
-variable (A : AnomaTypes)
-
--- ============================================================================
--- § TxOrdering (mempool worker)
--- ============================================================================
-
-/-- Messages for the transaction-ordering engine. -/
-inductive TxOrderingMsg where
-  | submitTx         : A.TxFingerprint → A.Executable → TxOrderingMsg
-  | lockAcquired     : A.TxFingerprint → A.KVSKey → TxOrderingMsg
-  | executorFinished  : A.TxFingerprint → TxOrderingMsg
-  deriving DecidableEq, BEq
-
-/-- Configuration for the transaction-ordering engine. -/
-structure TxOrderingCfg where
-  keyToShard : A.KVSKey → Nat
-
-/-- Local state for the transaction-ordering engine. -/
-structure TxOrderingState where
-  nextFingerprint : A.TxFingerprint
-
--- ============================================================================
--- § Shard
--- ============================================================================
-
-/-- Messages for the shard engine. -/
-inductive ShardMsg where
-  | acquireLock   : A.TxFingerprint → A.KVSKey → ShardMsg
-  | readRequest   : A.TxFingerprint → A.KVSKey → ShardMsg
-  | write         : A.TxFingerprint → A.KVSKey → A.KVSDatum → ShardMsg
-  | updateSeenAll : A.TxFingerprint → ShardMsg
-  deriving DecidableEq, BEq
-
-/-- Configuration for the shard engine. -/
-abbrev ShardCfg := Unit
-
-/-- Local state for the shard engine.
-    The shard manages a multi-version store keyed by transaction fingerprint. -/
-structure ShardState where
-  heardAllReads : A.TxFingerprint
-  heardAllWrites : A.TxFingerprint
-
--- ============================================================================
--- § Executor
--- ============================================================================
-
-/-- Messages for the executor engine. -/
-inductive ExecutorMsg where
-  | readReply : A.KVSKey → A.KVSDatum → ExecutorMsg
-  deriving DecidableEq, BEq
-
-/-- Configuration for the executor engine.
-    Fixed at spawn time by the txOrdering engine. -/
-structure ExecutorCfg where
-  fingerprint : A.TxFingerprint
-  executable : A.Executable
-
-/-- Local state for the executor engine. -/
-structure ExecutorState where
-  programState : A.ProgramState
-
-end MailboxActors.Examples.Anoma.Ordering

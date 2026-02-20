@@ -7,8 +7,21 @@ import MailboxActors.Examples.Anoma.Infra.Types
 /-!
 # Anoma Engine Specification
 
-Defines the type families `MsgType`, `CfgData`, `LocalState`
-and the `EngineSpec` instance for `AnomaIdx`.
+Defines the three type families `MsgType`, `CfgData`, `LocalState` mapping
+each `AnomaIdx` to its concrete types, and the `EngineSpec` instance.
+
+## Type families
+
+- `AnomaSpec.MsgType A` — Message type for each engine. All constructors
+  carry opaque `AnomaTypes` fields, ensuring representation independence.
+- `AnomaSpec.CfgData A` — Immutable configuration set at engine creation.
+- `AnomaSpec.LocalState A` — Mutable local state updated by actions.
+
+## EngineSpec instance
+
+`anomaEngineSpec A` provides the `EngineSpec` instance used by all
+Behaviour files. It uses trivial mailbox semantics (every message is
+considered present, removal is a no-op) and same-type `unwrap`.
 -/
 
 namespace MailboxActors.Examples.Anoma
