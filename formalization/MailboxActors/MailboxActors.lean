@@ -31,6 +31,7 @@ import MailboxActors.Properties.Delivery
 
 -- Examples
 import MailboxActors.Examples.CausalMailbox
+import MailboxActors.Examples.Anoma.Anoma
 
 /-!
 # Mailbox Actors — Lean 4 Formalization
@@ -45,5 +46,5 @@ first-class actors in actor systems, formalized in dependent type theory."
 - `System.*`         — Node, SystemState, WellTypedState
 - `Semantics.*`      — Judgment forms and all 18 operational rules
 - `Properties.*`     — Metatheoretic properties (5 propositions)
-- `Examples.*`       — Concrete instantiations (CausalMailbox)
+- `Examples.*`       — Concrete instantiations (CausalMailbox, Anoma)
 -/
