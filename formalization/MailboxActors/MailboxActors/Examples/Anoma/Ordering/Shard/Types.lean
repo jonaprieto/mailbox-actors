@@ -1,4 +1,5 @@
 import MailboxActors.Examples.Anoma.EngIdx
+import MailboxActors.Basic
 
 /-!
 # Shard Engine — Types
@@ -56,16 +57,19 @@ structure KeyAccess where
 /-- Messages for the shard engine.
 
 - `acquireLock`: The mempool worker requests a lock for a transaction
-  on a key. The shard adds an entry to its DAG and responds with
-  `lockAcquired`.
+  on a key. Carries the worker's address so the shard can reply with
+  `TxOrderingMsg.lockAcquired`. The shard adds an entry to its DAG
+  and sends the confirmation back.
 - `readRequest`: An executor requests the current value of a key at
-  a given transaction fingerprint.
+  a given transaction fingerprint. Carries the executor's address so
+  the shard can reply with `ExecutorMsg.readReply` when the value is
+  available.
 - `write`: An executor writes a value for a key at a given fingerprint.
 - `updateSeenAll`: The mempool worker updates the barrier watermarks,
   allowing the shard to garbage-collect old DAG entries. -/
 inductive ShardMsg where
-  | acquireLock : A.TxFingerprint → A.KVSKey → ShardMsg
-  | readRequest : A.TxFingerprint → A.KVSKey → ShardMsg
+  | acquireLock : A.TxFingerprint → A.KVSKey → MailboxActors.Address → ShardMsg
+  | readRequest : A.TxFingerprint → A.KVSKey → MailboxActors.Address → ShardMsg
   | write : A.TxFingerprint → A.KVSKey → A.KVSDatum → ShardMsg
   | updateSeenAll : A.TxFingerprint → ShardMsg
   deriving DecidableEq, BEq

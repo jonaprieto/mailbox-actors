@@ -2,18 +2,14 @@ import MailboxActors.Engine.Behaviour
 import MailboxActors.Examples.Anoma.Spec
 
 /-!
-# Commitment Engine -- Behaviour
+# Commitment Engine — Behaviour
 
 ## Sign Request
 
-When `signReq` arrives with signable data, the commitment engine should
-compute the signature using `A.sign inp.config.cfg.backend w` and send
-a `CommitmentMsg.signReply` back to the requester.
-
-Currently the action is `Effect.noop` because the framework's `GuardInput`
-does not carry the sender address, so we cannot construct the
-`Effect.send` target. The cryptographic backend is available via
-`inp.config.cfg.backend`.
+When `signReq` arrives with signable data and a reply address, the
+commitment engine computes the signature using `A.sign backend signable`
+and sends the result as `IdentityMsg.signResult` to the identity
+manager via cross-type `Effect.send .identity`.
 -/
 
 namespace MailboxActors.Examples.Anoma.Identity
@@ -27,27 +23,35 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 -- § Commitment Behaviour
 -- ============================================================================
 
-/-- Guard for `signReq` messages. -/
+/-- Guard for `signReq` messages. Extracts the signable data and
+    the identity manager's reply address. -/
 @[simp] def commitmentSignGuard
     (inp : @GuardInput (S A) AnomaIdx.commitment) :
-    Option A.Signable :=
+    Option (A.Signable × Address) :=
   match @GuardInput.msg (S A) _ inp with
-  | .signReq s => some s
+  | .signReq s replyTo => some (s, replyTo)
   | _ => none
 
-/-- Action for `signReq`: intended to compute `A.sign backend signable`
-    and reply with `CommitmentMsg.signReply`. Currently `noop` because
-    the sender address is not available in `GuardInput`. -/
+/-- Action for `signReq`: compute `A.sign backend signable` and send
+    the signature to the identity manager as `IdentityMsg.signResult`.
+
+    The backend is accessed from the engine's configuration
+    (`inp.config.cfg.backend`). -/
 def commitmentSignAction
-    (w : A.Signable)
+    (w : A.Signable × Address)
     (inp : @GuardInput (S A) AnomaIdx.commitment)
     (_ : commitmentSignGuard A inp = some w) :
     @Effect (S A) AnomaIdx.commitment :=
-  letI := S A; Effect.noop
+  letI := S A
+  let signable := w.1
+  let replyTo := w.2
+  let backend := inp.config.cfg.backend
+  let sig := A.sign backend signable
+  Effect.send AnomaIdx.identity replyTo (.signResult sig)
 
 def commitmentActions : @Behaviour (S A) AnomaIdx.commitment :=
   letI := S A
-  [ { Witness := A.Signable
+  [ { Witness := A.Signable × Address
       guard := commitmentSignGuard A
       action := commitmentSignAction A } ]
 

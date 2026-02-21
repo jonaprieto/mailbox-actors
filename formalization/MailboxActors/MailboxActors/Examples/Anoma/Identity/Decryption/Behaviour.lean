@@ -2,18 +2,14 @@ import MailboxActors.Engine.Behaviour
 import MailboxActors.Examples.Anoma.Spec
 
 /-!
-# Decryption Engine -- Behaviour
+# Decryption Engine — Behaviour
 
 ## Decrypt Request
 
-When `decryptReq` arrives with ciphertext, the decryption engine should
-compute `A.decrypt_ inp.config.cfg.backend ct` and reply with
-`DecryptionMsg.decryptReply`. The cryptographic backend is available
-via `inp.config.cfg.backend`.
-
-Currently the action is `Effect.noop` because the framework's `GuardInput`
-does not carry the sender address, so we cannot construct the
-`Effect.send` target.
+When `decryptReq` arrives with ciphertext and a reply address, the
+decryption engine computes `A.decrypt_ backend ciphertext` and sends
+the result as `IdentityMsg.decryptResult` to the identity manager
+via cross-type `Effect.send .identity`.
 -/
 
 namespace MailboxActors.Examples.Anoma.Identity
@@ -27,28 +23,33 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 -- § Decryption Behaviour
 -- ============================================================================
 
-/-- Guard for `decryptReq` messages. -/
+/-- Guard for `decryptReq` messages. Extracts the ciphertext and
+    the identity manager's reply address. -/
 @[simp] def decryptionGuard
     (inp : @GuardInput (S A) AnomaIdx.decryption) :
-    Option A.Ciphertext :=
+    Option (A.Ciphertext × Address) :=
   match @GuardInput.msg (S A) _ inp with
-  | .decryptReq ct => some ct
+  | .decryptReq ct replyTo => some (ct, replyTo)
   | _ => none
 
-/-- Action for `decryptReq`: intended to compute
-    `A.decrypt_ backend ciphertext` and reply with
-    `DecryptionMsg.decryptReply`. Currently `noop` because the sender
-    address is not available in `GuardInput`. -/
+/-- Action for `decryptReq`: compute `A.decrypt_ backend ciphertext`
+    and send the plaintext to the identity manager as
+    `IdentityMsg.decryptResult`. -/
 def decryptionAction
-    (w : A.Ciphertext)
+    (w : A.Ciphertext × Address)
     (inp : @GuardInput (S A) AnomaIdx.decryption)
     (_ : decryptionGuard A inp = some w) :
     @Effect (S A) AnomaIdx.decryption :=
-  letI := S A; Effect.noop
+  letI := S A
+  let ct := w.1
+  let replyTo := w.2
+  let backend := inp.config.cfg.backend
+  let pt := A.decrypt_ backend ct
+  Effect.send AnomaIdx.identity replyTo (.decryptResult pt)
 
 def decryptionActions : @Behaviour (S A) AnomaIdx.decryption :=
   letI := S A
-  [ { Witness := A.Ciphertext
+  [ { Witness := A.Ciphertext × Address
       guard := decryptionGuard A
       action := decryptionAction A } ]
 

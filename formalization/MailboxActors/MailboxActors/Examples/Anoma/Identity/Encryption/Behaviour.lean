@@ -2,19 +2,18 @@ import MailboxActors.Engine.Behaviour
 import MailboxActors.Examples.Anoma.Spec
 
 /-!
-# Encryption Engine -- Behaviour
+# Encryption Engine — Behaviour
 
 ## Encrypt Request
 
-When `encryptReq` arrives with `(eid, plaintext, useRF)`, the encryption
-engine should compute `A.encrypt_ inp.config.cfg.backend eid plaintext`
-and reply with `EncryptionMsg.encryptReply ciphertext`. If `useRF` is
-true, the engine should also consult the reads-for delegation engine
-to resolve the actual target identity before encrypting.
+When `encryptReq` arrives with `(eid, plaintext, useRF, replyTo)`,
+the encryption engine computes `A.encrypt_ backend eid plaintext`
+and sends the result as `IdentityMsg.encryptResult` to the identity
+manager via cross-type `Effect.send .identity`.
 
-Currently the action is `Effect.noop` because the framework's `GuardInput`
-does not carry the sender address, so we cannot construct the
-`Effect.send` target.
+If `useRF` is true, the engine should also consult the reads-for
+delegation engine to resolve the actual target identity before
+encrypting. This delegation-aware encryption is left abstract.
 -/
 
 namespace MailboxActors.Examples.Anoma.Identity
@@ -28,28 +27,34 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 -- § Encryption Behaviour
 -- ============================================================================
 
-/-- Guard for `encryptReq` messages. -/
+/-- Guard for `encryptReq` messages. Extracts the target identity,
+    plaintext, reads-for flag, and reply address. -/
 @[simp] def encryptionGuard
     (inp : @GuardInput (S A) AnomaIdx.encryption) :
-    Option (A.ExternalIdentity × A.Plaintext × Bool) :=
+    Option (A.ExternalIdentity × A.Plaintext × Bool × Address) :=
   match @GuardInput.msg (S A) _ inp with
-  | .encryptReq eid pt useRF => some (eid, pt, useRF)
+  | .encryptReq eid pt useRF replyTo => some (eid, pt, useRF, replyTo)
   | _ => none
 
-/-- Action for `encryptReq`: intended to compute
-    `A.encrypt_ backend eid plaintext` and reply with
-    `EncryptionMsg.encryptReply`. Currently `noop` because the sender
-    address is not available in `GuardInput`. -/
+/-- Action for `encryptReq`: compute `A.encrypt_ backend eid plaintext`
+    and send the ciphertext to the identity manager as
+    `IdentityMsg.encryptResult`. -/
 def encryptionAction
-    (w : A.ExternalIdentity × A.Plaintext × Bool)
+    (w : A.ExternalIdentity × A.Plaintext × Bool × Address)
     (inp : @GuardInput (S A) AnomaIdx.encryption)
     (_ : encryptionGuard A inp = some w) :
     @Effect (S A) AnomaIdx.encryption :=
-  letI := S A; Effect.noop
+  letI := S A
+  let eid := w.1
+  let pt := w.2.1
+  let replyTo := w.2.2.2
+  let backend := inp.config.cfg.backend
+  let ct := A.encrypt_ backend eid pt
+  Effect.send AnomaIdx.identity replyTo (.encryptResult ct)
 
 def encryptionActions : @Behaviour (S A) AnomaIdx.encryption :=
   letI := S A
-  [ { Witness := A.ExternalIdentity × A.Plaintext × Bool
+  [ { Witness := A.ExternalIdentity × A.Plaintext × Bool × Address
       guard := encryptionGuard A
       action := encryptionAction A } ]
 

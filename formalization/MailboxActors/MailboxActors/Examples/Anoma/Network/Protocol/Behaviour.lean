@@ -5,11 +5,26 @@ import MailboxActors.Examples.Anoma.Spec
 # Protocol Engine — Behaviour
 
 The protocol engine handles protocol-specific connection management
-(e.g., QUIC, TLS, TCP).  It spawns connection engines for individual
+(e.g., QUIC, TLS, TCP). It spawns connection engines for individual
 transport connections.
 
-All actions are currently no-ops; the guards exist to match every
-message constructor so that the behaviour is total.
+## openConnection
+
+When `openConnection` arrives with a transport address, the protocol
+engine spawns a new connection engine for that address with initial
+`connecting` status.
+
+## incomingConnection
+
+When `incomingConnection` arrives, the protocol engine similarly
+spawns a connection engine to handle the incoming connection.
+
+## send
+
+When `send` arrives with a transport address and payload, the protocol
+engine should forward the data to the appropriate connection engine.
+Currently noop because the connection engine's address is not available
+without a connection table in the protocol state.
 -/
 
 namespace MailboxActors.Examples.Anoma.Network
@@ -54,23 +69,34 @@ def protocolSendGuard
 -- § Actions
 -- ============================================================================
 
-/-- Action for `openConnection`: no-op. -/
+/-- Action for `openConnection`: spawn a new connection engine for the
+    given transport address with `connecting` status and sequence
+    number 0. -/
 def protocolOpenConnectionAction
     (w : A.TransportAddr)
     (inp : @GuardInput (S A) AnomaIdx.protocol)
     (_ : protocolOpenConnectionGuard A inp = some w) :
     @Effect (S A) AnomaIdx.protocol :=
-  letI := S A; Effect.noop
+  letI := S A
+  Effect.spawn AnomaIdx.connection
+    ({ remoteAddr := w } : ConnectionCfg A)
+    ({ sequenceNumber := 0, status := .connecting } : ConnectionState)
 
-/-- Action for `incomingConnection`: no-op. -/
+/-- Action for `incomingConnection`: spawn a connection engine for the
+    incoming transport address with `connecting` status. -/
 def protocolIncomingConnectionAction
     (w : A.TransportAddr)
     (inp : @GuardInput (S A) AnomaIdx.protocol)
     (_ : protocolIncomingConnectionGuard A inp = some w) :
     @Effect (S A) AnomaIdx.protocol :=
-  letI := S A; Effect.noop
+  letI := S A
+  Effect.spawn AnomaIdx.connection
+    ({ remoteAddr := w } : ConnectionCfg A)
+    ({ sequenceNumber := 0, status := .connecting } : ConnectionState)
 
-/-- Action for `send`: no-op. -/
+/-- Action for `send`: noop. Forwarding to the appropriate connection
+    engine requires a connection table mapping transport addresses to
+    connection engine addresses, which is left abstract. -/
 def protocolSendAction
     (w : A.TransportAddr × A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.protocol)

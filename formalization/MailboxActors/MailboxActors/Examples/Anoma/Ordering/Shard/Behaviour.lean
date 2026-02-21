@@ -6,9 +6,10 @@ import MailboxActors.Examples.Anoma.Spec
 
 ## Lock Acquisition
 
-When `acquireLock` arrives, the shard adds a `KeyAccess` entry to its DAG
-with pending read/write status, and sends `lockAcquired` back to the
-mempool worker.
+When `acquireLock` arrives from the mempool worker, the shard:
+1. Adds a `KeyAccess` entry to its DAG with pending read/write status.
+2. Sends `TxOrderingMsg.lockAcquired` back to the worker via
+   cross-type `Effect.send`.
 
 ## Write Handling
 
@@ -17,8 +18,12 @@ entry to `committed` status with the provided datum.
 
 ## Read Request Handling
 
-When `readRequest` arrives, the shard looks for the most recent
-preceding write and sends the value if ready.
+When `readRequest` arrives from an executor, the shard searches its
+DAG for the most recent committed write at a preceding fingerprint.
+- If found: marks the read as `fulfilled` and sends
+  `ExecutorMsg.readReply` to the executor.
+- If not found: marks the read as `pending` (to be fulfilled when
+  the preceding write commits).
 
 ## Watermark Updates
 
@@ -37,47 +42,93 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 -- § Shard Behaviour
 -- ============================================================================
 
-/-- Guard for `acquireLock` messages. -/
+/-- Guard for `acquireLock` messages. Extracts the fingerprint, key,
+    and mempool worker address. -/
 @[simp] def shardAcquireLockGuard
     (inp : @GuardInput (S A) AnomaIdx.shard) :
-    Option (A.TxFingerprint × A.KVSKey) :=
+    Option (A.TxFingerprint × A.KVSKey × Address) :=
   match @GuardInput.msg (S A) _ inp with
-  | .acquireLock fp key => some (fp, key)
+  | .acquireLock fp key worker => some (fp, key, worker)
   | _ => none
 
 /-- Action for `acquireLock`: add a DAG entry with pending read/write
-    status. This records the transaction's access to the key. -/
+    status and send `lockAcquired` back to the mempool worker.
+
+    Uses cross-type `Effect.send` to deliver a `TxOrderingMsg` to
+    the worker's address. -/
 def shardAcquireLockAction
-    (w : A.TxFingerprint × A.KVSKey)
+    (w : A.TxFingerprint × A.KVSKey × Address)
     (inp : @GuardInput (S A) AnomaIdx.shard)
     (_ : shardAcquireLockGuard A inp = some w) :
     @Effect (S A) AnomaIdx.shard :=
   letI := S A
   let env := inp.env
   let st := env.localState
+  let fp := w.1
+  let key := w.2.1
+  let worker := w.2.2
   let newAccess : KeyAccess A :=
     { readStatus := some .pending
       writeStatus := some .pending }
-  Effect.update { env with
-    localState := { st with
-      keyAccesses := st.keyAccesses ++ [(w.2, w.1, newAccess)] } }
+  Effect.chain
+    (Effect.update { env with
+      localState := { st with
+        keyAccesses := st.keyAccesses ++ [(key, fp, newAccess)] } })
+    (Effect.send AnomaIdx.txOrdering worker (.lockAcquired fp key))
 
-/-- Guard for `readRequest` messages. -/
+/-- Guard for `readRequest` messages. Extracts the fingerprint, key,
+    and executor address. -/
 @[simp] def shardReadRequestGuard
     (inp : @GuardInput (S A) AnomaIdx.shard) :
-    Option (A.TxFingerprint × A.KVSKey) :=
+    Option (A.TxFingerprint × A.KVSKey × Address) :=
   match @GuardInput.msg (S A) _ inp with
-  | .readRequest fp key => some (fp, key)
+  | .readRequest fp key executor => some (fp, key, executor)
   | _ => none
 
-/-- Action for `readRequest`: look up the key in the DAG and
-    attempt to fulfill the read from a preceding write. -/
+/-- Action for `readRequest`: search the DAG for the most recent
+    committed write for the given key at a preceding fingerprint.
+
+    - If a committed value is found, the read is marked `fulfilled`
+      and `ExecutorMsg.readReply` is sent to the executor.
+    - If no preceding write exists yet, the read is marked `pending`. -/
 def shardReadRequestAction
-    (w : A.TxFingerprint × A.KVSKey)
+    (w : A.TxFingerprint × A.KVSKey × Address)
     (inp : @GuardInput (S A) AnomaIdx.shard)
     (_ : shardReadRequestGuard A inp = some w) :
     @Effect (S A) AnomaIdx.shard :=
-  letI := S A; Effect.noop
+  letI := S A
+  let env := inp.env
+  let st := env.localState
+  let fp := w.1
+  let key := w.2.1
+  let executorAddr := w.2.2
+  -- Find the most recent committed write for this key preceding fp
+  let precedingWrite := st.keyAccesses.foldl (init := (none : Option A.KVSDatum))
+    fun acc entry =>
+      if entry.1 == key && !(entry.2.1 == fp) && A.fingerprintLe entry.2.1 fp then
+        match entry.2.2.writeStatus with
+        | some (.committed datum) => some datum
+        | _ => acc
+      else acc
+  match precedingWrite with
+  | some datum =>
+    -- Value available: mark read as fulfilled and send to executor
+    Effect.chain
+      (Effect.update { env with
+        localState := { st with
+          keyAccesses := st.keyAccesses.map fun entry =>
+            if entry.1 == key && entry.2.1 == fp then
+              (entry.1, entry.2.1, { entry.2.2 with readStatus := some .fulfilled })
+            else entry } })
+      (Effect.send AnomaIdx.executor executorAddr (.readReply key datum))
+  | none =>
+    -- No preceding write yet: mark read as pending
+    Effect.update { env with
+      localState := { st with
+        keyAccesses := st.keyAccesses.map fun entry =>
+          if entry.1 == key && entry.2.1 == fp then
+            (entry.1, entry.2.1, { entry.2.2 with readStatus := some .pending })
+          else entry } }
 
 /-- Guard for `write` messages. -/
 @[simp] def shardWriteGuard
@@ -88,8 +139,7 @@ def shardReadRequestAction
   | _ => none
 
 /-- Action for `write`: update the DAG entry for the given key and
-    fingerprint to `committed` status with the provided datum.
-    Then check for any pending reads that can now be fulfilled. -/
+    fingerprint to `committed` status with the provided datum. -/
 def shardWriteAction
     (w : A.TxFingerprint × A.KVSKey × A.KVSDatum)
     (inp : @GuardInput (S A) AnomaIdx.shard)
@@ -135,10 +185,10 @@ def shardUpdateSeenAllAction
 
 def shardActions : @Behaviour (S A) AnomaIdx.shard :=
   letI := S A
-  [ { Witness := A.TxFingerprint × A.KVSKey
+  [ { Witness := A.TxFingerprint × A.KVSKey × Address
       guard := shardAcquireLockGuard A
       action := shardAcquireLockAction A }
-  , { Witness := A.TxFingerprint × A.KVSKey
+  , { Witness := A.TxFingerprint × A.KVSKey × Address
       guard := shardReadRequestGuard A
       action := shardReadRequestAction A }
   , { Witness := A.TxFingerprint × A.KVSKey × A.KVSDatum

@@ -1,4 +1,5 @@
 import MailboxActors.Examples.Anoma.EngIdx
+import MailboxActors.Basic
 
 /-!
 # Decryption Engine — Types
@@ -6,6 +7,10 @@ import MailboxActors.Examples.Anoma.EngIdx
 The decryption engine decrypts ciphertext using a backend
 cryptographic provider. Each decryption engine is associated
 with a single identity.
+
+When `decryptReq` arrives, the engine computes
+`A.decrypt_ backend ciphertext` and sends the result as
+`IdentityMsg.decryptResult` to the identity manager at `replyTo`.
 -/
 
 namespace MailboxActors.Examples.Anoma.Identity
@@ -13,10 +18,11 @@ namespace MailboxActors.Examples.Anoma.Identity
 variable (A : AnomaTypes)
 
 /-- Messages for the decryption engine.
-- `decryptReq`: Request to decrypt ciphertext.
+- `decryptReq`: Request to decrypt ciphertext. Carries `replyTo`
+  (the identity manager's address) for cross-type reply.
 - `decryptReply`: Response with the decrypted plaintext. -/
 inductive DecryptionMsg where
-  | decryptReq : A.Ciphertext → DecryptionMsg
+  | decryptReq : A.Ciphertext → MailboxActors.Address → DecryptionMsg
   | decryptReply : A.Plaintext → DecryptionMsg
   deriving DecidableEq, BEq
 

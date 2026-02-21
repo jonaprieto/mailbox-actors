@@ -24,14 +24,23 @@ inductive Capability where
 
 /-- Messages for the identity-management engine.
 - `generateReq`: Request to generate a new identity with given backend and capabilities.
+  The manager spawns commitment/decryption engines based on the capability.
 - `generateReply`: Response with the generated external identity.
 - `deleteReq`: Request to delete an identity.
-- `deleteReply`: Confirmation of deletion. -/
+- `deleteReply`: Confirmation of deletion.
+- `signResult`: Signature result forwarded from a commitment sub-engine.
+- `decryptResult`: Decryption result forwarded from a decryption sub-engine.
+- `verifyResult`: Verification result forwarded from a verification sub-engine.
+- `encryptResult`: Encryption result forwarded from an encryption sub-engine. -/
 inductive IdentityMsg where
   | generateReq : A.Backend → Capability → IdentityMsg
   | generateReply : A.ExternalIdentity → IdentityMsg
   | deleteReq : A.ExternalIdentity → IdentityMsg
   | deleteReply : Bool → IdentityMsg
+  | signResult : A.Signature → IdentityMsg
+  | decryptResult : A.Plaintext → IdentityMsg
+  | verifyResult : Bool → IdentityMsg
+  | encryptResult : A.Ciphertext → IdentityMsg
   deriving DecidableEq, BEq
 
 abbrev IdentityCfg := Unit

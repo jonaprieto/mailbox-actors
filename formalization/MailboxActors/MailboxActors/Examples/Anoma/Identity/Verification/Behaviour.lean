@@ -2,19 +2,18 @@ import MailboxActors.Engine.Behaviour
 import MailboxActors.Examples.Anoma.Spec
 
 /-!
-# Verification Engine -- Behaviour
+# Verification Engine — Behaviour
 
 ## Verify Request
 
-When `verifyReq` arrives with `(eid, signable, signature, useSF)`, the
-verification engine should compute
-`A.verify_ inp.config.cfg.backend eid signable signature` and reply
-with `VerificationMsg.verifyReply result`. If `useSF` is true, the engine
-should also consult the signs-for delegation engine before replying.
+When `verifyReq` arrives with `(eid, signable, signature, useSF, replyTo)`,
+the verification engine computes
+`A.verify_ backend eid signable signature` and sends the result as
+`IdentityMsg.verifyResult` to the identity manager.
 
-Currently the action is `Effect.noop` because the framework's `GuardInput`
-does not carry the sender address, so we cannot construct the
-`Effect.send` target.
+If `useSF` is true, the engine should also consult the signs-for
+delegation engine before replying. This delegation-aware verification
+is left abstract (the direct verification result is sent regardless).
 -/
 
 namespace MailboxActors.Examples.Anoma.Identity
@@ -28,28 +27,35 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 -- § Verification Behaviour
 -- ============================================================================
 
-/-- Guard for `verifyReq` messages. -/
+/-- Guard for `verifyReq` messages. Extracts the external identity,
+    signable data, signature, signs-for flag, and reply address. -/
 @[simp] def verificationGuard
     (inp : @GuardInput (S A) AnomaIdx.verification) :
-    Option (A.ExternalIdentity × A.Signable × A.Signature × Bool) :=
+    Option (A.ExternalIdentity × A.Signable × A.Signature × Bool × Address) :=
   match @GuardInput.msg (S A) _ inp with
-  | .verifyReq eid s sig useSF => some (eid, s, sig, useSF)
+  | .verifyReq eid s sig useSF replyTo => some (eid, s, sig, useSF, replyTo)
   | _ => none
 
-/-- Action for `verifyReq`: intended to compute
-    `A.verify_ backend eid signable signature` and reply with
-    `VerificationMsg.verifyReply`. Currently `noop` because the sender
-    address is not available in `GuardInput`. -/
+/-- Action for `verifyReq`: compute `A.verify_ backend eid signable sig`
+    and send the result to the identity manager as
+    `IdentityMsg.verifyResult`. -/
 def verificationAction
-    (w : A.ExternalIdentity × A.Signable × A.Signature × Bool)
+    (w : A.ExternalIdentity × A.Signable × A.Signature × Bool × Address)
     (inp : @GuardInput (S A) AnomaIdx.verification)
     (_ : verificationGuard A inp = some w) :
     @Effect (S A) AnomaIdx.verification :=
-  letI := S A; Effect.noop
+  letI := S A
+  let eid := w.1
+  let signable := w.2.1
+  let sig := w.2.2.1
+  let replyTo := w.2.2.2.2
+  let backend := inp.config.cfg.backend
+  let result := A.verify_ backend eid signable sig
+  Effect.send AnomaIdx.identity replyTo (.verifyResult result)
 
 def verificationActions : @Behaviour (S A) AnomaIdx.verification :=
   letI := S A
-  [ { Witness := A.ExternalIdentity × A.Signable × A.Signature × Bool
+  [ { Witness := A.ExternalIdentity × A.Signable × A.Signature × Bool × Address
       guard := verificationGuard A
       action := verificationAction A } ]
 
