@@ -21,3 +21,10 @@ rev = "v4.28.0-rc1"
 
 [[lean_lib]]
 name = "MailboxActors"
+
+[[lean_lib]]
+name = "Spec"
+
+[[lean_exe]]
+name = "generate-spec"
+root = "GenerateSpec"
