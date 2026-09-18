@@ -23,7 +23,8 @@ lemma guardEvalStep_det
     {E₁ E₂ : Effect i}
     (h₁ : GuardEvalStep i p ga v E₁)
     (h₂ : GuardEvalStep i p ga v E₂)
-    : E₁ = E₂ := by
+    : E₁ = E₂
+    := by
   cases h₁ with
   | guardMatch inp₁ w₁ hg₁ _ hinp₁ =>
     subst hinp₁
@@ -50,7 +51,8 @@ theorem effectDeterminism
     (E₁ E₂ : Effect i)
     : EvalStep i p v E₁ →
       EvalStep i p v E₂ →
-      E₁ = E₂ := by
+      E₁ = E₂
+    := by
   intro h₁ h₂
   cases h₁ with
   | guardStrategy ga₁ _ _ hga₁mem hge₁ hall₁ =>

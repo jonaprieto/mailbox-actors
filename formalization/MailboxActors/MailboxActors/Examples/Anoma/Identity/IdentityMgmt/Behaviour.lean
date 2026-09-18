@@ -57,7 +57,8 @@ def identityGenerateAction
     (w : A.Backend × Capability)
     (inp : @GuardInput (S A) AnomaIdx.identity)
     (_ : identityGenerateGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.identity :=
+    : @Effect (S A) AnomaIdx.identity
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -99,7 +100,8 @@ def identityDeleteAction
     (w : A.ExternalIdentity)
     (inp : @GuardInput (S A) AnomaIdx.identity)
     (_ : identityDeleteGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.identity :=
+    : @Effect (S A) AnomaIdx.identity
+    :=
   letI := S A; Effect.noop
 
 /-- Guard for `signResult` messages from commitment sub-engines. -/
@@ -116,7 +118,8 @@ def identitySignResultAction
     (w : A.Signature)
     (inp : @GuardInput (S A) AnomaIdx.identity)
     (_ : identitySignResultGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.identity :=
+    : @Effect (S A) AnomaIdx.identity
+    :=
   letI := S A; Effect.noop
 
 /-- Guard for `decryptResult` messages from decryption sub-engines. -/
@@ -133,7 +136,8 @@ def identityDecryptResultAction
     (w : A.Plaintext)
     (inp : @GuardInput (S A) AnomaIdx.identity)
     (_ : identityDecryptResultGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.identity :=
+    : @Effect (S A) AnomaIdx.identity
+    :=
   letI := S A; Effect.noop
 
 /-- Guard for `verifyResult` messages from verification sub-engines. -/
@@ -151,7 +155,8 @@ def identityVerifyResultAction
     (w : Bool)
     (inp : @GuardInput (S A) AnomaIdx.identity)
     (_ : identityVerifyResultGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.identity :=
+    : @Effect (S A) AnomaIdx.identity
+    :=
   letI := S A; Effect.noop
 
 /-- Guard for `encryptResult` messages from encryption sub-engines. -/
@@ -168,7 +173,8 @@ def identityEncryptResultAction
     (w : A.Ciphertext)
     (inp : @GuardInput (S A) AnomaIdx.identity)
     (_ : identityEncryptResultGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.identity :=
+    : @Effect (S A) AnomaIdx.identity
+    :=
   letI := S A; Effect.noop
 
 def identityActions : @Behaviour (S A) AnomaIdx.identity :=

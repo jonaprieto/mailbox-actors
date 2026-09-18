@@ -135,27 +135,31 @@ instance PubSubSpec : EngineSpec where
 def dependenciesMet
     (msg : TopicMsg)
     (delivered : Finset MsgHash)
-    : Bool :=
+    : Bool
+    :=
   decide (msg.deps ⊆ delivered)
 
 /-- Find pending messages whose dependencies are now met. -/
 def findCascade
     (pending : List (MsgHash × TopicMsg))
     (delivered : Finset MsgHash)
-    : List TopicMsg :=
+    : List TopicMsg
+    :=
   (pending.filter (fun (_, m) => dependenciesMet m delivered)).map (·.2)
 
 /-- Remove cascaded messages from the pending list. -/
 def removeCascaded
     (pending : List (MsgHash × TopicMsg))
     (delivered : Finset MsgHash)
-    : List (MsgHash × TopicMsg) :=
+    : List (MsgHash × TopicMsg)
+    :=
   pending.filter (fun (_, m) => !dependenciesMet m delivered)
 
 /-- The causal broker guard: always matches (witness is `Unit`). -/
 def causalGuard
     : GuardInput PubSubIdx.broker →
-      Option Unit :=
+      Option Unit
+    :=
   fun _ => some ()
 
 /-- The causal broker action: branches on dependency satisfaction.
@@ -167,7 +171,8 @@ def causalAction
     (_w : Unit)
     (inp : GuardInput PubSubIdx.broker)
     (_ : causalGuard inp = some _w)
-    : Effect PubSubIdx.broker :=
+    : Effect PubSubIdx.broker
+    :=
   let msg : TopicMsg := inp.msg
   let q : CausalState := inp.env.localState
     if dependenciesMet msg q.delivered then
@@ -226,7 +231,8 @@ def causalBehaviour : WellFormedBehaviour PubSubIdx.broker :=
     its causal dependencies recorded in the `delivered` set. -/
 def CausalInvariant
     (q : CausalState)
-    : Prop :=
+    : Prop
+    :=
   ∀ msg ∈ q.ready, msg.deps ⊆ q.delivered
 
 /-- `dependenciesMet` is equivalent to subset inclusion. -/
@@ -234,7 +240,8 @@ theorem dependenciesMet_iff
     (msg : TopicMsg)
     (delivered : Finset MsgHash)
     : dependenciesMet msg delivered = true ↔
-      msg.deps ⊆ delivered := by
+      msg.deps ⊆ delivered
+    := by
   simp [dependenciesMet]
 
 /-- Every message returned by `findCascade` has its dependencies met
@@ -243,7 +250,8 @@ theorem findCascade_deps_met
     (pending : List (MsgHash × TopicMsg))
     (delivered : Finset MsgHash)
     : ∀ m ∈ findCascade pending delivered,
-      m.deps ⊆ delivered := by
+      m.deps ⊆ delivered
+    := by
   intro m hm
   simp only [findCascade, List.mem_map, List.mem_filter] at hm
   obtain ⟨⟨_, m'⟩, ⟨_, hdeps⟩, rfl⟩ := hm

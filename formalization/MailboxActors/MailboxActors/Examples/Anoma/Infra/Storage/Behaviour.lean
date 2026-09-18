@@ -28,7 +28,8 @@ def storageChunkGetAction
     (w : A.ChunkID)
     (inp : @GuardInput (S A) AnomaIdx.storage)
     (_ : storageChunkGetGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.storage :=
+    : @Effect (S A) AnomaIdx.storage
+    :=
   letI := S A; Effect.noop
 
 @[simp] def storageChunkPutGuard
@@ -43,7 +44,8 @@ def storageChunkPutAction
     (w : A.ChunkID × A.Chunk)
     (inp : @GuardInput (S A) AnomaIdx.storage)
     (_ : storageChunkPutGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.storage :=
+    : @Effect (S A) AnomaIdx.storage
+    :=
   letI := S A
   let env := inp.env
   Effect.update { env with

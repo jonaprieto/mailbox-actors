@@ -130,7 +130,8 @@ def AnomaSpec.unwrap
     (A : AnomaTypes)
     {i j : AnomaIdx}
     (m : AnomaSpec.MsgType A i)
-    : Option (AnomaSpec.MsgType A j) :=
+    : Option (AnomaSpec.MsgType A j)
+    :=
   if h : i = j then some (h ▸ m) else none
 
 -- ============================================================================

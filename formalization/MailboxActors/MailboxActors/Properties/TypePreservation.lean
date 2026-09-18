@@ -21,7 +21,8 @@ theorem typePreservation
     : WellTypedState κ →
       MailboxIsolation κ →
       OpStep κ op κ' →
-      WellTypedState κ' := by
+      WellTypedState κ'
+    := by
   intro wt hiso step
   cases step with
   -- ── S-Node: create a new empty node ──────────────────────────────────────

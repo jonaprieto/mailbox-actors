@@ -38,7 +38,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 @[simp]
 def txOrderingSubmitGuard
     (inp : @GuardInput (S A) AnomaIdx.txOrdering)
-    : Option (A.TxFingerprint × A.Executable) :=
+    : Option (A.TxFingerprint × A.Executable)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .submitTx fp exe => some (fp, exe)
   | _ => none
@@ -53,7 +54,8 @@ def txOrderingSubmitAction
     (w : A.TxFingerprint × A.Executable)
     (inp : @GuardInput (S A) AnomaIdx.txOrdering)
     (_ : txOrderingSubmitGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.txOrdering :=
+    : @Effect (S A) AnomaIdx.txOrdering
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -77,7 +79,8 @@ def txOrderingSubmitAction
 @[simp]
 def txOrderingLockGuard
     (inp : @GuardInput (S A) AnomaIdx.txOrdering)
-    : Option (A.TxFingerprint × A.KVSKey) :=
+    : Option (A.TxFingerprint × A.KVSKey)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .lockAcquired fp key => some (fp, key)
   | _ => none
@@ -88,7 +91,8 @@ def txOrderingLockAction
     (w : A.TxFingerprint × A.KVSKey)
     (inp : @GuardInput (S A) AnomaIdx.txOrdering)
     (_ : txOrderingLockGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.txOrdering :=
+    : @Effect (S A) AnomaIdx.txOrdering
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -100,7 +104,8 @@ def txOrderingLockAction
 @[simp]
 def txOrderingFinishedGuard
     (inp : @GuardInput (S A) AnomaIdx.txOrdering)
-    : Option A.TxFingerprint :=
+    : Option A.TxFingerprint
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .executorFinished fp => some fp
   | _ => none
@@ -111,7 +116,8 @@ def txOrderingFinishedAction
     (w : A.TxFingerprint)
     (inp : @GuardInput (S A) AnomaIdx.txOrdering)
     (_ : txOrderingFinishedGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.txOrdering :=
+    : @Effect (S A) AnomaIdx.txOrdering
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState

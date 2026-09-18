@@ -50,7 +50,8 @@ structure WellTypedState
 /-- All messages in transit target mailbox engines (not processing engines). -/
 def MailboxIsolation
     (κ : SystemState)
-    : Prop :=
+    : Prop
+    :=
   ∀ m ∈ κ.messages,
     ∀ se : SomeEngine,
       κ.engineAt m.target = some se →
@@ -71,7 +72,8 @@ theorem spawnPairing
     : ∃ mboxSe : SomeEngine,
       κ.engineAt (κ.mailboxOf addr) = some mboxSe ∧
       mboxSe.idx = se.idx ∧
-      mboxSe.engine.mode = EngineMode.mail :=
+      mboxSe.engine.mode = EngineMode.mail
+    :=
   wt.mailbox_exists addr se heng hmode
 
 end MailboxActors

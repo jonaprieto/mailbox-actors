@@ -60,7 +60,8 @@ def shardAcquireLockAction
     (w : A.TxFingerprint × A.KVSKey × Address)
     (inp : @GuardInput (S A) AnomaIdx.shard)
     (_ : shardAcquireLockGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.shard :=
+    : @Effect (S A) AnomaIdx.shard
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -95,7 +96,8 @@ def shardReadRequestAction
     (w : A.TxFingerprint × A.KVSKey × Address)
     (inp : @GuardInput (S A) AnomaIdx.shard)
     (_ : shardReadRequestGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.shard :=
+    : @Effect (S A) AnomaIdx.shard
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -144,7 +146,8 @@ def shardWriteAction
     (w : A.TxFingerprint × A.KVSKey × A.KVSDatum)
     (inp : @GuardInput (S A) AnomaIdx.shard)
     (_ : shardWriteGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.shard :=
+    : @Effect (S A) AnomaIdx.shard
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -174,7 +177,8 @@ def shardUpdateSeenAllAction
     (w : A.TxFingerprint)
     (inp : @GuardInput (S A) AnomaIdx.shard)
     (_ : shardUpdateSeenAllGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.shard :=
+    : @Effect (S A) AnomaIdx.shard
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState

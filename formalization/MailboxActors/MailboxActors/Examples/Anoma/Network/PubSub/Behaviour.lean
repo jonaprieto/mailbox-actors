@@ -35,7 +35,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 @[simp]
 def pubsubPublishGuard
     (inp : @GuardInput (S A) AnomaIdx.pubsub)
-    : Option (A.TopicID × A.ByteString) :=
+    : Option (A.TopicID × A.ByteString)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .publish tid bs => some (tid, bs)
   | _ => none
@@ -44,7 +45,8 @@ def pubsubPublishGuard
 @[simp]
 def pubsubSubscribeGuard
     (inp : @GuardInput (S A) AnomaIdx.pubsub)
-    : Option A.TopicID :=
+    : Option A.TopicID
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .subscribe tid => some tid
   | _ => none
@@ -53,7 +55,8 @@ def pubsubSubscribeGuard
 @[simp]
 def pubsubUnsubscribeGuard
     (inp : @GuardInput (S A) AnomaIdx.pubsub)
-    : Option A.TopicID :=
+    : Option A.TopicID
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .unsubscribe tid => some tid
   | _ => none
@@ -62,7 +65,8 @@ def pubsubUnsubscribeGuard
 @[simp]
 def pubsubForwardGuard
     (inp : @GuardInput (S A) AnomaIdx.pubsub)
-    : Option (A.TopicID × A.ByteString) :=
+    : Option (A.TopicID × A.ByteString)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .forward tid bs => some (tid, bs)
   | _ => none
@@ -76,7 +80,8 @@ def pubsubPublishAction
     (w : A.TopicID × A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.pubsub)
     (_ : pubsubPublishGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.pubsub :=
+    : @Effect (S A) AnomaIdx.pubsub
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -88,7 +93,8 @@ def pubsubSubscribeAction
     (w : A.TopicID)
     (inp : @GuardInput (S A) AnomaIdx.pubsub)
     (_ : pubsubSubscribeGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.pubsub :=
+    : @Effect (S A) AnomaIdx.pubsub
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -100,7 +106,8 @@ def pubsubUnsubscribeAction
     (w : A.TopicID)
     (inp : @GuardInput (S A) AnomaIdx.pubsub)
     (_ : pubsubUnsubscribeGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.pubsub :=
+    : @Effect (S A) AnomaIdx.pubsub
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -112,7 +119,8 @@ def pubsubForwardAction
     (w : A.TopicID × A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.pubsub)
     (_ : pubsubForwardGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.pubsub :=
+    : @Effect (S A) AnomaIdx.pubsub
+    :=
   letI := S A; Effect.noop
 
 -- ============================================================================

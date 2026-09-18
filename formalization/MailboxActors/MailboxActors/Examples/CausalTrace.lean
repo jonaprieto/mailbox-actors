@@ -16,7 +16,8 @@ open PubSubSpec
     For every broker in the system, its local state satisfies CausalInvariant. -/
 def GlobalCausalInvariant
     (κ : SystemState)
-    : Prop :=
+    : Prop
+    :=
   ∀ addr se, κ.engineAt addr = some se →
     ∀ (h : se.idx = PubSubIdx.broker),
     -- Cast localState to CausalState using the type equality
@@ -30,7 +31,8 @@ lemma causalInvariant_erase
     (s : CausalState)
     (w : TopicMsg)
     : CausalInvariant s →
-      CausalInvariant { s with ready := s.ready.erase w } := by
+      CausalInvariant { s with ready := s.ready.erase w }
+    := by
   intro hinv msg hmem
   exact hinv msg (List.mem_of_mem_erase hmem)
 
@@ -44,7 +46,8 @@ lemma mailboxRemove_preserves_causalInvariant
     {w : EngineSpec.MsgType idx}
     (hidx : idx = PubSubIdx.broker)
     (hinv : CausalInvariant (cast (by rw [hidx]; rfl) localState))
-    : CausalInvariant (cast (by rw [hidx]; rfl) (EngineSpec.mailboxRemove localState w)) := by
+    : CausalInvariant (cast (by rw [hidx]; rfl) (EngineSpec.mailboxRemove localState w))
+    := by
   subst hidx
   exact causalInvariant_erase _ _ hinv
 

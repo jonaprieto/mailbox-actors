@@ -53,7 +53,8 @@ structure GuardedAction
 def GuardedAction.apply
     (ga : GuardedAction i)
     (inp : GuardInput i)
-    : Effect i :=
+    : Effect i
+    :=
   match h : ga.guard inp with
   | some w => ga.action w inp h
   | none   => Effect.noop

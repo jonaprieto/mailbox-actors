@@ -42,7 +42,8 @@ def signDelegQueryAction
     (w : A.ExternalIdentity)
     (inp : @GuardInput (S A) AnomaIdx.signDeleg)
     (_ : signDelegQueryGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.signDeleg :=
+    : @Effect (S A) AnomaIdx.signDeleg
+    :=
   letI := S A; Effect.noop
 
 /-- Guard for `submit` messages. -/
@@ -59,7 +60,8 @@ def signDelegSubmitAction
     (w : A.SignEvidence)
     (inp : @GuardInput (S A) AnomaIdx.signDeleg)
     (_ : signDelegSubmitGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.signDeleg :=
+    : @Effect (S A) AnomaIdx.signDeleg
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState

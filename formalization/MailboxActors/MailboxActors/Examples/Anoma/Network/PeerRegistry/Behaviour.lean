@@ -37,7 +37,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 @[simp]
 def peerRegistryAdvertNodeGuard
     (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
-    : Option (A.NodeID × A.TransportAddr) :=
+    : Option (A.NodeID × A.TransportAddr)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .advertNode nid addr => some (nid, addr)
   | _ => none
@@ -46,7 +47,8 @@ def peerRegistryAdvertNodeGuard
 @[simp]
 def peerRegistryLookupNodeGuard
     (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
-    : Option A.NodeID :=
+    : Option A.NodeID
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .lookupNode nid => some nid
   | _ => none
@@ -55,7 +57,8 @@ def peerRegistryLookupNodeGuard
 @[simp]
 def peerRegistryAdvertTopicGuard
     (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
-    : Option (A.TopicID × A.NodeID) :=
+    : Option (A.TopicID × A.NodeID)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .advertTopic tid nid => some (tid, nid)
   | _ => none
@@ -64,7 +67,8 @@ def peerRegistryAdvertTopicGuard
 @[simp]
 def peerRegistryLookupTopicGuard
     (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
-    : Option A.TopicID :=
+    : Option A.TopicID
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .lookupTopic tid => some tid
   | _ => none
@@ -78,7 +82,8 @@ def peerRegistryAdvertNodeAction
     (w : A.NodeID × A.TransportAddr)
     (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
     (_ : peerRegistryAdvertNodeGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.peerRegistry :=
+    : @Effect (S A) AnomaIdx.peerRegistry
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -90,7 +95,8 @@ def peerRegistryLookupNodeAction
     (w : A.NodeID)
     (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
     (_ : peerRegistryLookupNodeGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.peerRegistry :=
+    : @Effect (S A) AnomaIdx.peerRegistry
+    :=
   letI := S A; Effect.noop
 
 /-- Action for `advertTopic`: increment the topic count. -/
@@ -98,7 +104,8 @@ def peerRegistryAdvertTopicAction
     (w : A.TopicID × A.NodeID)
     (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
     (_ : peerRegistryAdvertTopicGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.peerRegistry :=
+    : @Effect (S A) AnomaIdx.peerRegistry
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -110,7 +117,8 @@ def peerRegistryLookupTopicAction
     (w : A.TopicID)
     (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
     (_ : peerRegistryLookupTopicGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.peerRegistry :=
+    : @Effect (S A) AnomaIdx.peerRegistry
+    :=
   letI := S A; Effect.noop
 
 -- ============================================================================

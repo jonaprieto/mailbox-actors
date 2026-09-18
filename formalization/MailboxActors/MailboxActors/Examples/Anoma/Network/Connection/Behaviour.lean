@@ -31,7 +31,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 @[simp]
 def connectionSendGuard
     (inp : @GuardInput (S A) AnomaIdx.connection)
-    : Option A.ByteString :=
+    : Option A.ByteString
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .send bs => some bs
   | _ => none
@@ -40,7 +41,8 @@ def connectionSendGuard
 @[simp]
 def connectionRecvGuard
     (inp : @GuardInput (S A) AnomaIdx.connection)
-    : Option A.ByteString :=
+    : Option A.ByteString
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .recv bs => some bs
   | _ => none
@@ -54,7 +56,8 @@ def connectionSendAction
     (w : A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.connection)
     (_ : connectionSendGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.connection :=
+    : @Effect (S A) AnomaIdx.connection
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -66,7 +69,8 @@ def connectionRecvAction
     (w : A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.connection)
     (_ : connectionRecvGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.connection :=
+    : @Effect (S A) AnomaIdx.connection
+    :=
   letI := S A; Effect.noop
 
 -- ============================================================================

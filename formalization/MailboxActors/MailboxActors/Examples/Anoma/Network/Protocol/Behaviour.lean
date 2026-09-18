@@ -42,7 +42,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 @[simp]
 def protocolOpenConnectionGuard
     (inp : @GuardInput (S A) AnomaIdx.protocol)
-    : Option A.TransportAddr :=
+    : Option A.TransportAddr
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .openConnection addr => some addr
   | _ => none
@@ -51,7 +52,8 @@ def protocolOpenConnectionGuard
 @[simp]
 def protocolIncomingConnectionGuard
     (inp : @GuardInput (S A) AnomaIdx.protocol)
-    : Option A.TransportAddr :=
+    : Option A.TransportAddr
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .incomingConnection addr => some addr
   | _ => none
@@ -60,7 +62,8 @@ def protocolIncomingConnectionGuard
 @[simp]
 def protocolSendGuard
     (inp : @GuardInput (S A) AnomaIdx.protocol)
-    : Option (A.TransportAddr × A.ByteString) :=
+    : Option (A.TransportAddr × A.ByteString)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .send addr bs => some (addr, bs)
   | _ => none
@@ -76,7 +79,8 @@ def protocolOpenConnectionAction
     (w : A.TransportAddr)
     (inp : @GuardInput (S A) AnomaIdx.protocol)
     (_ : protocolOpenConnectionGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.protocol :=
+    : @Effect (S A) AnomaIdx.protocol
+    :=
   letI := S A
   Effect.spawn AnomaIdx.connection
     ({ remoteAddr := w } : ConnectionCfg A)
@@ -88,7 +92,8 @@ def protocolIncomingConnectionAction
     (w : A.TransportAddr)
     (inp : @GuardInput (S A) AnomaIdx.protocol)
     (_ : protocolIncomingConnectionGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.protocol :=
+    : @Effect (S A) AnomaIdx.protocol
+    :=
   letI := S A
   Effect.spawn AnomaIdx.connection
     ({ remoteAddr := w } : ConnectionCfg A)
@@ -101,7 +106,8 @@ def protocolSendAction
     (w : A.TransportAddr × A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.protocol)
     (_ : protocolSendGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.protocol :=
+    : @Effect (S A) AnomaIdx.protocol
+    :=
   letI := S A; Effect.noop
 
 -- ============================================================================

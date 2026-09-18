@@ -39,7 +39,8 @@ def decryptionAction
     (w : A.Ciphertext × Address)
     (inp : @GuardInput (S A) AnomaIdx.decryption)
     (_ : decryptionGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.decryption :=
+    : @Effect (S A) AnomaIdx.decryption
+    :=
   letI := S A
   let ct := w.1
   let replyTo := w.2

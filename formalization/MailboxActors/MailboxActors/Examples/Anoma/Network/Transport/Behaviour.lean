@@ -26,7 +26,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 @[simp]
 def transportSendGuard
     (inp : @GuardInput (S A) AnomaIdx.transport)
-    : Option (A.TransportAddr × A.ByteString) :=
+    : Option (A.TransportAddr × A.ByteString)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .send addr bs => some (addr, bs)
   | _ => none
@@ -35,7 +36,8 @@ def transportSendGuard
 @[simp]
 def transportRecvGuard
     (inp : @GuardInput (S A) AnomaIdx.transport)
-    : Option (A.TransportAddr × A.ByteString) :=
+    : Option (A.TransportAddr × A.ByteString)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .recv addr bs => some (addr, bs)
   | _ => none
@@ -44,7 +46,8 @@ def transportRecvGuard
 @[simp]
 def transportConnectionEstablishedGuard
     (inp : @GuardInput (S A) AnomaIdx.transport)
-    : Option A.TransportAddr :=
+    : Option A.TransportAddr
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .connectionEstablished addr => some addr
   | _ => none
@@ -58,7 +61,8 @@ def transportSendAction
     (w : A.TransportAddr × A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.transport)
     (_ : transportSendGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.transport :=
+    : @Effect (S A) AnomaIdx.transport
+    :=
   letI := S A; Effect.noop
 
 /-- Action for `recv`: no-op. -/
@@ -66,7 +70,8 @@ def transportRecvAction
     (w : A.TransportAddr × A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.transport)
     (_ : transportRecvGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.transport :=
+    : @Effect (S A) AnomaIdx.transport
+    :=
   letI := S A; Effect.noop
 
 /-- Action for `connectionEstablished`: no-op. -/
@@ -74,7 +79,8 @@ def transportConnectionEstablishedAction
     (w : A.TransportAddr)
     (inp : @GuardInput (S A) AnomaIdx.transport)
     (_ : transportConnectionEstablishedGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.transport :=
+    : @Effect (S A) AnomaIdx.transport
+    :=
   letI := S A; Effect.noop
 
 -- ============================================================================
