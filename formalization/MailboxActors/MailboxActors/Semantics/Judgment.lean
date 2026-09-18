@@ -169,7 +169,8 @@ inductive EffectEvalStep
 def resolvePostStatus
     {i : EngineSpec.EngIdx}
     (s : EngineStatus i)
-    : EngineStatus i :=
+    : EngineStatus i
+    :=
   match s with
   | .busy _ => .ready (fun _ => true)
   | other => other
@@ -337,7 +338,8 @@ inductive ProcessStep
 /-- A single system step: there exists some operation that transforms the state. -/
 def SysStep
     (κ κ' : SystemState)
-    : Prop :=
+    : Prop
+    :=
   ∃ op, OpStep κ op κ'
 
 end MailboxActors

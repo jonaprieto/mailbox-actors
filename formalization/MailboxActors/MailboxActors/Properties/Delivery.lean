@@ -22,7 +22,8 @@ abbrev Trace := Nat → SystemState
     predicate is eventually taken. -/
 def WeaklyFair
     (trace : Trace)
-    : Prop :=
+    : Prop
+    :=
   ∀ (P : SystemState → SystemState → Prop) n,
     (∀ k ≥ n, ∃ κ', P (trace k) κ') →
     ∃ k ≥ n, P (trace k) (trace (k + 1))
@@ -31,7 +32,8 @@ def WeaklyFair
     predicate is eventually taken. -/
 def StronglyFair
     (trace : Trace)
-    : Prop :=
+    : Prop
+    :=
   ∀ (P : SystemState → SystemState → Prop) n,
     (∀ k ≥ n, ∃ l ≥ k, ∃ κ', P (trace l) κ') →
     ∃ k ≥ n, P (trace k) (trace (k + 1))
@@ -39,7 +41,8 @@ def StronglyFair
 /-- Consecutive states in the trace are related by a system step. -/
 def IsExecution
     (trace : Trace)
-    : Prop :=
+    : Prop
+    :=
   ∀ n, SysStep (trace n) (trace (n + 1))
 
 /-- Message `m` appears at most once in the in-transit list at every
@@ -48,7 +51,8 @@ def UniqueInTransit
     (trace : Trace)
     (m : Message)
     (n : Nat)
-    : Prop :=
+    : Prop
+    :=
   ∀ k ≥ n, ∀ pre post : List Message,
     (trace k).messages = pre ++ m :: post → m ∉ pre ∧ m ∉ post
 
@@ -63,7 +67,8 @@ theorem invariants_trace
     (k : Nat)
     (hk : n ≤ k)
     : WellTypedState (trace k) ∧
-      MailboxIsolation (trace k) := by
+      MailboxIsolation (trace k)
+    := by
   induction k with
   | zero =>
     have : n = 0 := by omega
@@ -84,7 +89,8 @@ def EventuallyAccepts
     (trace : Trace)
     (m : Message)
     (n : Nat)
-    : Prop :=
+    : Prop
+    :=
   ∀ k ≥ n, m ∈ (trace k).messages →
     ∃ l ≥ k, ∃ se, (trace l).engineAt m.target = some se ∧
       se.engine.mode = EngineMode.mail ∧
@@ -98,7 +104,8 @@ lemma effect_preserves_messages
     : EffectEvalStep κ i E κ' →
       ∀ m,
       m ∈ κ.messages →
-      m ∈ κ'.messages := by
+      m ∈ κ'.messages
+    := by
   intro h m hm
   induction h
   case noop => exact hm
@@ -125,7 +132,8 @@ lemma message_removal
       m.payload = ⟨mboxEng.idx, w⟩ ∧
       mboxEng.engine.mode = EngineMode.mail ∧
       mboxEng.engine.status = EngineStatus.ready f ∧
-      f w = true := by
+      f w = true
+    := by
   intro hk hnk
   obtain ⟨op, hstep⟩ := hexec k
   cases hstep
@@ -171,7 +179,8 @@ lemma list_split_of_mem
     (l : List α)
     (h : m ∈ l)
     : ∃ (pre post : List α),
-      l = pre ++ m :: post := by
+      l = pre ++ m :: post
+    := by
   induction l with
   | nil => contradiction
   | cons hd tl ih =>
@@ -200,7 +209,8 @@ theorem eventualDelivery
       EventuallyAccepts trace m n →
       m ∈ (trace n).messages →
       ∃ k ≥ n,
-      m ∉ (trace k).messages := by
+      m ∉ (trace k).messages
+    := by
   intro hexec hfair hwt hiso huniq haccepts hm
   let P (κ κ' : SystemState) : Prop :=
     ∃ mboxEng w f pre post,

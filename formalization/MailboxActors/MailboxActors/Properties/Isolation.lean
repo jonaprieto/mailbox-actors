@@ -23,7 +23,8 @@ theorem mailboxIsolation
     : WellTypedState κ →
       MailboxIsolation κ →
       OpStep κ op κ' →
-      MailboxIsolation κ' := by
+      MailboxIsolation κ'
+    := by
   intro wt hiso step
   cases step with
   | sNode =>
@@ -123,7 +124,8 @@ theorem mailboxPersistence
     (_heng : κ.engineAt addr = some se)
     (_hmode : se.engine.mode = EngineMode.process)
     (_hterm : se.engine.status = EngineStatus.terminated)
-    : (κ.removeEngineAt addr).engineAt (κ.mailboxOf addr) = κ.engineAt (κ.mailboxOf addr) := by
+    : (κ.removeEngineAt addr).engineAt (κ.mailboxOf addr) = κ.engineAt (κ.mailboxOf addr)
+    := by
   exact engineAt_removeEngineAt_ne κ addr (κ.mailboxOf addr) (mailboxOf_ne_self κ addr)
 
 /-- After S-Clean, a well-typed state's paired mailbox still exists. -/
@@ -138,7 +140,8 @@ theorem mailboxSurvivesClean
     : ∃ mboxSe : SomeEngine,
       (κ.removeEngineAt addr).engineAt (κ.mailboxOf addr) = some mboxSe ∧
       mboxSe.idx = se.idx ∧
-      mboxSe.engine.mode = EngineMode.mail := by
+      mboxSe.engine.mode = EngineMode.mail
+    := by
   obtain ⟨mboxSe, hmbox, hidx, hmboxMode⟩ := wt.mailbox_exists addr se heng hmode
   exact ⟨mboxSe, by rw [mailboxPersistence κ addr se heng hmode hterm]; exact hmbox,
     hidx, hmboxMode⟩

@@ -43,7 +43,8 @@ def encryptionAction
     (w : A.ExternalIdentity × A.Plaintext × Bool × Address)
     (inp : @GuardInput (S A) AnomaIdx.encryption)
     (_ : encryptionGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.encryption :=
+    : @Effect (S A) AnomaIdx.encryption
+    :=
   letI := S A
   let eid := w.1
   let pt := w.2.1

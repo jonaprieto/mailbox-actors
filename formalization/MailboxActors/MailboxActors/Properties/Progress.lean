@@ -24,7 +24,8 @@ lemma filter_le_one_eq
     (hl : l.length ≤ 1)
     (ha : a ∈ l)
     (hb : b ∈ l)
-    : a = b := by
+    : a = b
+    := by
   obtain ⟨⟨ia, hia⟩, rfl⟩ := List.get_of_mem ha
   obtain ⟨⟨ib, hib⟩, rfl⟩ := List.get_of_mem hb
   congr 1; exact Fin.ext (by omega)
@@ -37,7 +38,8 @@ variable [EngineSpec]
     3. A message is in transit to a ready mailbox that accepts it. -/
 def hasProductiveWork
     (κ : SystemState)
-    : Prop :=
+    : Prop
+    :=
   (∃ addr se, κ.engineAt addr = some se ∧
     (∃ i v, se.idx = i ∧ se.engine.status = EngineStatus.busy v)) ∨
   (∃ addr se, κ.engineAt addr = some se ∧
@@ -56,7 +58,8 @@ theorem evalStep_total
     (v : EngineSpec.MsgType i)
     (hbusy : p.status = EngineStatus.busy v)
     : ∃ E,
-      EvalStep i p v E := by
+      EvalStep i p v E
+    := by
   let inp := (⟨v, p.config, p.env⟩ : GuardInput i)
   -- Check if any guard matches
   if h : ∃ ga ∈ p.behaviour.actions, (ga.guard inp).isSome then
@@ -102,7 +105,8 @@ lemma engineAt_preserved_after_effect
       ∀ {j : EngineSpec.EngIdx} {p : Engine j},
       κ.engineAt addr = some ⟨j, p⟩ →
       ∃ p' : Engine j,
-      κ'.engineAt addr = some ⟨j, p'⟩ := by
+      κ'.engineAt addr = some ⟨j, p'⟩
+    := by
   intro wt hiso heff j p heng
   induction heff generalizing p with
   | noop => exact ⟨p, heng⟩
@@ -179,7 +183,8 @@ theorem effectEvalStep_total
       MailboxIsolation κ →
       κ.engineAt addr = some ⟨i, p⟩ →
       ∃ κ',
-      EffectEvalStep κ i E κ' := by
+      EffectEvalStep κ i E κ'
+    := by
   intro wt hiso heng
   induction E generalizing κ p with
   | noop => exact ⟨κ, EffectEvalStep.noop κ i⟩
@@ -243,7 +248,8 @@ theorem progress
       ∃ op,
       op ≠ OpLabel.node ∧
       ∃ κ',
-      OpStep κ op κ' := by
+      OpStep κ op κ'
+    := by
   intro wt hiso hp
   rcases hp with ⟨addr, se, heng, i, v, hidx, hbusy⟩ |
     ⟨addr, se, heng, hmode, hterm⟩ |

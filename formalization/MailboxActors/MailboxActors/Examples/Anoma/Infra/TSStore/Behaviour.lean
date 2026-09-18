@@ -29,7 +29,8 @@ def tsStoreRecordAction
     (w : A.StorageKey × A.StorageValue)
     (inp : @GuardInput (S A) AnomaIdx.tsStore)
     (_ : tsStoreRecordGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.tsStore :=
+    : @Effect (S A) AnomaIdx.tsStore
+    :=
   letI := S A
   let env := inp.env
   Effect.update { env with
@@ -48,7 +49,8 @@ def tsStoreQueryAction
     (w : A.StorageKey)
     (inp : @GuardInput (S A) AnomaIdx.tsStore)
     (_ : tsStoreQueryGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.tsStore :=
+    : @Effect (S A) AnomaIdx.tsStore
+    :=
   letI := S A; Effect.noop
 
 /-- Guard for `deleteReq` messages. -/
@@ -64,7 +66,8 @@ def tsStoreDeleteAction
     (w : A.StorageKey)
     (inp : @GuardInput (S A) AnomaIdx.tsStore)
     (_ : tsStoreDeleteGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.tsStore :=
+    : @Effect (S A) AnomaIdx.tsStore
+    :=
   letI := S A
   let env := inp.env
   Effect.update { env with

@@ -29,7 +29,8 @@ def tickerIncrAction
     (_ : Unit)
     (inp : @GuardInput (S A) AnomaIdx.ticker)
     (_ : tickerIncrGuard A inp = some ())
-    : @Effect (S A) AnomaIdx.ticker :=
+    : @Effect (S A) AnomaIdx.ticker
+    :=
   letI := S A
   let env := inp.env
   Effect.update { env with localState := { counter := env.localState.counter + 1 } }
@@ -47,7 +48,8 @@ def tickerGetCountAction
     (_ : Unit)
     (inp : @GuardInput (S A) AnomaIdx.ticker)
     (_ : tickerGetCountGuard A inp = some ())
-    : @Effect (S A) AnomaIdx.ticker :=
+    : @Effect (S A) AnomaIdx.ticker
+    :=
   letI := S A; Effect.noop
 
 /-- Guard for `count` reply messages. -/
@@ -63,7 +65,8 @@ def tickerCountAction
     (w : Nat)
     (inp : @GuardInput (S A) AnomaIdx.ticker)
     (_ : tickerCountGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.ticker :=
+    : @Effect (S A) AnomaIdx.ticker
+    :=
   letI := S A; Effect.noop
 
 def tickerActions : @Behaviour (S A) AnomaIdx.ticker :=

@@ -25,7 +25,8 @@ def kvStoreGetAction
     (w : A.StorageKey)
     (inp : @GuardInput (S A) AnomaIdx.kvStore)
     (_ : kvStoreGetGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.kvStore :=
+    : @Effect (S A) AnomaIdx.kvStore
+    :=
   letI := S A; Effect.noop
 
 @[simp] def kvStoreSetGuard
@@ -40,7 +41,8 @@ def kvStoreSetAction
     (w : A.StorageKey × A.StorageValue)
     (inp : @GuardInput (S A) AnomaIdx.kvStore)
     (_ : kvStoreSetGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.kvStore :=
+    : @Effect (S A) AnomaIdx.kvStore
+    :=
   letI := S A
   let env := inp.env
   Effect.update { env with
@@ -58,7 +60,8 @@ def kvStoreDeleteAction
     (w : A.StorageKey)
     (inp : @GuardInput (S A) AnomaIdx.kvStore)
     (_ : kvStoreDeleteGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.kvStore :=
+    : @Effect (S A) AnomaIdx.kvStore
+    :=
   letI := S A
   let env := inp.env
   Effect.update { env with

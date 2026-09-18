@@ -43,7 +43,8 @@ def verificationAction
     (w : A.ExternalIdentity × A.Signable × A.Signature × Bool × Address)
     (inp : @GuardInput (S A) AnomaIdx.verification)
     (_ : verificationGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.verification :=
+    : @Effect (S A) AnomaIdx.verification
+    :=
   letI := S A
   let eid := w.1
   let signable := w.2.1

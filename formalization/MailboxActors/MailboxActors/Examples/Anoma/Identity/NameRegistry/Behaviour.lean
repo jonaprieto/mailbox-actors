@@ -42,7 +42,8 @@ def nameRegistryQueryAction
     (w : A.ExternalIdentity)
     (inp : @GuardInput (S A) AnomaIdx.nameRegistry)
     (_ : nameRegistryQueryGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.nameRegistry :=
+    : @Effect (S A) AnomaIdx.nameRegistry
+    :=
   letI := S A; Effect.noop
 
 /-- Guard for `submit` messages. -/
@@ -59,7 +60,8 @@ def nameRegistrySubmitAction
     (w : A.NameEvidence)
     (inp : @GuardInput (S A) AnomaIdx.nameRegistry)
     (_ : nameRegistrySubmitGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.nameRegistry :=
+    : @Effect (S A) AnomaIdx.nameRegistry
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState

@@ -37,7 +37,8 @@ def executorReadReplyAction
     (w : A.KVSKey × A.KVSDatum)
     (inp : @GuardInput (S A) AnomaIdx.executor)
     (_ : executorReadReplyGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.executor :=
+    : @Effect (S A) AnomaIdx.executor
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState

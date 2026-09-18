@@ -27,7 +27,8 @@ def loggingAppendAction
     (w : String)
     (inp : @GuardInput (S A) AnomaIdx.logging)
     (_ : loggingAppendGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.logging :=
+    : @Effect (S A) AnomaIdx.logging
+    :=
   letI := S A
   let env := inp.env
   Effect.update { env with

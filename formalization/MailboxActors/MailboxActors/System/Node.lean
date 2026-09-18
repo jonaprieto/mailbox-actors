@@ -26,7 +26,8 @@ structure Node where
 def Node.getEngine
     (n : Node)
     (localId : Nat)
-    : Option SomeEngine :=
+    : Option SomeEngine
+    :=
   (n.engines.find? (fun p => p.1 == localId)).map (·.2)
 
 end MailboxActors

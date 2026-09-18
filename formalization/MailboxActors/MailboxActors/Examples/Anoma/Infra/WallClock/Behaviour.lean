@@ -25,7 +25,8 @@ def wallClockGetTimeAction
     (_ : Unit)
     (inp : @GuardInput (S A) AnomaIdx.wallClock)
     (_ : wallClockGetTimeGuard A inp = some ())
-    : @Effect (S A) AnomaIdx.wallClock :=
+    : @Effect (S A) AnomaIdx.wallClock
+    :=
   letI := S A; Effect.noop
 
 @[simp] def wallClockTimeReplyGuard
@@ -40,7 +41,8 @@ def wallClockTimeReplyAction
     (w : A.Epoch)
     (inp : @GuardInput (S A) AnomaIdx.wallClock)
     (_ : wallClockTimeReplyGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.wallClock :=
+    : @Effect (S A) AnomaIdx.wallClock
+    :=
   letI := S A
   let env := inp.env
   Effect.update { env with localState := { currentEpoch := w } }

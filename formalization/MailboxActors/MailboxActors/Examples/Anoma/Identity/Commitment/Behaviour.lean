@@ -41,7 +41,8 @@ def commitmentSignAction
     (w : A.Signable × Address)
     (inp : @GuardInput (S A) AnomaIdx.commitment)
     (_ : commitmentSignGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.commitment :=
+    : @Effect (S A) AnomaIdx.commitment
+    :=
   letI := S A
   let signable := w.1
   let replyTo := w.2

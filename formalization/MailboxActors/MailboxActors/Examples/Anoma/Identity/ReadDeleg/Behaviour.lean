@@ -42,7 +42,8 @@ def readDelegQueryAction
     (w : A.ExternalIdentity)
     (inp : @GuardInput (S A) AnomaIdx.readDeleg)
     (_ : readDelegQueryGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.readDeleg :=
+    : @Effect (S A) AnomaIdx.readDeleg
+    :=
   letI := S A; Effect.noop
 
 /-- Guard for `submit` messages. -/
@@ -59,7 +60,8 @@ def readDelegSubmitAction
     (w : A.ReadEvidence)
     (inp : @GuardInput (S A) AnomaIdx.readDeleg)
     (_ : readDelegSubmitGuard A inp = some w)
-    : @Effect (S A) AnomaIdx.readDeleg :=
+    : @Effect (S A) AnomaIdx.readDeleg
+    :=
   letI := S A
   let env := inp.env
   let st := env.localState

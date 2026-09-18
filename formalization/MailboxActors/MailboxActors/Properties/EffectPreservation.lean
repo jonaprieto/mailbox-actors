@@ -27,7 +27,8 @@ theorem updateEngineAt_preserves_invariants
     (wt : WellTypedState κ)
     (hiso : MailboxIsolation κ)
     : WellTypedState (κ.updateEngineAt addr se') ∧
-      MailboxIsolation (κ.updateEngineAt addr se') := by
+      MailboxIsolation (κ.updateEngineAt addr se')
+    := by
   constructor
   · -- WellTypedState
     exact {
@@ -111,7 +112,8 @@ theorem effectEvalStepPreservesInvariants
       WellTypedState κ →
       MailboxIsolation κ →
       WellTypedState κ' ∧
-      MailboxIsolation κ' := by
+      MailboxIsolation κ'
+    := by
   intro heff wt hiso
   induction heff with
   | noop => exact ⟨wt, hiso⟩
