@@ -75,8 +75,7 @@ structure CausalState where
   ready     : List TopicMsg            -- messages ready for delivery
 
 /-- The empty initial state. -/
-def CausalState.empty
-    : CausalState :=
+def CausalState.empty : CausalState :=
   { delivered := ∅, pending := [], ready := [] }
 
 -- ============================================================================
@@ -109,9 +108,7 @@ def PubSub.LocalState
 -- ============================================================================
 
 /-- Concrete engine specification for the pub/sub system. -/
-instance PubSubSpec
-    : EngineSpec
-    where
+instance PubSubSpec : EngineSpec where
   EngIdx     := PubSubIdx
   MsgType    := PubSub.MsgType
   CfgData    := PubSub.CfgData
@@ -203,26 +200,21 @@ def causalAction
         inp.env.addressBook ⟩
 
 /-- The causal broker guarded action. -/
-def causalGuardedAction
-    : GuardedAction PubSubIdx.broker :=
+def causalGuardedAction : GuardedAction PubSubIdx.broker :=
   { Witness := Unit, guard := causalGuard, action := causalAction }
 
 /-- The underlying action list for the causal delivery mailbox. -/
-def causalActions
-    : Behaviour PubSubIdx.broker :=
+def causalActions : Behaviour PubSubIdx.broker :=
   [causalGuardedAction]
 
 /-- Non-overlapping guards hold trivially (single guard). -/
-private
-theorem causalNonOverlapping
-    : NonOverlappingGuards causalActions := by
+private theorem causalNonOverlapping : NonOverlappingGuards causalActions := by
   intro inp
   simp [causalActions, causalGuardedAction, causalGuard]
 
 /-- Well-formed behaviour for the causal delivery mailbox: a single
     guarded action bundled with its non-overlapping proof. -/
-def causalBehaviour
-    : WellFormedBehaviour PubSubIdx.broker :=
+def causalBehaviour : WellFormedBehaviour PubSubIdx.broker :=
   { actions := causalActions
     nonOverlapping := causalNonOverlapping }
 

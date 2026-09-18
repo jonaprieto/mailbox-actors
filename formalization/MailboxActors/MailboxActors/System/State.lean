@@ -60,8 +60,7 @@ def SystemState.engineAt
   | none => none
 
 /-- The initial (empty) system state. -/
-def SystemState.initial
-    : SystemState :=
+def SystemState.initial : SystemState :=
   { nodes := [], messages := [], nextId := 0 }
 
 /-- `find?`-then-`getEngine` is stable under appending a node with empty engines. -/
@@ -86,12 +85,10 @@ lemma find?_match_append_emptyEngines (nodes : List Node) (emptyNode : Node)
     · simp only [List.find?_cons, hp]
 
 /-- Appending a node with empty engines preserves all engine lookups. -/
-lemma engineAt_append_emptyNode
-    (κ : SystemState)
-    (addr : Address)
-    : SystemState.engineAt
+lemma engineAt_append_emptyNode (κ : SystemState) (addr : Address) :
+    SystemState.engineAt
       ⟨κ.nodes ++ [{ id := κ.nextId, engines := [] }], κ.messages, κ.nextId + 1⟩ addr =
-      κ.engineAt addr := by
+    κ.engineAt addr := by
   unfold SystemState.engineAt
   exact find?_match_append_emptyEngines κ.nodes ⟨κ.nextId, []⟩ rfl _ _
 
@@ -160,14 +157,11 @@ lemma beq_false_of_ne
 
 -- ── List-level helpers for setEngine ──
 
-private
-lemma map_find_setEngine_self
-    (engines : EngineMap)
-    (id : Nat)
-    (se : SomeEngine)
-    : engines.find? (fun p => p.1 == id) ≠ none →
-      (engines.map fun p => if p.1 == id then (id, se) else p).find?
-        (fun p => p.1 == id) = some (id, se) := by
+private lemma map_find_setEngine_self (engines : EngineMap) (id : Nat)
+    (se : SomeEngine) :
+    engines.find? (fun p => p.1 == id) ≠ none →
+    (engines.map fun p => if p.1 == id then (id, se) else p).find?
+      (fun p => p.1 == id) = some (id, se) := by
   intro h
   induction engines with
   | nil => exact absurd rfl h
@@ -181,13 +175,9 @@ lemma map_find_setEngine_self
       simp only [List.find?_cons, he] at h
       exact ih h
 
-private
-lemma map_find_setEngine_ne
-    (engines : EngineMap)
-    (id id' : Nat)
-    (se : SomeEngine)
-    (h : id' ≠ id)
-    : (engines.map fun p => if p.1 == id then (id, se) else p).find?
+private lemma map_find_setEngine_ne (engines : EngineMap) (id id' : Nat)
+    (se : SomeEngine) (h : id' ≠ id) :
+    (engines.map fun p => if p.1 == id then (id, se) else p).find?
       (fun p => p.1 == id') = engines.find? (fun p => p.1 == id') := by
   induction engines with
   | nil => simp
@@ -345,13 +335,10 @@ lemma filter_find_removeEngine_self
       simp only [Bool.not_false, ↓reduceIte, List.find?_cons, he]
       exact ih
 
-private
-lemma filter_find_removeEngine_ne
-    (engines : EngineMap)
-    (id id' : Nat)
-    (h : id' ≠ id)
-    : (engines.filter fun p => !(p.1 == id)).find? (fun p => p.1 == id') =
-      engines.find? (fun p => p.1 == id') := by
+private lemma filter_find_removeEngine_ne (engines : EngineMap) (id id' : Nat)
+    (h : id' ≠ id) :
+    (engines.filter fun p => !(p.1 == id)).find? (fun p => p.1 == id') =
+    engines.find? (fun p => p.1 == id') := by
   induction engines with
   | nil => simp
   | cons e es ih =>
@@ -522,14 +509,10 @@ lemma append_find_addEngine_self
       simp only [List.cons_append, List.find?_cons, he]
       exact ih h
 
-private
-lemma append_find_addEngine_ne
-    (engines : EngineMap)
-    (id id' : Nat)
-    (se : SomeEngine)
-    (h : id' ≠ id)
-    : (engines ++ [(id, se)]).find? (fun p => p.1 == id') =
-      engines.find? (fun p => p.1 == id') := by
+private lemma append_find_addEngine_ne (engines : EngineMap) (id id' : Nat)
+    (se : SomeEngine) (h : id' ≠ id) :
+    (engines ++ [(id, se)]).find? (fun p => p.1 == id') =
+    engines.find? (fun p => p.1 == id') := by
   induction engines with
   | nil =>
     simp only [List.nil_append, List.find?_cons, List.find?_nil]

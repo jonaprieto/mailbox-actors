@@ -64,8 +64,7 @@ def kvStoreDeleteAction
   Effect.update { env with
     localState := { entryCount := env.localState.entryCount - 1 } }
 
-def kvStoreActions
-    : @Behaviour (S A) AnomaIdx.kvStore :=
+def kvStoreActions : @Behaviour (S A) AnomaIdx.kvStore :=
   letI := S A
   [ { Witness := A.StorageKey
       guard := kvStoreGetGuard A
@@ -77,15 +76,13 @@ def kvStoreActions
       guard := kvStoreDeleteGuard A
       action := kvStoreDeleteAction A } ]
 
-private
-theorem kvStoreNonOverlapping
-    : @NonOverlappingGuards (S A) _ (kvStoreActions A) := by
+private theorem kvStoreNonOverlapping :
+    @NonOverlappingGuards (S A) _ (kvStoreActions A) := by
   letI := S A; intro inp
   simp only [kvStoreActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def kvStoreBehaviour
-    : @WellFormedBehaviour (S A) AnomaIdx.kvStore :=
+def kvStoreBehaviour : @WellFormedBehaviour (S A) AnomaIdx.kvStore :=
   letI := S A
   { actions := kvStoreActions A
     nonOverlapping := kvStoreNonOverlapping A }

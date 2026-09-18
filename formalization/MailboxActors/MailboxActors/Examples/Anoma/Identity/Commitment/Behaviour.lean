@@ -49,22 +49,19 @@ def commitmentSignAction
   let sig := A.sign backend signable
   Effect.send AnomaIdx.identity replyTo (.signResult sig)
 
-def commitmentActions
-    : @Behaviour (S A) AnomaIdx.commitment :=
+def commitmentActions : @Behaviour (S A) AnomaIdx.commitment :=
   letI := S A
   [ { Witness := A.Signable × Address
       guard := commitmentSignGuard A
       action := commitmentSignAction A } ]
 
-private
-theorem commitmentNonOverlapping
-    : @NonOverlappingGuards (S A) _ (commitmentActions A) := by
+private theorem commitmentNonOverlapping :
+    @NonOverlappingGuards (S A) _ (commitmentActions A) := by
   letI := S A; intro inp
   simp only [commitmentActions, List.filter]
   split <;> simp
 
-def commitmentBehaviour
-    : @WellFormedBehaviour (S A) AnomaIdx.commitment :=
+def commitmentBehaviour : @WellFormedBehaviour (S A) AnomaIdx.commitment :=
   letI := S A
   { actions := commitmentActions A
     nonOverlapping := commitmentNonOverlapping A }

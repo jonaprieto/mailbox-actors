@@ -183,8 +183,7 @@ def shardUpdateSeenAllAction
       heardAllReads := w
       heardAllWrites := w } }
 
-def shardActions
-    : @Behaviour (S A) AnomaIdx.shard :=
+def shardActions : @Behaviour (S A) AnomaIdx.shard :=
   letI := S A
   [ { Witness := A.TxFingerprint × A.KVSKey × Address
       guard := shardAcquireLockGuard A
@@ -199,16 +198,14 @@ def shardActions
       guard := shardUpdateSeenAllGuard A
       action := shardUpdateSeenAllAction A } ]
 
-private
-theorem shardNonOverlapping
-    : @NonOverlappingGuards (S A) _ (shardActions A) := by
+private theorem shardNonOverlapping :
+    @NonOverlappingGuards (S A) _ (shardActions A) := by
   letI := S A
   intro inp
   simp only [shardActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def shardBehaviour
-    : @WellFormedBehaviour (S A) AnomaIdx.shard :=
+def shardBehaviour : @WellFormedBehaviour (S A) AnomaIdx.shard :=
   letI := S A
   { actions := shardActions A
     nonOverlapping := shardNonOverlapping A }
