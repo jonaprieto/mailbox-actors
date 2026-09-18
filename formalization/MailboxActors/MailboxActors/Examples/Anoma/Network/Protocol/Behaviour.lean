@@ -108,8 +108,7 @@ def protocolSendAction
 -- § Behaviour assembly
 -- ============================================================================
 
-def protocolActions
-    : @Behaviour (S A) AnomaIdx.protocol :=
+def protocolActions : @Behaviour (S A) AnomaIdx.protocol :=
   letI := S A
   [ { Witness := A.TransportAddr
       guard := protocolOpenConnectionGuard A
@@ -121,15 +120,13 @@ def protocolActions
       guard := protocolSendGuard A
       action := protocolSendAction A } ]
 
-private
-theorem protocolNonOverlapping
-    : @NonOverlappingGuards (S A) _ (protocolActions A) := by
+private theorem protocolNonOverlapping :
+    @NonOverlappingGuards (S A) _ (protocolActions A) := by
   letI := S A; intro inp
   simp only [protocolActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def protocolBehaviour
-    : @WellFormedBehaviour (S A) AnomaIdx.protocol :=
+def protocolBehaviour : @WellFormedBehaviour (S A) AnomaIdx.protocol :=
   letI := S A
   { actions := protocolActions A
     nonOverlapping := protocolNonOverlapping A }

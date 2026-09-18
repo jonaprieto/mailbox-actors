@@ -119,8 +119,7 @@ def txOrderingFinishedAction
     localState := { st with
       pendingLocks := st.pendingLocks.filter (· != w) } }
 
-def txOrderingActions
-    : @Behaviour (S A) AnomaIdx.txOrdering :=
+def txOrderingActions : @Behaviour (S A) AnomaIdx.txOrdering :=
   letI := S A
   [ { Witness := A.TxFingerprint × A.Executable
       guard := txOrderingSubmitGuard A
@@ -132,16 +131,14 @@ def txOrderingActions
       guard := txOrderingFinishedGuard A
       action := txOrderingFinishedAction A } ]
 
-private
-theorem txOrderingNonOverlapping
-    : @NonOverlappingGuards (S A) _ (txOrderingActions A) := by
+private theorem txOrderingNonOverlapping :
+    @NonOverlappingGuards (S A) _ (txOrderingActions A) := by
   letI := S A
   intro inp
   simp only [txOrderingActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def txOrderingBehaviour
-    : @WellFormedBehaviour (S A) AnomaIdx.txOrdering :=
+def txOrderingBehaviour : @WellFormedBehaviour (S A) AnomaIdx.txOrdering :=
   letI := S A
   { actions := txOrderingActions A
     nonOverlapping := txOrderingNonOverlapping A }

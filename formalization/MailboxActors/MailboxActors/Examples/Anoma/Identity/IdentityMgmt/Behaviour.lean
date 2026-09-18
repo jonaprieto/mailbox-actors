@@ -171,8 +171,7 @@ def identityEncryptResultAction
     : @Effect (S A) AnomaIdx.identity :=
   letI := S A; Effect.noop
 
-def identityActions
-    : @Behaviour (S A) AnomaIdx.identity :=
+def identityActions : @Behaviour (S A) AnomaIdx.identity :=
   letI := S A
   [ { Witness := A.Backend × Capability
       guard := identityGenerateGuard A
@@ -193,15 +192,13 @@ def identityActions
       guard := identityEncryptResultGuard A
       action := identityEncryptResultAction A } ]
 
-private
-theorem identityNonOverlapping
-    : @NonOverlappingGuards (S A) _ (identityActions A) := by
+private theorem identityNonOverlapping :
+    @NonOverlappingGuards (S A) _ (identityActions A) := by
   letI := S A; intro inp
   simp only [identityActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def identityBehaviour
-    : @WellFormedBehaviour (S A) AnomaIdx.identity :=
+def identityBehaviour : @WellFormedBehaviour (S A) AnomaIdx.identity :=
   letI := S A
   { actions := identityActions A
     nonOverlapping := identityNonOverlapping A }

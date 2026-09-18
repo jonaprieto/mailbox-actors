@@ -284,16 +284,13 @@ theorem effectEvalStepPreservesInvariants
 
 /-- The full S-Process step (effect + resolvePostStatus) preserves both
     `WellTypedState` and `MailboxIsolation`. -/
-theorem sProcessPreservesInvariants
-    (κ κ' κ'' : SystemState)
-    (addr : Address)
-    (i : EngineSpec.EngIdx)
-    (E : Effect i)
-    : EffectEvalStep κ i E κ' →
-      (∃ (p' : Engine i),
-        κ'.engineAt addr = some ⟨i, p'⟩ ∧
-        κ'' = κ'.updateEngineAt addr
-          ⟨i, { p' with status := resolvePostStatus p'.status }⟩) →
+theorem sProcessPreservesInvariants (κ κ' κ'' : SystemState)
+    (addr : Address) (i : EngineSpec.EngIdx) (E : Effect i) :
+    EffectEvalStep κ i E κ' →
+    (∃ (p' : Engine i),
+      κ'.engineAt addr = some ⟨i, p'⟩ ∧
+      κ'' = κ'.updateEngineAt addr
+        ⟨i, { p' with status := resolvePostStatus p'.status }⟩) →
     WellTypedState κ → MailboxIsolation κ →
     WellTypedState κ'' ∧ MailboxIsolation κ'' := by
   intro heff ⟨p', heng', hκ''⟩ wt hiso

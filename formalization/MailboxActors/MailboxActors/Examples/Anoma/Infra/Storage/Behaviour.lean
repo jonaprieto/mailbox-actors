@@ -49,8 +49,7 @@ def storageChunkPutAction
   Effect.update { env with
     localState := { chunkCount := env.localState.chunkCount + 1 } }
 
-def storageActions
-    : @Behaviour (S A) AnomaIdx.storage :=
+def storageActions : @Behaviour (S A) AnomaIdx.storage :=
   letI := S A
   [ { Witness := A.ChunkID
       guard := storageChunkGetGuard A
@@ -59,15 +58,13 @@ def storageActions
       guard := storageChunkPutGuard A
       action := storageChunkPutAction A } ]
 
-private
-theorem storageNonOverlapping
-    : @NonOverlappingGuards (S A) _ (storageActions A) := by
+private theorem storageNonOverlapping :
+    @NonOverlappingGuards (S A) _ (storageActions A) := by
   letI := S A; intro inp
   simp only [storageActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def storageBehaviour
-    : @WellFormedBehaviour (S A) AnomaIdx.storage :=
+def storageBehaviour : @WellFormedBehaviour (S A) AnomaIdx.storage :=
   letI := S A
   { actions := storageActions A
     nonOverlapping := storageNonOverlapping A }

@@ -66,8 +66,7 @@ def tickerCountAction
     : @Effect (S A) AnomaIdx.ticker :=
   letI := S A; Effect.noop
 
-def tickerActions
-    : @Behaviour (S A) AnomaIdx.ticker :=
+def tickerActions : @Behaviour (S A) AnomaIdx.ticker :=
   letI := S A
   [ { Witness := Unit
       guard := tickerIncrGuard A
@@ -79,15 +78,13 @@ def tickerActions
       guard := tickerCountGuard A
       action := tickerCountAction A } ]
 
-private
-theorem tickerNonOverlapping
-    : @NonOverlappingGuards (S A) _ (tickerActions A) := by
+private theorem tickerNonOverlapping :
+    @NonOverlappingGuards (S A) _ (tickerActions A) := by
   letI := S A; intro inp
   simp only [tickerActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def tickerBehaviour
-    : @WellFormedBehaviour (S A) AnomaIdx.ticker :=
+def tickerBehaviour : @WellFormedBehaviour (S A) AnomaIdx.ticker :=
   letI := S A
   { actions := tickerActions A
     nonOverlapping := tickerNonOverlapping A }

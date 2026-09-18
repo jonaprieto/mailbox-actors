@@ -52,22 +52,19 @@ def encryptionAction
   let ct := A.encrypt_ backend eid pt
   Effect.send AnomaIdx.identity replyTo (.encryptResult ct)
 
-def encryptionActions
-    : @Behaviour (S A) AnomaIdx.encryption :=
+def encryptionActions : @Behaviour (S A) AnomaIdx.encryption :=
   letI := S A
   [ { Witness := A.ExternalIdentity × A.Plaintext × Bool × Address
       guard := encryptionGuard A
       action := encryptionAction A } ]
 
-private
-theorem encryptionNonOverlapping
-    : @NonOverlappingGuards (S A) _ (encryptionActions A) := by
+private theorem encryptionNonOverlapping :
+    @NonOverlappingGuards (S A) _ (encryptionActions A) := by
   letI := S A; intro inp
   simp only [encryptionActions, List.filter]
   split <;> simp
 
-def encryptionBehaviour
-    : @WellFormedBehaviour (S A) AnomaIdx.encryption :=
+def encryptionBehaviour : @WellFormedBehaviour (S A) AnomaIdx.encryption :=
   letI := S A
   { actions := encryptionActions A
     nonOverlapping := encryptionNonOverlapping A }

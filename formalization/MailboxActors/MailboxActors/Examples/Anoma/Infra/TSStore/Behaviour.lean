@@ -70,8 +70,7 @@ def tsStoreDeleteAction
   Effect.update { env with
     localState := { seriesCount := env.localState.seriesCount - 1 } }
 
-def tsStoreActions
-    : @Behaviour (S A) AnomaIdx.tsStore :=
+def tsStoreActions : @Behaviour (S A) AnomaIdx.tsStore :=
   letI := S A
   [ { Witness := A.StorageKey × A.StorageValue
       guard := tsStoreRecordGuard A
@@ -83,15 +82,13 @@ def tsStoreActions
       guard := tsStoreDeleteGuard A
       action := tsStoreDeleteAction A } ]
 
-private
-theorem tsStoreNonOverlapping
-    : @NonOverlappingGuards (S A) _ (tsStoreActions A) := by
+private theorem tsStoreNonOverlapping :
+    @NonOverlappingGuards (S A) _ (tsStoreActions A) := by
   letI := S A; intro inp
   simp only [tsStoreActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def tsStoreBehaviour
-    : @WellFormedBehaviour (S A) AnomaIdx.tsStore :=
+def tsStoreBehaviour : @WellFormedBehaviour (S A) AnomaIdx.tsStore :=
   letI := S A
   { actions := tsStoreActions A
     nonOverlapping := tsStoreNonOverlapping A }

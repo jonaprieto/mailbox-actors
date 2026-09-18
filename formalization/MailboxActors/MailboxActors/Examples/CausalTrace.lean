@@ -44,8 +44,7 @@ lemma mailboxRemove_preserves_causalInvariant
     {w : EngineSpec.MsgType idx}
     (hidx : idx = PubSubIdx.broker)
     (hinv : CausalInvariant (cast (by rw [hidx]; rfl) localState))
-    : CausalInvariant (cast (by rw [hidx]; rfl)
-      (EngineSpec.mailboxRemove localState w)) := by
+    : CausalInvariant (cast (by rw [hidx]; rfl) (EngineSpec.mailboxRemove localState w)) := by
   subst hidx
   exact causalInvariant_erase _ _ hinv
 
