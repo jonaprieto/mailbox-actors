@@ -11,7 +11,9 @@ variable [EngineSpec]
 
 /-- Effects produced by behaviour evaluation.
     Each constructor corresponds to a system action. -/
-inductive Effect (i : EngineSpec.EngIdx) where
+inductive Effect
+    (i : EngineSpec.EngIdx)
+    where
   | noop : Effect i
   | send (j : EngineSpec.EngIdx) (target : Address)
          (payload : EngineSpec.MsgType j) : Effect i

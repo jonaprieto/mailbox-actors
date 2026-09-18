@@ -24,8 +24,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 def kvStoreGetAction
     (w : A.StorageKey)
     (inp : @GuardInput (S A) AnomaIdx.kvStore)
-    (_ : kvStoreGetGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.kvStore :=
+    (_ : kvStoreGetGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.kvStore :=
   letI := S A; Effect.noop
 
 @[simp] def kvStoreSetGuard
@@ -39,8 +39,8 @@ def kvStoreGetAction
 def kvStoreSetAction
     (w : A.StorageKey × A.StorageValue)
     (inp : @GuardInput (S A) AnomaIdx.kvStore)
-    (_ : kvStoreSetGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.kvStore :=
+    (_ : kvStoreSetGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.kvStore :=
   letI := S A
   let env := inp.env
   Effect.update { env with
@@ -57,14 +57,15 @@ def kvStoreSetAction
 def kvStoreDeleteAction
     (w : A.StorageKey)
     (inp : @GuardInput (S A) AnomaIdx.kvStore)
-    (_ : kvStoreDeleteGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.kvStore :=
+    (_ : kvStoreDeleteGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.kvStore :=
   letI := S A
   let env := inp.env
   Effect.update { env with
     localState := { entryCount := env.localState.entryCount - 1 } }
 
-def kvStoreActions : @Behaviour (S A) AnomaIdx.kvStore :=
+def kvStoreActions
+    : @Behaviour (S A) AnomaIdx.kvStore :=
   letI := S A
   [ { Witness := A.StorageKey
       guard := kvStoreGetGuard A
@@ -76,13 +77,15 @@ def kvStoreActions : @Behaviour (S A) AnomaIdx.kvStore :=
       guard := kvStoreDeleteGuard A
       action := kvStoreDeleteAction A } ]
 
-private theorem kvStoreNonOverlapping :
-    @NonOverlappingGuards (S A) _ (kvStoreActions A) := by
+private
+theorem kvStoreNonOverlapping
+    : @NonOverlappingGuards (S A) _ (kvStoreActions A) := by
   letI := S A; intro inp
   simp only [kvStoreActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def kvStoreBehaviour : @WellFormedBehaviour (S A) AnomaIdx.kvStore :=
+def kvStoreBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.kvStore :=
   letI := S A
   { actions := kvStoreActions A
     nonOverlapping := kvStoreNonOverlapping A }

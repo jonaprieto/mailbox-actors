@@ -36,8 +36,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 /-- Guard for `sendLocal` messages. -/
 @[simp]
 def routerSendLocalGuard
-    (inp : @GuardInput (S A) AnomaIdx.router) :
-    Option (A.NodeID × A.ByteString) :=
+    (inp : @GuardInput (S A) AnomaIdx.router)
+    : Option (A.NodeID × A.ByteString) :=
   match @GuardInput.msg (S A) _ inp with
   | .sendLocal nid bs => some (nid, bs)
   | _ => none
@@ -45,8 +45,8 @@ def routerSendLocalGuard
 /-- Guard for `sendRemote` messages. -/
 @[simp]
 def routerSendRemoteGuard
-    (inp : @GuardInput (S A) AnomaIdx.router) :
-    Option (A.NodeID × A.ByteString) :=
+    (inp : @GuardInput (S A) AnomaIdx.router)
+    : Option (A.NodeID × A.ByteString) :=
   match @GuardInput.msg (S A) _ inp with
   | .sendRemote nid bs => some (nid, bs)
   | _ => none
@@ -54,8 +54,8 @@ def routerSendRemoteGuard
 /-- Guard for `recv` messages. -/
 @[simp]
 def routerRecvGuard
-    (inp : @GuardInput (S A) AnomaIdx.router) :
-    Option (A.NodeID × A.ByteString) :=
+    (inp : @GuardInput (S A) AnomaIdx.router)
+    : Option (A.NodeID × A.ByteString) :=
   match @GuardInput.msg (S A) _ inp with
   | .recv nid bs => some (nid, bs)
   | _ => none
@@ -63,8 +63,8 @@ def routerRecvGuard
 /-- Guard for `connectReq` messages. -/
 @[simp]
 def routerConnectReqGuard
-    (inp : @GuardInput (S A) AnomaIdx.router) :
-    Option A.NodeID :=
+    (inp : @GuardInput (S A) AnomaIdx.router)
+    : Option A.NodeID :=
   match @GuardInput.msg (S A) _ inp with
   | .connectReq nid => some nid
   | _ => none
@@ -72,8 +72,8 @@ def routerConnectReqGuard
 /-- Guard for `connectReply` messages. -/
 @[simp]
 def routerConnectReplyGuard
-    (inp : @GuardInput (S A) AnomaIdx.router) :
-    Option (A.NodeID × Bool) :=
+    (inp : @GuardInput (S A) AnomaIdx.router)
+    : Option (A.NodeID × Bool) :=
   match @GuardInput.msg (S A) _ inp with
   | .connectReply nid ok => some (nid, ok)
   | _ => none
@@ -87,8 +87,8 @@ def routerConnectReplyGuard
 def routerSendLocalAction
     (w : A.NodeID × A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.router)
-    (_ : routerSendLocalGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.router :=
+    (_ : routerSendLocalGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.router :=
   letI := S A; Effect.noop
 
 /-- Action for `sendRemote`: increment the outgoing sequence number
@@ -96,8 +96,8 @@ def routerSendLocalAction
 def routerSendRemoteAction
     (w : A.NodeID × A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.router)
-    (_ : routerSendRemoteGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.router :=
+    (_ : routerSendRemoteGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.router :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -109,8 +109,8 @@ def routerSendRemoteAction
 def routerRecvAction
     (w : A.NodeID × A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.router)
-    (_ : routerRecvGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.router :=
+    (_ : routerRecvGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.router :=
   letI := S A; Effect.noop
 
 /-- Action for `connectReq`: no-op — connection setup is delegated to
@@ -118,8 +118,8 @@ def routerRecvAction
 def routerConnectReqAction
     (w : A.NodeID)
     (inp : @GuardInput (S A) AnomaIdx.router)
-    (_ : routerConnectReqGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.router :=
+    (_ : routerConnectReqGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.router :=
   letI := S A; Effect.noop
 
 /-- Action for `connectReply`: no-op — the reply is consumed by the
@@ -127,15 +127,16 @@ def routerConnectReqAction
 def routerConnectReplyAction
     (w : A.NodeID × Bool)
     (inp : @GuardInput (S A) AnomaIdx.router)
-    (_ : routerConnectReplyGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.router :=
+    (_ : routerConnectReplyGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.router :=
   letI := S A; Effect.noop
 
 -- ============================================================================
 -- § Behaviour assembly
 -- ============================================================================
 
-def routerActions : @Behaviour (S A) AnomaIdx.router :=
+def routerActions
+    : @Behaviour (S A) AnomaIdx.router :=
   letI := S A
   [ { Witness := A.NodeID × A.ByteString
       guard := routerSendLocalGuard A
@@ -153,13 +154,15 @@ def routerActions : @Behaviour (S A) AnomaIdx.router :=
       guard := routerConnectReplyGuard A
       action := routerConnectReplyAction A } ]
 
-private theorem routerNonOverlapping :
-    @NonOverlappingGuards (S A) _ (routerActions A) := by
+private
+theorem routerNonOverlapping
+    : @NonOverlappingGuards (S A) _ (routerActions A) := by
   letI := S A; intro inp
   simp only [routerActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def routerBehaviour : @WellFormedBehaviour (S A) AnomaIdx.router :=
+def routerBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.router :=
   letI := S A
   { actions := routerActions A
     nonOverlapping := routerNonOverlapping A }

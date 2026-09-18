@@ -17,14 +17,17 @@ variable [EngineSpec]
 
 /-- `updateEngineAt` with a replacement engine that has the same `idx` and
     `mode` preserves both `WellTypedState` and `MailboxIsolation`. -/
-theorem updateEngineAt_preserves_invariants (κ : SystemState)
-    (addr : Address) (se se' : SomeEngine)
+theorem updateEngineAt_preserves_invariants
+    (κ : SystemState)
+    (addr : Address)
+    (se se' : SomeEngine)
     (heng : κ.engineAt addr = some se)
     (hidx : se'.idx = se.idx)
     (hmode : se'.engine.mode = se.engine.mode)
-    (wt : WellTypedState κ) (hiso : MailboxIsolation κ) :
-    WellTypedState (κ.updateEngineAt addr se') ∧
-    MailboxIsolation (κ.updateEngineAt addr se') := by
+    (wt : WellTypedState κ)
+    (hiso : MailboxIsolation κ)
+    : WellTypedState (κ.updateEngineAt addr se') ∧
+      MailboxIsolation (κ.updateEngineAt addr se') := by
   constructor
   · -- WellTypedState
     exact {
@@ -100,11 +103,15 @@ theorem updateEngineAt_preserves_invariants (κ : SystemState)
 
 /-- `EffectEvalStep` preserves both `WellTypedState` and `MailboxIsolation`.
     The proof proceeds by induction on the effect evaluation derivation. -/
-theorem effectEvalStepPreservesInvariants (κ κ' : SystemState)
-    (i : EngineSpec.EngIdx) (E : Effect i) :
-    EffectEvalStep κ i E κ' →
-    WellTypedState κ → MailboxIsolation κ →
-    WellTypedState κ' ∧ MailboxIsolation κ' := by
+theorem effectEvalStepPreservesInvariants
+    (κ κ' : SystemState)
+    (i : EngineSpec.EngIdx)
+    (E : Effect i)
+    : EffectEvalStep κ i E κ' →
+      WellTypedState κ →
+      MailboxIsolation κ →
+      WellTypedState κ' ∧
+      MailboxIsolation κ' := by
   intro heff wt hiso
   induction heff with
   | noop => exact ⟨wt, hiso⟩
@@ -277,13 +284,16 @@ theorem effectEvalStepPreservesInvariants (κ κ' : SystemState)
 
 /-- The full S-Process step (effect + resolvePostStatus) preserves both
     `WellTypedState` and `MailboxIsolation`. -/
-theorem sProcessPreservesInvariants (κ κ' κ'' : SystemState)
-    (addr : Address) (i : EngineSpec.EngIdx) (E : Effect i) :
-    EffectEvalStep κ i E κ' →
-    (∃ (p' : Engine i),
-      κ'.engineAt addr = some ⟨i, p'⟩ ∧
-      κ'' = κ'.updateEngineAt addr
-        ⟨i, { p' with status := resolvePostStatus p'.status }⟩) →
+theorem sProcessPreservesInvariants
+    (κ κ' κ'' : SystemState)
+    (addr : Address)
+    (i : EngineSpec.EngIdx)
+    (E : Effect i)
+    : EffectEvalStep κ i E κ' →
+      (∃ (p' : Engine i),
+        κ'.engineAt addr = some ⟨i, p'⟩ ∧
+        κ'' = κ'.updateEngineAt addr
+          ⟨i, { p' with status := resolvePostStatus p'.status }⟩) →
     WellTypedState κ → MailboxIsolation κ →
     WellTypedState κ'' ∧ MailboxIsolation κ'' := by
   intro heff ⟨p', heng', hκ''⟩ wt hiso

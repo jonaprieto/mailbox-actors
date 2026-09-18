@@ -16,8 +16,15 @@ namespace MailboxActors
 
     Todo: move this to a module of list/utils.
 -/
-private lemma filter_le_one_eq {α : Type*} {a b : α} {l : List α}
-    (hl : l.length ≤ 1) (ha : a ∈ l) (hb : b ∈ l) : a = b := by
+private
+lemma filter_le_one_eq
+    {α : Type*}
+    {a b : α}
+    {l : List α}
+    (hl : l.length ≤ 1)
+    (ha : a ∈ l)
+    (hb : b ∈ l)
+    : a = b := by
   obtain ⟨⟨ia, hia⟩, rfl⟩ := List.get_of_mem ha
   obtain ⟨⟨ib, hib⟩, rfl⟩ := List.get_of_mem hb
   congr 1; exact Fin.ext (by omega)
@@ -28,7 +35,9 @@ variable [EngineSpec]
     1. An engine is busy (guaranteed to proceed via S-Process).
     2. A processing engine is terminated (guaranteed to be cleaned via S-Clean).
     3. A message is in transit to a ready mailbox that accepts it. -/
-def hasProductiveWork (κ : SystemState) : Prop :=
+def hasProductiveWork
+    (κ : SystemState)
+    : Prop :=
   (∃ addr se, κ.engineAt addr = some se ∧
     (∃ i v, se.idx = i ∧ se.engine.status = EngineStatus.busy v)) ∨
   (∃ addr se, κ.engineAt addr = some se ∧
@@ -41,9 +50,13 @@ def hasProductiveWork (κ : SystemState) : Prop :=
 
 /-- Helper: Evaluation is total for well-formed behaviours.
     Requires the engine to be busy (for `GuardEvalStep` status premise). -/
-theorem evalStep_total {i : EngineSpec.EngIdx} (p : Engine i) (v : EngineSpec.MsgType i)
-    (hbusy : p.status = EngineStatus.busy v) :
-    ∃ E, EvalStep i p v E := by
+theorem evalStep_total
+    {i : EngineSpec.EngIdx}
+    (p : Engine i)
+    (v : EngineSpec.MsgType i)
+    (hbusy : p.status = EngineStatus.busy v)
+    : ∃ E,
+      EvalStep i p v E := by
   let inp := (⟨v, p.config, p.env⟩ : GuardInput i)
   -- Check if any guard matches
   if h : ∃ ga ∈ p.behaviour.actions, (ga.guard inp).isSome then
@@ -78,14 +91,18 @@ theorem evalStep_total {i : EngineSpec.EngIdx} (p : Engine i) (v : EngineSpec.Ms
 
 /-- Lemma: Effect execution preserves the existence and type of the engine
     at the processing address. -/
-lemma engineAt_preserved_after_effect {κ κ' : SystemState} {i : EngineSpec.EngIdx}
-    {E : Effect i} {addr : Address} :
-    WellTypedState κ →
-    MailboxIsolation κ →
-    EffectEvalStep κ i E κ' →
-    ∀ {j : EngineSpec.EngIdx} {p : Engine j},
-    κ.engineAt addr = some ⟨j, p⟩ →
-    ∃ p' : Engine j, κ'.engineAt addr = some ⟨j, p'⟩ := by
+lemma engineAt_preserved_after_effect
+    {κ κ' : SystemState}
+    {i : EngineSpec.EngIdx}
+    {E : Effect i}
+    {addr : Address}
+    : WellTypedState κ →
+      MailboxIsolation κ →
+      EffectEvalStep κ i E κ' →
+      ∀ {j : EngineSpec.EngIdx} {p : Engine j},
+      κ.engineAt addr = some ⟨j, p⟩ →
+      ∃ p' : Engine j,
+      κ'.engineAt addr = some ⟨j, p'⟩ := by
   intro wt hiso heff j p heng
   induction heff generalizing p with
   | noop => exact ⟨p, heng⟩
@@ -151,12 +168,18 @@ lemma engineAt_preserved_after_effect {κ κ' : SystemState} {i : EngineSpec.Eng
 
 /-- **Effect Execution Totality**: executing an effect produced by a
     well-typed engine always yields a valid next state. -/
-theorem effectEvalStep_total {κ : SystemState} {i : EngineSpec.EngIdx} (addr : Address)
-    (p : Engine i) (v : EngineSpec.MsgType i) (E : Effect i) :
-    WellTypedState κ →
-    MailboxIsolation κ →
-    κ.engineAt addr = some ⟨i, p⟩ →
-    ∃ κ', EffectEvalStep κ i E κ' := by
+theorem effectEvalStep_total
+    {κ : SystemState}
+    {i : EngineSpec.EngIdx}
+    (addr : Address)
+    (p : Engine i)
+    (v : EngineSpec.MsgType i)
+    (E : Effect i)
+    : WellTypedState κ →
+      MailboxIsolation κ →
+      κ.engineAt addr = some ⟨i, p⟩ →
+      ∃ κ',
+      EffectEvalStep κ i E κ' := by
   intro wt hiso heng
   induction E generalizing κ p with
   | noop => exact ⟨κ, EffectEvalStep.noop κ i⟩
@@ -212,9 +235,15 @@ theorem effectEvalStep_total {κ : SystemState} {i : EngineSpec.EngIdx} (addr : 
 
 /-- **Progress**:
     If there is productive work, the system takes a step that is NOT S-Node. -/
-theorem progress (κ : SystemState) :
-    WellTypedState κ → MailboxIsolation κ → hasProductiveWork κ →
-    ∃ op, op ≠ OpLabel.node ∧ ∃ κ', OpStep κ op κ' := by
+theorem progress
+    (κ : SystemState)
+    : WellTypedState κ →
+      MailboxIsolation κ →
+      hasProductiveWork κ →
+      ∃ op,
+      op ≠ OpLabel.node ∧
+      ∃ κ',
+      OpStep κ op κ' := by
   intro wt hiso hp
   rcases hp with ⟨addr, se, heng, i, v, hidx, hbusy⟩ |
     ⟨addr, se, heng, hmode, hterm⟩ |

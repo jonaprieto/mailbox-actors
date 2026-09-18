@@ -14,9 +14,16 @@ variable [EngineSpec]
 
 /-- Guard evaluation is deterministic: for a given engine, guarded action,
     and message, the effect is uniquely determined by the guard function. -/
-private lemma guardEvalStep_det {i : EngineSpec.EngIdx} {p : Engine i}
-    {ga : GuardedAction i} {v : EngineSpec.MsgType i} {E₁ E₂ : Effect i}
-    (h₁ : GuardEvalStep i p ga v E₁) (h₂ : GuardEvalStep i p ga v E₂) : E₁ = E₂ := by
+private
+lemma guardEvalStep_det
+    {i : EngineSpec.EngIdx}
+    {p : Engine i}
+    {ga : GuardedAction i}
+    {v : EngineSpec.MsgType i}
+    {E₁ E₂ : Effect i}
+    (h₁ : GuardEvalStep i p ga v E₁)
+    (h₂ : GuardEvalStep i p ga v E₂)
+    : E₁ = E₂ := by
   cases h₁ with
   | guardMatch inp₁ w₁ hg₁ _ hinp₁ =>
     subst hinp₁
@@ -36,11 +43,14 @@ private lemma guardEvalStep_det {i : EngineSpec.EngIdx} {p : Engine i}
 
     Non-overlapping guards are guaranteed structurally by
     `WellFormedBehaviour`, so no explicit hypothesis is needed. -/
-theorem effectDeterminism (i : EngineSpec.EngIdx)
-    (p : Engine i) (v : EngineSpec.MsgType i) (E₁ E₂ : Effect i) :
-    EvalStep i p v E₁ →
-    EvalStep i p v E₂ →
-    E₁ = E₂ := by
+theorem effectDeterminism
+    (i : EngineSpec.EngIdx)
+    (p : Engine i)
+    (v : EngineSpec.MsgType i)
+    (E₁ E₂ : Effect i)
+    : EvalStep i p v E₁ →
+      EvalStep i p v E₂ →
+      E₁ = E₂ := by
   intro h₁ h₂
   cases h₁ with
   | guardStrategy ga₁ _ _ hga₁mem hge₁ hall₁ =>

@@ -14,7 +14,10 @@ variable [EngineSpec]
     1. Every message payload conforms to its target's interface.
     2. Every processing engine has a valid paired mailbox.
     3. All engine components are consistently typed. -/
-structure WellTypedState (κ : SystemState) : Prop where
+structure WellTypedState
+    (κ : SystemState)
+    : Prop
+    where
   /-- Every in-transit message has a payload whose engine type index matches
       the target engine's type (if it exists). -/
   messages_typed :
@@ -45,7 +48,9 @@ structure WellTypedState (κ : SystemState) : Prop where
       κ.engineAt addr ≠ none → ∃ n ∈ κ.nodes, n.id = addr.nodeId
 
 /-- All messages in transit target mailbox engines (not processing engines). -/
-def MailboxIsolation (κ : SystemState) : Prop :=
+def MailboxIsolation
+    (κ : SystemState)
+    : Prop :=
   ∀ m ∈ κ.messages,
     ∀ se : SomeEngine,
       κ.engineAt m.target = some se →
@@ -56,10 +61,14 @@ def MailboxIsolation (κ : SystemState) : Prop :=
 /-- **Spawn pairing**: every processing engine has a paired mailbox engine
     with matching type index in `mail` mode.  Restates `mailbox_exists`
     as a standalone theorem for clarity. -/
-theorem spawnPairing (κ : SystemState) (wt : WellTypedState κ)
-    (addr : Address) (se : SomeEngine)
-    (heng : κ.engineAt addr = some se) (hmode : se.engine.mode = EngineMode.process) :
-    ∃ mboxSe : SomeEngine,
+theorem spawnPairing
+    (κ : SystemState)
+    (wt : WellTypedState κ)
+    (addr : Address)
+    (se : SomeEngine)
+    (heng : κ.engineAt addr = some se)
+    (hmode : se.engine.mode = EngineMode.process)
+    : ∃ mboxSe : SomeEngine,
       κ.engineAt (κ.mailboxOf addr) = some mboxSe ∧
       mboxSe.idx = se.idx ∧
       mboxSe.engine.mode = EngineMode.mail :=

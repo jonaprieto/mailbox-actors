@@ -12,7 +12,9 @@ variable [EngineSpec]
     - `ready f`: accepting messages filtered by `f`
     - `busy m`: processing message `m`
     - `terminated`: stopped, awaiting cleanup -/
-inductive EngineStatus (i : EngineSpec.EngIdx) where
+inductive EngineStatus
+    (i : EngineSpec.EngIdx)
+    where
   | ready (f : EngineSpec.MsgType i → Bool) : EngineStatus i
   | busy (m : EngineSpec.MsgType i) : EngineStatus i
   | terminated : EngineStatus i

@@ -17,8 +17,13 @@ variable [EngineSpec]
 /-- **Mailbox Isolation**: M-Send is the only rule that creates messages,
     and it always targets a mailbox engine.  Requires well-typedness so that
     `mailbox_exists` guarantees the paired mailbox is in `mail` mode. -/
-theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
-    WellTypedState κ → MailboxIsolation κ → OpStep κ op κ' → MailboxIsolation κ' := by
+theorem mailboxIsolation
+    (κ κ' : SystemState)
+    (op : OpLabel)
+    : WellTypedState κ →
+      MailboxIsolation κ →
+      OpStep κ op κ' →
+      MailboxIsolation κ' := by
   intro wt hiso step
   cases step with
   | sNode =>
@@ -111,21 +116,27 @@ theorem mailboxIsolation (κ κ' : SystemState) (op : OpLabel) :
 /-- **Mailbox persistence after cleanup** (Remark 4.4): when S-Clean removes
     a terminated processing engine, its paired mailbox engine survives.
     This prevents in-flight messages from being orphaned. -/
-theorem mailboxPersistence (κ : SystemState) (addr : Address) (se : SomeEngine)
+theorem mailboxPersistence
+    (κ : SystemState)
+    (addr : Address)
+    (se : SomeEngine)
     (_heng : κ.engineAt addr = some se)
     (_hmode : se.engine.mode = EngineMode.process)
-    (_hterm : se.engine.status = EngineStatus.terminated) :
-    (κ.removeEngineAt addr).engineAt (κ.mailboxOf addr) =
+    (_hterm : se.engine.status = EngineStatus.terminated)
+    : (κ.removeEngineAt addr).engineAt (κ.mailboxOf addr) =
       κ.engineAt (κ.mailboxOf addr) := by
   exact engineAt_removeEngineAt_ne κ addr (κ.mailboxOf addr) (mailboxOf_ne_self κ addr)
 
 /-- After S-Clean, a well-typed state's paired mailbox still exists. -/
-theorem mailboxSurvivesClean (κ : SystemState) (wt : WellTypedState κ)
-    (addr : Address) (se : SomeEngine)
+theorem mailboxSurvivesClean
+    (κ : SystemState)
+    (wt : WellTypedState κ)
+    (addr : Address)
+    (se : SomeEngine)
     (heng : κ.engineAt addr = some se)
     (hmode : se.engine.mode = EngineMode.process)
-    (hterm : se.engine.status = EngineStatus.terminated) :
-    ∃ mboxSe : SomeEngine,
+    (hterm : se.engine.status = EngineStatus.terminated)
+    : ∃ mboxSe : SomeEngine,
       (κ.removeEngineAt addr).engineAt (κ.mailboxOf addr) = some mboxSe ∧
       mboxSe.idx = se.idx ∧
       mboxSe.engine.mode = EngineMode.mail := by

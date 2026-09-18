@@ -63,7 +63,10 @@ def AnomaSpec.MsgType (A : AnomaTypes) : AnomaIdx → Type
   | .storage      => StorageMsg A
 
 /-- Configuration data family for Anoma engines. -/
-def AnomaSpec.CfgData (A : AnomaTypes) : AnomaIdx → Type
+def AnomaSpec.CfgData
+    (A : AnomaTypes)
+    : AnomaIdx →
+      Type
   | .txOrdering   => TxOrderingCfg A
   | .shard        => ShardCfg
   | .executor     => ExecutorCfg A
@@ -89,7 +92,10 @@ def AnomaSpec.CfgData (A : AnomaTypes) : AnomaIdx → Type
   | .storage      => StorageCfg
 
 /-- Local state family for Anoma engines. -/
-def AnomaSpec.LocalState (A : AnomaTypes) : AnomaIdx → Type
+def AnomaSpec.LocalState
+    (A : AnomaTypes)
+    : AnomaIdx →
+      Type
   | .txOrdering   => TxOrderingState A
   | .shard        => ShardState A
   | .executor     => ExecutorState A
@@ -120,8 +126,11 @@ def AnomaSpec.LocalState (A : AnomaTypes) : AnomaIdx → Type
 
 /-- Unwrap: if sender and receiver have the same engine type, cast;
     otherwise `none`. -/
-def AnomaSpec.unwrap (A : AnomaTypes) {i j : AnomaIdx}
-    (m : AnomaSpec.MsgType A i) : Option (AnomaSpec.MsgType A j) :=
+def AnomaSpec.unwrap
+    (A : AnomaTypes)
+    {i j : AnomaIdx}
+    (m : AnomaSpec.MsgType A i)
+    : Option (AnomaSpec.MsgType A j) :=
   if h : i = j then some (h ▸ m) else none
 
 -- ============================================================================
@@ -130,7 +139,10 @@ def AnomaSpec.unwrap (A : AnomaTypes) {i j : AnomaIdx}
 
 /-- Anoma engine specification: 23 engine types with trivial mailbox
     semantics (all engines use FIFO pass-through mailboxes). -/
-instance anomaEngineSpec (A : AnomaTypes) : EngineSpec where
+instance anomaEngineSpec
+    (A : AnomaTypes)
+    : EngineSpec
+    where
   EngIdx := AnomaIdx
   MsgType := AnomaSpec.MsgType A
   CfgData := AnomaSpec.CfgData A

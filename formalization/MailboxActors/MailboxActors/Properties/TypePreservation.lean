@@ -15,8 +15,13 @@ variable [EngineSpec]
 /-- **Type Preservation**: transitions preserve well-typedness.
     Requires `MailboxIsolation` so that S-Clean (which only removes the
     processing engine, not its mailbox) cannot orphan message targets. -/
-theorem typePreservation (κ κ' : SystemState) (op : OpLabel) :
-    WellTypedState κ → MailboxIsolation κ → OpStep κ op κ' → WellTypedState κ' := by
+theorem typePreservation
+    (κ κ' : SystemState)
+    (op : OpLabel)
+    : WellTypedState κ →
+      MailboxIsolation κ →
+      OpStep κ op κ' →
+      WellTypedState κ' := by
   intro wt hiso step
   cases step with
   -- ── S-Node: create a new empty node ──────────────────────────────────────

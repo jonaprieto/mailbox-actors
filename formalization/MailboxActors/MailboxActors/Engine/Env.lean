@@ -10,7 +10,9 @@ variable [EngineSpec]
 
 /-- Execution environment of an engine of type `i`.
     Components: type-specific local state and an address book. -/
-structure EngineEnv (i : EngineSpec.EngIdx) where
+structure EngineEnv
+    (i : EngineSpec.EngIdx)
+    where
   localState : EngineSpec.LocalState i
   addressBook : String → Option Address
 

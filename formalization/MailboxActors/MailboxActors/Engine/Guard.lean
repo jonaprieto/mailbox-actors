@@ -26,7 +26,9 @@ namespace MailboxActors
 variable [EngineSpec]
 
 /-- The input triple for guard and action evaluation. -/
-structure GuardInput (i : EngineSpec.EngIdx) where
+structure GuardInput
+    (i : EngineSpec.EngIdx)
+    where
   msg : EngineSpec.MsgType i
   config : EngineConfig i
   env : EngineEnv i
@@ -36,7 +38,9 @@ structure GuardInput (i : EngineSpec.EngIdx) where
     The action is dependently typed: it may only be applied when
     `guard inp = some w`, so the type system enforces the invariant
     "action only when guard holds." -/
-structure GuardedAction (i : EngineSpec.EngIdx) where
+structure GuardedAction
+    (i : EngineSpec.EngIdx)
+    where
   Witness : Type
   /-- The guard: returns `some w` when the action should fire, providing a witness `w`. -/
   guard : GuardInput i → Option Witness
@@ -46,7 +50,10 @@ structure GuardedAction (i : EngineSpec.EngIdx) where
 
 /-- Apply a guarded action: if the guard matches, fire the action
     (passing the proof that the guard holds); otherwise produce `noop`. -/
-def GuardedAction.apply (ga : GuardedAction i) (inp : GuardInput i) : Effect i :=
+def GuardedAction.apply
+    (ga : GuardedAction i)
+    (inp : GuardInput i)
+    : Effect i :=
   match h : ga.guard inp with
   | some w => ga.action w inp h
   | none   => Effect.noop

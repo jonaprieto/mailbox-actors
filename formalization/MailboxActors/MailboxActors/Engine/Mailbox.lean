@@ -16,11 +16,15 @@ namespace MailboxActors
 variable [EngineSpec]
 
 /-- Predicate: an engine is a mailbox engine when its mode is `mail`. -/
-def Engine.isMailbox (e : Engine i) : Prop :=
+def Engine.isMailbox
+    (e : Engine i)
+    : Prop :=
   e.mode = EngineMode.mail
 
 /-- Predicate: an engine is a processing engine when its mode is `process`. -/
-def Engine.isProcessing (e : Engine i) : Prop :=
+def Engine.isProcessing
+    (e : Engine i)
+    : Prop :=
   e.mode = EngineMode.process
 
 end MailboxActors

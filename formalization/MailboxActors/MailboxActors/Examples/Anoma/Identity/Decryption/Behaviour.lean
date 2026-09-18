@@ -38,8 +38,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 def decryptionAction
     (w : A.Ciphertext × Address)
     (inp : @GuardInput (S A) AnomaIdx.decryption)
-    (_ : decryptionGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.decryption :=
+    (_ : decryptionGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.decryption :=
   letI := S A
   let ct := w.1
   let replyTo := w.2
@@ -47,19 +47,22 @@ def decryptionAction
   let pt := A.decrypt_ backend ct
   Effect.send AnomaIdx.identity replyTo (.decryptResult pt)
 
-def decryptionActions : @Behaviour (S A) AnomaIdx.decryption :=
+def decryptionActions
+    : @Behaviour (S A) AnomaIdx.decryption :=
   letI := S A
   [ { Witness := A.Ciphertext × Address
       guard := decryptionGuard A
       action := decryptionAction A } ]
 
-private theorem decryptionNonOverlapping :
-    @NonOverlappingGuards (S A) _ (decryptionActions A) := by
+private
+theorem decryptionNonOverlapping
+    : @NonOverlappingGuards (S A) _ (decryptionActions A) := by
   letI := S A; intro inp
   simp only [decryptionActions, List.filter]
   split <;> simp
 
-def decryptionBehaviour : @WellFormedBehaviour (S A) AnomaIdx.decryption :=
+def decryptionBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.decryption :=
   letI := S A
   { actions := decryptionActions A
     nonOverlapping := decryptionNonOverlapping A }

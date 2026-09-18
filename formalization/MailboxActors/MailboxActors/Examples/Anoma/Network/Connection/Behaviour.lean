@@ -30,8 +30,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 /-- Guard for `send` messages. -/
 @[simp]
 def connectionSendGuard
-    (inp : @GuardInput (S A) AnomaIdx.connection) :
-    Option A.ByteString :=
+    (inp : @GuardInput (S A) AnomaIdx.connection)
+    : Option A.ByteString :=
   match @GuardInput.msg (S A) _ inp with
   | .send bs => some bs
   | _ => none
@@ -39,8 +39,8 @@ def connectionSendGuard
 /-- Guard for `recv` messages. -/
 @[simp]
 def connectionRecvGuard
-    (inp : @GuardInput (S A) AnomaIdx.connection) :
-    Option A.ByteString :=
+    (inp : @GuardInput (S A) AnomaIdx.connection)
+    : Option A.ByteString :=
   match @GuardInput.msg (S A) _ inp with
   | .recv bs => some bs
   | _ => none
@@ -53,8 +53,8 @@ def connectionRecvGuard
 def connectionSendAction
     (w : A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.connection)
-    (_ : connectionSendGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.connection :=
+    (_ : connectionSendGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.connection :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -65,15 +65,16 @@ def connectionSendAction
 def connectionRecvAction
     (w : A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.connection)
-    (_ : connectionRecvGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.connection :=
+    (_ : connectionRecvGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.connection :=
   letI := S A; Effect.noop
 
 -- ============================================================================
 -- § Behaviour assembly
 -- ============================================================================
 
-def connectionActions : @Behaviour (S A) AnomaIdx.connection :=
+def connectionActions
+    : @Behaviour (S A) AnomaIdx.connection :=
   letI := S A
   [ { Witness := A.ByteString
       guard := connectionSendGuard A
@@ -82,13 +83,15 @@ def connectionActions : @Behaviour (S A) AnomaIdx.connection :=
       guard := connectionRecvGuard A
       action := connectionRecvAction A } ]
 
-private theorem connectionNonOverlapping :
-    @NonOverlappingGuards (S A) _ (connectionActions A) := by
+private
+theorem connectionNonOverlapping
+    : @NonOverlappingGuards (S A) _ (connectionActions A) := by
   letI := S A; intro inp
   simp only [connectionActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def connectionBehaviour : @WellFormedBehaviour (S A) AnomaIdx.connection :=
+def connectionBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.connection :=
   letI := S A
   { actions := connectionActions A
     nonOverlapping := connectionNonOverlapping A }

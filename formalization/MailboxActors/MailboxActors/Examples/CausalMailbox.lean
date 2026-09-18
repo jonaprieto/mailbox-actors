@@ -75,7 +75,8 @@ structure CausalState where
   ready     : List TopicMsg            -- messages ready for delivery
 
 /-- The empty initial state. -/
-def CausalState.empty : CausalState :=
+def CausalState.empty
+    : CausalState :=
   { delivered := ∅, pending := [], ready := [] }
 
 -- ============================================================================
@@ -83,17 +84,23 @@ def CausalState.empty : CausalState :=
 -- ============================================================================
 
 /-- Message interface: both engine types use `TopicMsg`. -/
-def PubSub.MsgType : PubSubIdx → Type
+def PubSub.MsgType
+    : PubSubIdx →
+      Type
   | .relay  => TopicMsg
   | .broker => TopicMsg
 
 /-- Configuration data per engine type. -/
-def PubSub.CfgData : PubSubIdx → Type
+def PubSub.CfgData
+    : PubSubIdx →
+      Type
   | .relay  => RelayConfig
   | .broker => BrokerConfig
 
 /-- Local state per engine type. -/
-def PubSub.LocalState : PubSubIdx → Type
+def PubSub.LocalState
+    : PubSubIdx →
+      Type
   | .relay  => RelayState
   | .broker => CausalState
 
@@ -102,7 +109,9 @@ def PubSub.LocalState : PubSubIdx → Type
 -- ============================================================================
 
 /-- Concrete engine specification for the pub/sub system. -/
-instance PubSubSpec : EngineSpec where
+instance PubSubSpec
+    : EngineSpec
+    where
   EngIdx     := PubSubIdx
   MsgType    := PubSub.MsgType
   CfgData    := PubSub.CfgData
@@ -126,21 +135,30 @@ instance PubSubSpec : EngineSpec where
 -- ============================================================================
 
 /-- Check whether all dependencies of a message are in the delivered set. -/
-def dependenciesMet (msg : TopicMsg) (delivered : Finset MsgHash) : Bool :=
+def dependenciesMet
+    (msg : TopicMsg)
+    (delivered : Finset MsgHash)
+    : Bool :=
   decide (msg.deps ⊆ delivered)
 
 /-- Find pending messages whose dependencies are now met. -/
-def findCascade (pending : List (MsgHash × TopicMsg))
-    (delivered : Finset MsgHash) : List TopicMsg :=
+def findCascade
+    (pending : List (MsgHash × TopicMsg))
+    (delivered : Finset MsgHash)
+    : List TopicMsg :=
   (pending.filter (fun (_, m) => dependenciesMet m delivered)).map (·.2)
 
 /-- Remove cascaded messages from the pending list. -/
-def removeCascaded (pending : List (MsgHash × TopicMsg))
-    (delivered : Finset MsgHash) : List (MsgHash × TopicMsg) :=
+def removeCascaded
+    (pending : List (MsgHash × TopicMsg))
+    (delivered : Finset MsgHash)
+    : List (MsgHash × TopicMsg) :=
   pending.filter (fun (_, m) => !dependenciesMet m delivered)
 
 /-- The causal broker guard: always matches (witness is `Unit`). -/
-def causalGuard : GuardInput PubSubIdx.broker → Option Unit :=
+def causalGuard
+    : GuardInput PubSubIdx.broker →
+      Option Unit :=
   fun _ => some ()
 
 /-- The causal broker action: branches on dependency satisfaction.
@@ -148,8 +166,11 @@ def causalGuard : GuardInput PubSubIdx.broker → Option Unit :=
     - Dependencies not met: buffer in pending.
 
     Uses `Effect.chain` for the cascade. -/
-def causalAction (_w : Unit) (inp : GuardInput PubSubIdx.broker)
-    (_ : causalGuard inp = some _w) : Effect PubSubIdx.broker :=
+def causalAction
+    (_w : Unit)
+    (inp : GuardInput PubSubIdx.broker)
+    (_ : causalGuard inp = some _w)
+    : Effect PubSubIdx.broker :=
   let msg : TopicMsg := inp.msg
   let q : CausalState := inp.env.localState
     if dependenciesMet msg q.delivered then
@@ -182,21 +203,26 @@ def causalAction (_w : Unit) (inp : GuardInput PubSubIdx.broker)
         inp.env.addressBook ⟩
 
 /-- The causal broker guarded action. -/
-def causalGuardedAction : GuardedAction PubSubIdx.broker :=
+def causalGuardedAction
+    : GuardedAction PubSubIdx.broker :=
   { Witness := Unit, guard := causalGuard, action := causalAction }
 
 /-- The underlying action list for the causal delivery mailbox. -/
-def causalActions : Behaviour PubSubIdx.broker :=
+def causalActions
+    : Behaviour PubSubIdx.broker :=
   [causalGuardedAction]
 
 /-- Non-overlapping guards hold trivially (single guard). -/
-private theorem causalNonOverlapping : NonOverlappingGuards causalActions := by
+private
+theorem causalNonOverlapping
+    : NonOverlappingGuards causalActions := by
   intro inp
   simp [causalActions, causalGuardedAction, causalGuard]
 
 /-- Well-formed behaviour for the causal delivery mailbox: a single
     guarded action bundled with its non-overlapping proof. -/
-def causalBehaviour : WellFormedBehaviour PubSubIdx.broker :=
+def causalBehaviour
+    : WellFormedBehaviour PubSubIdx.broker :=
   { actions := causalActions
     nonOverlapping := causalNonOverlapping }
 
@@ -206,19 +232,26 @@ def causalBehaviour : WellFormedBehaviour PubSubIdx.broker :=
 
 /-- The causal delivery invariant: every message in the `ready` list has
     its causal dependencies recorded in the `delivered` set. -/
-def CausalInvariant (q : CausalState) : Prop :=
+def CausalInvariant
+    (q : CausalState)
+    : Prop :=
   ∀ msg ∈ q.ready, msg.deps ⊆ q.delivered
 
 /-- `dependenciesMet` is equivalent to subset inclusion. -/
-theorem dependenciesMet_iff (msg : TopicMsg) (delivered : Finset MsgHash) :
-    dependenciesMet msg delivered = true ↔ msg.deps ⊆ delivered := by
+theorem dependenciesMet_iff
+    (msg : TopicMsg)
+    (delivered : Finset MsgHash)
+    : dependenciesMet msg delivered = true ↔
+      msg.deps ⊆ delivered := by
   simp [dependenciesMet]
 
 /-- Every message returned by `findCascade` has its dependencies met
     with respect to the given delivered set. -/
-theorem findCascade_deps_met (pending : List (MsgHash × TopicMsg))
-    (delivered : Finset MsgHash) :
-    ∀ m ∈ findCascade pending delivered, m.deps ⊆ delivered := by
+theorem findCascade_deps_met
+    (pending : List (MsgHash × TopicMsg))
+    (delivered : Finset MsgHash)
+    : ∀ m ∈ findCascade pending delivered,
+      m.deps ⊆ delivered := by
   intro m hm
   simp only [findCascade, List.mem_map, List.mem_filter] at hm
   obtain ⟨⟨_, m'⟩, ⟨_, hdeps⟩, rfl⟩ := hm

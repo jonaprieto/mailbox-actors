@@ -14,7 +14,9 @@ open PubSubSpec
 
 /-- The global causal invariant:
     For every broker in the system, its local state satisfies CausalInvariant. -/
-def GlobalCausalInvariant (κ : SystemState) : Prop :=
+def GlobalCausalInvariant
+    (κ : SystemState)
+    : Prop :=
   ∀ addr se, κ.engineAt addr = some se →
     ∀ (h : se.idx = PubSubIdx.broker),
     -- Cast localState to CausalState using the type equality
@@ -23,20 +25,26 @@ def GlobalCausalInvariant (κ : SystemState) : Prop :=
 
 /-- CausalInvariant is preserved when removing a message from ready:
     fewer messages to check, delivered set unchanged. -/
-private lemma causalInvariant_erase (s : CausalState) (w : TopicMsg) :
-    CausalInvariant s → CausalInvariant { s with ready := s.ready.erase w } := by
+private
+lemma causalInvariant_erase
+    (s : CausalState)
+    (w : TopicMsg)
+    : CausalInvariant s →
+      CausalInvariant { s with ready := s.ready.erase w } := by
   intro hinv msg hmem
   exact hinv msg (List.mem_of_mem_erase hmem)
 
 /-- mailboxRemove preserves CausalInvariant: removing a message from a broker's
     ready list preserves the invariant. Taking `idx` as a free variable lets
     `subst` eliminate it so the cast and mailboxRemove both reduce. -/
-private lemma mailboxRemove_preserves_causalInvariant
-    {idx : EngineSpec.EngIdx} {localState : EngineSpec.LocalState idx}
+private
+lemma mailboxRemove_preserves_causalInvariant
+    {idx : EngineSpec.EngIdx}
+    {localState : EngineSpec.LocalState idx}
     {w : EngineSpec.MsgType idx}
     (hidx : idx = PubSubIdx.broker)
-    (hinv : CausalInvariant (cast (by rw [hidx]; rfl) localState)) :
-    CausalInvariant (cast (by rw [hidx]; rfl)
+    (hinv : CausalInvariant (cast (by rw [hidx]; rfl) localState))
+    : CausalInvariant (cast (by rw [hidx]; rfl)
       (EngineSpec.mailboxRemove localState w)) := by
   subst hidx
   exact causalInvariant_erase _ _ hinv

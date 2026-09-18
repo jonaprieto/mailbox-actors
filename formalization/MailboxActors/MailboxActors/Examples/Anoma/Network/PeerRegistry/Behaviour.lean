@@ -36,8 +36,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 /-- Guard for `advertNode` messages. -/
 @[simp]
 def peerRegistryAdvertNodeGuard
-    (inp : @GuardInput (S A) AnomaIdx.peerRegistry) :
-    Option (A.NodeID × A.TransportAddr) :=
+    (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
+    : Option (A.NodeID × A.TransportAddr) :=
   match @GuardInput.msg (S A) _ inp with
   | .advertNode nid addr => some (nid, addr)
   | _ => none
@@ -45,8 +45,8 @@ def peerRegistryAdvertNodeGuard
 /-- Guard for `lookupNode` messages. -/
 @[simp]
 def peerRegistryLookupNodeGuard
-    (inp : @GuardInput (S A) AnomaIdx.peerRegistry) :
-    Option A.NodeID :=
+    (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
+    : Option A.NodeID :=
   match @GuardInput.msg (S A) _ inp with
   | .lookupNode nid => some nid
   | _ => none
@@ -54,8 +54,8 @@ def peerRegistryLookupNodeGuard
 /-- Guard for `advertTopic` messages. -/
 @[simp]
 def peerRegistryAdvertTopicGuard
-    (inp : @GuardInput (S A) AnomaIdx.peerRegistry) :
-    Option (A.TopicID × A.NodeID) :=
+    (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
+    : Option (A.TopicID × A.NodeID) :=
   match @GuardInput.msg (S A) _ inp with
   | .advertTopic tid nid => some (tid, nid)
   | _ => none
@@ -63,8 +63,8 @@ def peerRegistryAdvertTopicGuard
 /-- Guard for `lookupTopic` messages. -/
 @[simp]
 def peerRegistryLookupTopicGuard
-    (inp : @GuardInput (S A) AnomaIdx.peerRegistry) :
-    Option A.TopicID :=
+    (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
+    : Option A.TopicID :=
   match @GuardInput.msg (S A) _ inp with
   | .lookupTopic tid => some tid
   | _ => none
@@ -77,8 +77,8 @@ def peerRegistryLookupTopicGuard
 def peerRegistryAdvertNodeAction
     (w : A.NodeID × A.TransportAddr)
     (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
-    (_ : peerRegistryAdvertNodeGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.peerRegistry :=
+    (_ : peerRegistryAdvertNodeGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.peerRegistry :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -89,16 +89,16 @@ def peerRegistryAdvertNodeAction
 def peerRegistryLookupNodeAction
     (w : A.NodeID)
     (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
-    (_ : peerRegistryLookupNodeGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.peerRegistry :=
+    (_ : peerRegistryLookupNodeGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.peerRegistry :=
   letI := S A; Effect.noop
 
 /-- Action for `advertTopic`: increment the topic count. -/
 def peerRegistryAdvertTopicAction
     (w : A.TopicID × A.NodeID)
     (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
-    (_ : peerRegistryAdvertTopicGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.peerRegistry :=
+    (_ : peerRegistryAdvertTopicGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.peerRegistry :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -109,15 +109,16 @@ def peerRegistryAdvertTopicAction
 def peerRegistryLookupTopicAction
     (w : A.TopicID)
     (inp : @GuardInput (S A) AnomaIdx.peerRegistry)
-    (_ : peerRegistryLookupTopicGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.peerRegistry :=
+    (_ : peerRegistryLookupTopicGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.peerRegistry :=
   letI := S A; Effect.noop
 
 -- ============================================================================
 -- § Behaviour assembly
 -- ============================================================================
 
-def peerRegistryActions : @Behaviour (S A) AnomaIdx.peerRegistry :=
+def peerRegistryActions
+    : @Behaviour (S A) AnomaIdx.peerRegistry :=
   letI := S A
   [ { Witness := A.NodeID × A.TransportAddr
       guard := peerRegistryAdvertNodeGuard A
@@ -132,13 +133,15 @@ def peerRegistryActions : @Behaviour (S A) AnomaIdx.peerRegistry :=
       guard := peerRegistryLookupTopicGuard A
       action := peerRegistryLookupTopicAction A } ]
 
-private theorem peerRegistryNonOverlapping :
-    @NonOverlappingGuards (S A) _ (peerRegistryActions A) := by
+private
+theorem peerRegistryNonOverlapping
+    : @NonOverlappingGuards (S A) _ (peerRegistryActions A) := by
   letI := S A; intro inp
   simp only [peerRegistryActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def peerRegistryBehaviour : @WellFormedBehaviour (S A) AnomaIdx.peerRegistry :=
+def peerRegistryBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.peerRegistry :=
   letI := S A
   { actions := peerRegistryActions A
     nonOverlapping := peerRegistryNonOverlapping A }

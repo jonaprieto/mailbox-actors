@@ -15,7 +15,9 @@ variable [EngineSpec]
 
     The behaviour field uses `WellFormedBehaviour`, bundling the guard list
     with a proof of non-overlapping guards. -/
-structure Engine (i : EngineSpec.EngIdx) where
+structure Engine
+    (i : EngineSpec.EngIdx)
+    where
   behaviour : WellFormedBehaviour i
   status : EngineStatus i
   config : EngineConfig i

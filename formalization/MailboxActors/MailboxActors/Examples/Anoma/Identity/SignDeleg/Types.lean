@@ -18,7 +18,9 @@ variable (A : AnomaTypes)
 - `reply`: Response to a query.
 - `submit`: Submit new evidence for a relationship.
 - `confirm`: Confirmation of evidence submission. -/
-inductive EvidenceMsg (E : Type) where
+inductive EvidenceMsg
+    (E : Type)
+    where
   | query : A.ExternalIdentity → EvidenceMsg E
   | reply : Bool → EvidenceMsg E
   | submit : E → EvidenceMsg E
