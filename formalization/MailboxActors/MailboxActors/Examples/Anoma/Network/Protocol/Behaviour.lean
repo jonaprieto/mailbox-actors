@@ -41,8 +41,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 /-- Guard for `openConnection` messages. -/
 @[simp]
 def protocolOpenConnectionGuard
-    (inp : @GuardInput (S A) AnomaIdx.protocol) :
-    Option A.TransportAddr :=
+    (inp : @GuardInput (S A) AnomaIdx.protocol)
+    : Option A.TransportAddr :=
   match @GuardInput.msg (S A) _ inp with
   | .openConnection addr => some addr
   | _ => none
@@ -50,8 +50,8 @@ def protocolOpenConnectionGuard
 /-- Guard for `incomingConnection` messages. -/
 @[simp]
 def protocolIncomingConnectionGuard
-    (inp : @GuardInput (S A) AnomaIdx.protocol) :
-    Option A.TransportAddr :=
+    (inp : @GuardInput (S A) AnomaIdx.protocol)
+    : Option A.TransportAddr :=
   match @GuardInput.msg (S A) _ inp with
   | .incomingConnection addr => some addr
   | _ => none
@@ -59,8 +59,8 @@ def protocolIncomingConnectionGuard
 /-- Guard for `send` messages. -/
 @[simp]
 def protocolSendGuard
-    (inp : @GuardInput (S A) AnomaIdx.protocol) :
-    Option (A.TransportAddr × A.ByteString) :=
+    (inp : @GuardInput (S A) AnomaIdx.protocol)
+    : Option (A.TransportAddr × A.ByteString) :=
   match @GuardInput.msg (S A) _ inp with
   | .send addr bs => some (addr, bs)
   | _ => none
@@ -75,8 +75,8 @@ def protocolSendGuard
 def protocolOpenConnectionAction
     (w : A.TransportAddr)
     (inp : @GuardInput (S A) AnomaIdx.protocol)
-    (_ : protocolOpenConnectionGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.protocol :=
+    (_ : protocolOpenConnectionGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.protocol :=
   letI := S A
   Effect.spawn AnomaIdx.connection
     ({ remoteAddr := w } : ConnectionCfg A)
@@ -87,8 +87,8 @@ def protocolOpenConnectionAction
 def protocolIncomingConnectionAction
     (w : A.TransportAddr)
     (inp : @GuardInput (S A) AnomaIdx.protocol)
-    (_ : protocolIncomingConnectionGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.protocol :=
+    (_ : protocolIncomingConnectionGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.protocol :=
   letI := S A
   Effect.spawn AnomaIdx.connection
     ({ remoteAddr := w } : ConnectionCfg A)
@@ -100,15 +100,16 @@ def protocolIncomingConnectionAction
 def protocolSendAction
     (w : A.TransportAddr × A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.protocol)
-    (_ : protocolSendGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.protocol :=
+    (_ : protocolSendGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.protocol :=
   letI := S A; Effect.noop
 
 -- ============================================================================
 -- § Behaviour assembly
 -- ============================================================================
 
-def protocolActions : @Behaviour (S A) AnomaIdx.protocol :=
+def protocolActions
+    : @Behaviour (S A) AnomaIdx.protocol :=
   letI := S A
   [ { Witness := A.TransportAddr
       guard := protocolOpenConnectionGuard A
@@ -120,13 +121,15 @@ def protocolActions : @Behaviour (S A) AnomaIdx.protocol :=
       guard := protocolSendGuard A
       action := protocolSendAction A } ]
 
-private theorem protocolNonOverlapping :
-    @NonOverlappingGuards (S A) _ (protocolActions A) := by
+private
+theorem protocolNonOverlapping
+    : @NonOverlappingGuards (S A) _ (protocolActions A) := by
   letI := S A; intro inp
   simp only [protocolActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def protocolBehaviour : @WellFormedBehaviour (S A) AnomaIdx.protocol :=
+def protocolBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.protocol :=
   letI := S A
   { actions := protocolActions A
     nonOverlapping := protocolNonOverlapping A }

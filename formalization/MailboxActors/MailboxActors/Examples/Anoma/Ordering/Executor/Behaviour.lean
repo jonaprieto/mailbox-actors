@@ -36,8 +36,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 def executorReadReplyAction
     (w : A.KVSKey × A.KVSDatum)
     (inp : @GuardInput (S A) AnomaIdx.executor)
-    (_ : executorReadReplyGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.executor :=
+    (_ : executorReadReplyGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.executor :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -45,20 +45,23 @@ def executorReadReplyAction
     localState := { st with
       completedReads := st.completedReads ++ [w.1] } }
 
-def executorActions : @Behaviour (S A) AnomaIdx.executor :=
+def executorActions
+    : @Behaviour (S A) AnomaIdx.executor :=
   letI := S A
   [ { Witness := A.KVSKey × A.KVSDatum
       guard := executorReadReplyGuard A
       action := executorReadReplyAction A } ]
 
-private theorem executorNonOverlapping :
-    @NonOverlappingGuards (S A) _ (executorActions A) := by
+private
+theorem executorNonOverlapping
+    : @NonOverlappingGuards (S A) _ (executorActions A) := by
   letI := S A
   intro inp
   simp only [executorActions, List.filter]
   split <;> simp
 
-def executorBehaviour : @WellFormedBehaviour (S A) AnomaIdx.executor :=
+def executorBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.executor :=
   letI := S A
   { actions := executorActions A
     nonOverlapping := executorNonOverlapping A }

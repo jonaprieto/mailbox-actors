@@ -23,7 +23,10 @@ structure Node where
   engines : EngineMap
 
 /-- Look up an engine by its local identifier within a node. -/
-def Node.getEngine (n : Node) (localId : Nat) : Option SomeEngine :=
+def Node.getEngine
+    (n : Node)
+    (localId : Nat)
+    : Option SomeEngine :=
   (n.engines.find? (fun p => p.1 == localId)).map (·.2)
 
 end MailboxActors

@@ -20,34 +20,50 @@ abbrev Trace := Nat → SystemState
 
 /-- Weak fairness (TLA⁺-style): every continuously enabled transition
     predicate is eventually taken. -/
-def WeaklyFair (trace : Trace) : Prop :=
+def WeaklyFair
+    (trace : Trace)
+    : Prop :=
   ∀ (P : SystemState → SystemState → Prop) n,
     (∀ k ≥ n, ∃ κ', P (trace k) κ') →
     ∃ k ≥ n, P (trace k) (trace (k + 1))
 
 /-- Strong fairness: every infinitely often enabled transition
     predicate is eventually taken. -/
-def StronglyFair (trace : Trace) : Prop :=
+def StronglyFair
+    (trace : Trace)
+    : Prop :=
   ∀ (P : SystemState → SystemState → Prop) n,
     (∀ k ≥ n, ∃ l ≥ k, ∃ κ', P (trace l) κ') →
     ∃ k ≥ n, P (trace k) (trace (k + 1))
 
 /-- Consecutive states in the trace are related by a system step. -/
-def IsExecution (trace : Trace) : Prop :=
+def IsExecution
+    (trace : Trace)
+    : Prop :=
   ∀ n, SysStep (trace n) (trace (n + 1))
 
 /-- Message `m` appears at most once in the in-transit list at every
     step from `n` onwards (each sent message is a unique packet). -/
-def UniqueInTransit (trace : Trace) (m : Message) (n : Nat) : Prop :=
+def UniqueInTransit
+    (trace : Trace)
+    (m : Message)
+    (n : Nat)
+    : Prop :=
   ∀ k ≥ n, ∀ pre post : List Message,
     (trace k).messages = pre ++ m :: post → m ∉ pre ∧ m ∉ post
 
 /-- **Safety**: well-typedness and mailbox isolation are jointly preserved
     along any execution trace starting from a well-typed state. -/
-theorem invariants_trace (trace : Trace) (hexec : IsExecution trace) (n : Nat)
-    (hwt : WellTypedState (trace n)) (hiso : MailboxIsolation (trace n))
-    (k : Nat) (hk : n ≤ k) :
-    WellTypedState (trace k) ∧ MailboxIsolation (trace k) := by
+theorem invariants_trace
+    (trace : Trace)
+    (hexec : IsExecution trace)
+    (n : Nat)
+    (hwt : WellTypedState (trace n))
+    (hiso : MailboxIsolation (trace n))
+    (k : Nat)
+    (hk : n ≤ k)
+    : WellTypedState (trace k) ∧
+      MailboxIsolation (trace k) := by
   induction k with
   | zero =>
     have : n = 0 := by omega
@@ -64,15 +80,25 @@ theorem invariants_trace (trace : Trace) (hexec : IsExecution trace) (n : Nat)
 /-- The target mailbox eventually accepts the message.
     This is a liveness property required for Eventual Delivery:
     the mailbox must not permanently block the message via filters. -/
-def EventuallyAccepts (trace : Trace) (m : Message) (n : Nat) : Prop :=
+def EventuallyAccepts
+    (trace : Trace)
+    (m : Message)
+    (n : Nat)
+    : Prop :=
   ∀ k ≥ n, m ∈ (trace k).messages →
     ∃ l ≥ k, ∃ se, (trace l).engineAt m.target = some se ∧
       se.engine.mode = EngineMode.mail ∧
       ∃ f w, se.engine.status = EngineStatus.ready f ∧
       m.payload = ⟨se.idx, w⟩ ∧ f w = true
 
-lemma effect_preserves_messages (κ κ' : SystemState) (i : EngineSpec.EngIdx) (E : Effect i) :
-    EffectEvalStep κ i E κ' → ∀ m, m ∈ κ.messages → m ∈ κ'.messages := by
+lemma effect_preserves_messages
+    (κ κ' : SystemState)
+    (i : EngineSpec.EngIdx)
+    (E : Effect i)
+    : EffectEvalStep κ i E κ' →
+      ∀ m,
+      m ∈ κ.messages →
+      m ∈ κ'.messages := by
   intro h m hm
   induction h
   case noop => exact hm
@@ -85,9 +111,14 @@ lemma effect_preserves_messages (κ κ' : SystemState) (i : EngineSpec.EngIdx) (
 
 /-- If message `m` is in the trace at step `k` and not in step `k+1`,
     then an `M-Enqueue` operation for `m` must have occurred. -/
-lemma message_removal (trace : Trace) (hexec : IsExecution trace) (m : Message) (k : Nat) :
-    m ∈ (trace k).messages → m ∉ (trace (k + 1)).messages →
-    ∃ mboxEng w f pre post,
+lemma message_removal
+    (trace : Trace)
+    (hexec : IsExecution trace)
+    (m : Message)
+    (k : Nat)
+    : m ∈ (trace k).messages →
+      m ∉ (trace (k + 1)).messages →
+      ∃ mboxEng w f pre post,
       (trace k).messages = pre ++ m :: post ∧
       OpStep (trace k) OpLabel.enqueue (trace (k + 1)) ∧
       (trace k).engineAt m.target = some mboxEng ∧
@@ -134,8 +165,13 @@ lemma message_removal (trace : Trace) (hexec : IsExecution trace) (m : Message) 
     contradiction
 
 omit [EngineSpec] in
-lemma list_split_of_mem {α : Type} (m : α) (l : List α) (h : m ∈ l) :
-    ∃ (pre post : List α), l = pre ++ m :: post := by
+lemma list_split_of_mem
+    {α : Type}
+    (m : α)
+    (l : List α)
+    (h : m ∈ l)
+    : ∃ (pre post : List α),
+      l = pre ++ m :: post := by
   induction l with
   | nil => contradiction
   | cons hd tl ih =>
@@ -152,15 +188,19 @@ lemma list_split_of_mem {α : Type} (m : α) (l : List α) (h : m ∈ l) :
     * `UniqueInTransit` — message uniqueness.
     * `EventuallyAccepts` — filters do not permanently block.
     * `StronglyFair` — scheduler is fair. -/
-theorem eventualDelivery (trace : Trace) (m : Message) (n : Nat) :
-    IsExecution trace →
-    StronglyFair trace →
-    WellTypedState (trace n) →
-    MailboxIsolation (trace n) →
-    UniqueInTransit trace m n →
-    EventuallyAccepts trace m n →
-    m ∈ (trace n).messages →
-    ∃ k ≥ n, m ∉ (trace k).messages := by
+theorem eventualDelivery
+    (trace : Trace)
+    (m : Message)
+    (n : Nat)
+    : IsExecution trace →
+      StronglyFair trace →
+      WellTypedState (trace n) →
+      MailboxIsolation (trace n) →
+      UniqueInTransit trace m n →
+      EventuallyAccepts trace m n →
+      m ∈ (trace n).messages →
+      ∃ k ≥ n,
+      m ∉ (trace k).messages := by
   intro hexec hfair hwt hiso huniq haccepts hm
   let P (κ κ' : SystemState) : Prop :=
     ∃ mboxEng w f pre post,

@@ -28,8 +28,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 def tickerIncrAction
     (_ : Unit)
     (inp : @GuardInput (S A) AnomaIdx.ticker)
-    (_ : tickerIncrGuard A inp = some ()) :
-    @Effect (S A) AnomaIdx.ticker :=
+    (_ : tickerIncrGuard A inp = some ())
+    : @Effect (S A) AnomaIdx.ticker :=
   letI := S A
   let env := inp.env
   Effect.update { env with localState := { counter := env.localState.counter + 1 } }
@@ -46,8 +46,8 @@ def tickerIncrAction
 def tickerGetCountAction
     (_ : Unit)
     (inp : @GuardInput (S A) AnomaIdx.ticker)
-    (_ : tickerGetCountGuard A inp = some ()) :
-    @Effect (S A) AnomaIdx.ticker :=
+    (_ : tickerGetCountGuard A inp = some ())
+    : @Effect (S A) AnomaIdx.ticker :=
   letI := S A; Effect.noop
 
 /-- Guard for `count` reply messages. -/
@@ -62,11 +62,12 @@ def tickerGetCountAction
 def tickerCountAction
     (w : Nat)
     (inp : @GuardInput (S A) AnomaIdx.ticker)
-    (_ : tickerCountGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.ticker :=
+    (_ : tickerCountGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.ticker :=
   letI := S A; Effect.noop
 
-def tickerActions : @Behaviour (S A) AnomaIdx.ticker :=
+def tickerActions
+    : @Behaviour (S A) AnomaIdx.ticker :=
   letI := S A
   [ { Witness := Unit
       guard := tickerIncrGuard A
@@ -78,13 +79,15 @@ def tickerActions : @Behaviour (S A) AnomaIdx.ticker :=
       guard := tickerCountGuard A
       action := tickerCountAction A } ]
 
-private theorem tickerNonOverlapping :
-    @NonOverlappingGuards (S A) _ (tickerActions A) := by
+private
+theorem tickerNonOverlapping
+    : @NonOverlappingGuards (S A) _ (tickerActions A) := by
   letI := S A; intro inp
   simp only [tickerActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def tickerBehaviour : @WellFormedBehaviour (S A) AnomaIdx.ticker :=
+def tickerBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.ticker :=
   letI := S A
   { actions := tickerActions A
     nonOverlapping := tickerNonOverlapping A }

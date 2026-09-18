@@ -41,8 +41,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 def signDelegQueryAction
     (w : A.ExternalIdentity)
     (inp : @GuardInput (S A) AnomaIdx.signDeleg)
-    (_ : signDelegQueryGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.signDeleg :=
+    (_ : signDelegQueryGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.signDeleg :=
   letI := S A; Effect.noop
 
 /-- Guard for `submit` messages. -/
@@ -58,15 +58,16 @@ def signDelegQueryAction
 def signDelegSubmitAction
     (w : A.SignEvidence)
     (inp : @GuardInput (S A) AnomaIdx.signDeleg)
-    (_ : signDelegSubmitGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.signDeleg :=
+    (_ : signDelegSubmitGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.signDeleg :=
   letI := S A
   let env := inp.env
   let st := env.localState
   Effect.update { env with
     localState := { st with evidenceCount := st.evidenceCount + 1 } }
 
-def signDelegActions : @Behaviour (S A) AnomaIdx.signDeleg :=
+def signDelegActions
+    : @Behaviour (S A) AnomaIdx.signDeleg :=
   letI := S A
   [ { Witness := A.ExternalIdentity
       guard := signDelegQueryGuard A
@@ -75,13 +76,15 @@ def signDelegActions : @Behaviour (S A) AnomaIdx.signDeleg :=
       guard := signDelegSubmitGuard A
       action := signDelegSubmitAction A } ]
 
-private theorem signDelegNonOverlapping :
-    @NonOverlappingGuards (S A) _ (signDelegActions A) := by
+private
+theorem signDelegNonOverlapping
+    : @NonOverlappingGuards (S A) _ (signDelegActions A) := by
   letI := S A; intro inp
   simp only [signDelegActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def signDelegBehaviour : @WellFormedBehaviour (S A) AnomaIdx.signDeleg :=
+def signDelegBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.signDeleg :=
   letI := S A
   { actions := signDelegActions A
     nonOverlapping := signDelegNonOverlapping A }

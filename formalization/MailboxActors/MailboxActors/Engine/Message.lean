@@ -19,7 +19,9 @@ structure Message where
   payload : TotalMsg
 
 /-- The `Append` wrapper for mailbox engine messages: `Msg_m = Append(Msg_i)`. -/
-inductive Append (α : Type) where
+inductive Append
+    (α : Type)
+    where
   | mk : α → Append α
 
 end MailboxActors

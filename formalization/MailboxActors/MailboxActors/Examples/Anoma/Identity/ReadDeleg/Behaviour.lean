@@ -41,8 +41,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 def readDelegQueryAction
     (w : A.ExternalIdentity)
     (inp : @GuardInput (S A) AnomaIdx.readDeleg)
-    (_ : readDelegQueryGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.readDeleg :=
+    (_ : readDelegQueryGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.readDeleg :=
   letI := S A; Effect.noop
 
 /-- Guard for `submit` messages. -/
@@ -58,15 +58,16 @@ def readDelegQueryAction
 def readDelegSubmitAction
     (w : A.ReadEvidence)
     (inp : @GuardInput (S A) AnomaIdx.readDeleg)
-    (_ : readDelegSubmitGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.readDeleg :=
+    (_ : readDelegSubmitGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.readDeleg :=
   letI := S A
   let env := inp.env
   let st := env.localState
   Effect.update { env with
     localState := { st with evidenceCount := st.evidenceCount + 1 } }
 
-def readDelegActions : @Behaviour (S A) AnomaIdx.readDeleg :=
+def readDelegActions
+    : @Behaviour (S A) AnomaIdx.readDeleg :=
   letI := S A
   [ { Witness := A.ExternalIdentity
       guard := readDelegQueryGuard A
@@ -75,13 +76,15 @@ def readDelegActions : @Behaviour (S A) AnomaIdx.readDeleg :=
       guard := readDelegSubmitGuard A
       action := readDelegSubmitAction A } ]
 
-private theorem readDelegNonOverlapping :
-    @NonOverlappingGuards (S A) _ (readDelegActions A) := by
+private
+theorem readDelegNonOverlapping
+    : @NonOverlappingGuards (S A) _ (readDelegActions A) := by
   letI := S A; intro inp
   simp only [readDelegActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def readDelegBehaviour : @WellFormedBehaviour (S A) AnomaIdx.readDeleg :=
+def readDelegBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.readDeleg :=
   letI := S A
   { actions := readDelegActions A
     nonOverlapping := readDelegNonOverlapping A }

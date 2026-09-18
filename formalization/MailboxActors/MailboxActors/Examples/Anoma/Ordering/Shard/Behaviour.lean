@@ -59,8 +59,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 def shardAcquireLockAction
     (w : A.TxFingerprint × A.KVSKey × Address)
     (inp : @GuardInput (S A) AnomaIdx.shard)
-    (_ : shardAcquireLockGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.shard :=
+    (_ : shardAcquireLockGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.shard :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -94,8 +94,8 @@ def shardAcquireLockAction
 def shardReadRequestAction
     (w : A.TxFingerprint × A.KVSKey × Address)
     (inp : @GuardInput (S A) AnomaIdx.shard)
-    (_ : shardReadRequestGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.shard :=
+    (_ : shardReadRequestGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.shard :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -143,8 +143,8 @@ def shardReadRequestAction
 def shardWriteAction
     (w : A.TxFingerprint × A.KVSKey × A.KVSDatum)
     (inp : @GuardInput (S A) AnomaIdx.shard)
-    (_ : shardWriteGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.shard :=
+    (_ : shardWriteGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.shard :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -173,8 +173,8 @@ def shardWriteAction
 def shardUpdateSeenAllAction
     (w : A.TxFingerprint)
     (inp : @GuardInput (S A) AnomaIdx.shard)
-    (_ : shardUpdateSeenAllGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.shard :=
+    (_ : shardUpdateSeenAllGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.shard :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -183,7 +183,8 @@ def shardUpdateSeenAllAction
       heardAllReads := w
       heardAllWrites := w } }
 
-def shardActions : @Behaviour (S A) AnomaIdx.shard :=
+def shardActions
+    : @Behaviour (S A) AnomaIdx.shard :=
   letI := S A
   [ { Witness := A.TxFingerprint × A.KVSKey × Address
       guard := shardAcquireLockGuard A
@@ -198,14 +199,16 @@ def shardActions : @Behaviour (S A) AnomaIdx.shard :=
       guard := shardUpdateSeenAllGuard A
       action := shardUpdateSeenAllAction A } ]
 
-private theorem shardNonOverlapping :
-    @NonOverlappingGuards (S A) _ (shardActions A) := by
+private
+theorem shardNonOverlapping
+    : @NonOverlappingGuards (S A) _ (shardActions A) := by
   letI := S A
   intro inp
   simp only [shardActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def shardBehaviour : @WellFormedBehaviour (S A) AnomaIdx.shard :=
+def shardBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.shard :=
   letI := S A
   { actions := shardActions A
     nonOverlapping := shardNonOverlapping A }

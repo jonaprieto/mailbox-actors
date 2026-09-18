@@ -25,8 +25,14 @@ variable [EngineSpec]
     guarded action `ga` processing message `v` produces effect `E`.
 
     Rules: B-GuardedActionEval, B-NoMatchingGuard. -/
-inductive GuardEvalStep (i : EngineSpec.EngIdx) :
-    Engine i → GuardedAction i → EngineSpec.MsgType i → Effect i → Prop where
+inductive GuardEvalStep
+    (i : EngineSpec.EngIdx)
+    : Engine i →
+      GuardedAction i →
+      EngineSpec.MsgType i →
+      Effect i →
+      Prop
+    where
   /-- B-GuardedActionEval: guard matches, action fires. -/
   | guardMatch (p : Engine i) (ga : GuardedAction i) (v : EngineSpec.MsgType i)
       (inp : GuardInput i) (w : ga.Witness) (h : ga.guard inp = some w) :
@@ -49,8 +55,13 @@ inductive GuardEvalStep (i : EngineSpec.EngIdx) :
     produces effect `E`.
 
     Rules: B-GuardStrategy, B-AllGuardsFail. -/
-inductive EvalStep (i : EngineSpec.EngIdx) :
-    Engine i → EngineSpec.MsgType i → Effect i → Prop where
+inductive EvalStep
+    (i : EngineSpec.EngIdx)
+    : Engine i →
+      EngineSpec.MsgType i →
+      Effect i →
+      Prop
+    where
   /-- B-GuardStrategy: exactly one guard matches. -/
   | guardStrategy (p : Engine i) (v : EngineSpec.MsgType i)
       (ga : GuardedAction i) (E : Effect i) :
@@ -74,8 +85,13 @@ inductive EvalStep (i : EngineSpec.EngIdx) :
 /-- `EffectEvalStep κ E κ'` : executing effect `E` in state `κ` produces `κ'`.
 
     Rules: E-Send, E-Update, E-MFilter, E-Spawn, E-Chain, E-Terminate, E-Noop. -/
-inductive EffectEvalStep :
-    SystemState → (i : EngineSpec.EngIdx) → Effect i → SystemState → Prop where
+inductive EffectEvalStep
+    : SystemState →
+      (i : EngineSpec.EngIdx) →
+      Effect i →
+      SystemState →
+      Prop
+    where
   /-- E-Noop: no change. -/
   | noop (κ : SystemState) (i : EngineSpec.EngIdx) :
       EffectEvalStep κ i Effect.noop κ
@@ -150,7 +166,10 @@ inductive EffectEvalStep :
 /-- Post-processing status resolution: if the effect left the engine `busy`,
     reset to `ready(λ_.true)`; otherwise preserve the status set by the effect
     (e.g. `terminated` from E-Terminate, `ready(f)` from E-MFilter). -/
-def resolvePostStatus {i : EngineSpec.EngIdx} (s : EngineStatus i) : EngineStatus i :=
+def resolvePostStatus
+    {i : EngineSpec.EngIdx}
+    (s : EngineStatus i)
+    : EngineStatus i :=
   match s with
   | .busy _ => .ready (fun _ => true)
   | other => other
@@ -174,7 +193,12 @@ inductive OpLabel where
 /-- `OpStep κ op κ'` : operation `op` transforms `κ` into `κ'`.
 
     This combines all system-level, message-passing, and processing rules. -/
-inductive OpStep : SystemState → OpLabel → SystemState → Prop where
+inductive OpStep
+    : SystemState →
+      OpLabel →
+      SystemState →
+      Prop
+    where
   /-- S-Node: create a new node. -/
   | sNode (κ κ' : SystemState) (newId : Nat) :
       κ.nextId = newId →
@@ -282,9 +306,14 @@ inductive OpStep : SystemState → OpLabel → SystemState → Prop where
 
 /-- `ProcessStep κ addr i v κ'` : engine at `addr` of type `i` processes
     message `v`, yielding new state `κ'`. -/
-inductive ProcessStep :
-    SystemState → Address → (i : EngineSpec.EngIdx) →
-    EngineSpec.MsgType i → SystemState → Prop where
+inductive ProcessStep
+    : SystemState →
+      Address →
+      (i : EngineSpec.EngIdx) →
+      EngineSpec.MsgType i →
+      SystemState →
+      Prop
+    where
   | process (κ κ' κ'' : SystemState) (addr : Address)
       (i : EngineSpec.EngIdx) (p : Engine i) (v : EngineSpec.MsgType i)
       (E : Effect i) :
@@ -306,7 +335,9 @@ inductive ProcessStep :
 -- ============================================================================
 
 /-- A single system step: there exists some operation that transforms the state. -/
-def SysStep (κ κ' : SystemState) : Prop :=
+def SysStep
+    (κ κ' : SystemState)
+    : Prop :=
   ∃ op, OpStep κ op κ'
 
 end MailboxActors

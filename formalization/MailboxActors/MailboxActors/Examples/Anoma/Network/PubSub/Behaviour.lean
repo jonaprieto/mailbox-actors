@@ -34,8 +34,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 /-- Guard for `publish` messages. -/
 @[simp]
 def pubsubPublishGuard
-    (inp : @GuardInput (S A) AnomaIdx.pubsub) :
-    Option (A.TopicID × A.ByteString) :=
+    (inp : @GuardInput (S A) AnomaIdx.pubsub)
+    : Option (A.TopicID × A.ByteString) :=
   match @GuardInput.msg (S A) _ inp with
   | .publish tid bs => some (tid, bs)
   | _ => none
@@ -43,8 +43,8 @@ def pubsubPublishGuard
 /-- Guard for `subscribe` messages. -/
 @[simp]
 def pubsubSubscribeGuard
-    (inp : @GuardInput (S A) AnomaIdx.pubsub) :
-    Option A.TopicID :=
+    (inp : @GuardInput (S A) AnomaIdx.pubsub)
+    : Option A.TopicID :=
   match @GuardInput.msg (S A) _ inp with
   | .subscribe tid => some tid
   | _ => none
@@ -52,8 +52,8 @@ def pubsubSubscribeGuard
 /-- Guard for `unsubscribe` messages. -/
 @[simp]
 def pubsubUnsubscribeGuard
-    (inp : @GuardInput (S A) AnomaIdx.pubsub) :
-    Option A.TopicID :=
+    (inp : @GuardInput (S A) AnomaIdx.pubsub)
+    : Option A.TopicID :=
   match @GuardInput.msg (S A) _ inp with
   | .unsubscribe tid => some tid
   | _ => none
@@ -61,8 +61,8 @@ def pubsubUnsubscribeGuard
 /-- Guard for `forward` messages. -/
 @[simp]
 def pubsubForwardGuard
-    (inp : @GuardInput (S A) AnomaIdx.pubsub) :
-    Option (A.TopicID × A.ByteString) :=
+    (inp : @GuardInput (S A) AnomaIdx.pubsub)
+    : Option (A.TopicID × A.ByteString) :=
   match @GuardInput.msg (S A) _ inp with
   | .forward tid bs => some (tid, bs)
   | _ => none
@@ -75,8 +75,8 @@ def pubsubForwardGuard
 def pubsubPublishAction
     (w : A.TopicID × A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.pubsub)
-    (_ : pubsubPublishGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.pubsub :=
+    (_ : pubsubPublishGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.pubsub :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -87,8 +87,8 @@ def pubsubPublishAction
 def pubsubSubscribeAction
     (w : A.TopicID)
     (inp : @GuardInput (S A) AnomaIdx.pubsub)
-    (_ : pubsubSubscribeGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.pubsub :=
+    (_ : pubsubSubscribeGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.pubsub :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -99,8 +99,8 @@ def pubsubSubscribeAction
 def pubsubUnsubscribeAction
     (w : A.TopicID)
     (inp : @GuardInput (S A) AnomaIdx.pubsub)
-    (_ : pubsubUnsubscribeGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.pubsub :=
+    (_ : pubsubUnsubscribeGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.pubsub :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -111,15 +111,16 @@ def pubsubUnsubscribeAction
 def pubsubForwardAction
     (w : A.TopicID × A.ByteString)
     (inp : @GuardInput (S A) AnomaIdx.pubsub)
-    (_ : pubsubForwardGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.pubsub :=
+    (_ : pubsubForwardGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.pubsub :=
   letI := S A; Effect.noop
 
 -- ============================================================================
 -- § Behaviour assembly
 -- ============================================================================
 
-def pubsubActions : @Behaviour (S A) AnomaIdx.pubsub :=
+def pubsubActions
+    : @Behaviour (S A) AnomaIdx.pubsub :=
   letI := S A
   [ { Witness := A.TopicID × A.ByteString
       guard := pubsubPublishGuard A
@@ -134,13 +135,15 @@ def pubsubActions : @Behaviour (S A) AnomaIdx.pubsub :=
       guard := pubsubForwardGuard A
       action := pubsubForwardAction A } ]
 
-private theorem pubsubNonOverlapping :
-    @NonOverlappingGuards (S A) _ (pubsubActions A) := by
+private
+theorem pubsubNonOverlapping
+    : @NonOverlappingGuards (S A) _ (pubsubActions A) := by
   letI := S A; intro inp
   simp only [pubsubActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def pubsubBehaviour : @WellFormedBehaviour (S A) AnomaIdx.pubsub :=
+def pubsubBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.pubsub :=
   letI := S A
   { actions := pubsubActions A
     nonOverlapping := pubsubNonOverlapping A }

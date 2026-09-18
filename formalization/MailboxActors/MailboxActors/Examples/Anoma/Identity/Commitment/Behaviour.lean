@@ -40,8 +40,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 def commitmentSignAction
     (w : A.Signable × Address)
     (inp : @GuardInput (S A) AnomaIdx.commitment)
-    (_ : commitmentSignGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.commitment :=
+    (_ : commitmentSignGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.commitment :=
   letI := S A
   let signable := w.1
   let replyTo := w.2
@@ -49,19 +49,22 @@ def commitmentSignAction
   let sig := A.sign backend signable
   Effect.send AnomaIdx.identity replyTo (.signResult sig)
 
-def commitmentActions : @Behaviour (S A) AnomaIdx.commitment :=
+def commitmentActions
+    : @Behaviour (S A) AnomaIdx.commitment :=
   letI := S A
   [ { Witness := A.Signable × Address
       guard := commitmentSignGuard A
       action := commitmentSignAction A } ]
 
-private theorem commitmentNonOverlapping :
-    @NonOverlappingGuards (S A) _ (commitmentActions A) := by
+private
+theorem commitmentNonOverlapping
+    : @NonOverlappingGuards (S A) _ (commitmentActions A) := by
   letI := S A; intro inp
   simp only [commitmentActions, List.filter]
   split <;> simp
 
-def commitmentBehaviour : @WellFormedBehaviour (S A) AnomaIdx.commitment :=
+def commitmentBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.commitment :=
   letI := S A
   { actions := commitmentActions A
     nonOverlapping := commitmentNonOverlapping A }

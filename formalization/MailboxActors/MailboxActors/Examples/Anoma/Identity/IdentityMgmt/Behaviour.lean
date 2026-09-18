@@ -56,8 +56,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 def identityGenerateAction
     (w : A.Backend × Capability)
     (inp : @GuardInput (S A) AnomaIdx.identity)
-    (_ : identityGenerateGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.identity :=
+    (_ : identityGenerateGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.identity :=
   letI := S A
   let env := inp.env
   let st := env.localState
@@ -98,8 +98,8 @@ def identityGenerateAction
 def identityDeleteAction
     (w : A.ExternalIdentity)
     (inp : @GuardInput (S A) AnomaIdx.identity)
-    (_ : identityDeleteGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.identity :=
+    (_ : identityDeleteGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.identity :=
   letI := S A; Effect.noop
 
 /-- Guard for `signResult` messages from commitment sub-engines. -/
@@ -115,8 +115,8 @@ def identityDeleteAction
 def identitySignResultAction
     (w : A.Signature)
     (inp : @GuardInput (S A) AnomaIdx.identity)
-    (_ : identitySignResultGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.identity :=
+    (_ : identitySignResultGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.identity :=
   letI := S A; Effect.noop
 
 /-- Guard for `decryptResult` messages from decryption sub-engines. -/
@@ -132,8 +132,8 @@ def identitySignResultAction
 def identityDecryptResultAction
     (w : A.Plaintext)
     (inp : @GuardInput (S A) AnomaIdx.identity)
-    (_ : identityDecryptResultGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.identity :=
+    (_ : identityDecryptResultGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.identity :=
   letI := S A; Effect.noop
 
 /-- Guard for `verifyResult` messages from verification sub-engines. -/
@@ -150,8 +150,8 @@ def identityDecryptResultAction
 def identityVerifyResultAction
     (w : Bool)
     (inp : @GuardInput (S A) AnomaIdx.identity)
-    (_ : identityVerifyResultGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.identity :=
+    (_ : identityVerifyResultGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.identity :=
   letI := S A; Effect.noop
 
 /-- Guard for `encryptResult` messages from encryption sub-engines. -/
@@ -167,11 +167,12 @@ def identityVerifyResultAction
 def identityEncryptResultAction
     (w : A.Ciphertext)
     (inp : @GuardInput (S A) AnomaIdx.identity)
-    (_ : identityEncryptResultGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.identity :=
+    (_ : identityEncryptResultGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.identity :=
   letI := S A; Effect.noop
 
-def identityActions : @Behaviour (S A) AnomaIdx.identity :=
+def identityActions
+    : @Behaviour (S A) AnomaIdx.identity :=
   letI := S A
   [ { Witness := A.Backend × Capability
       guard := identityGenerateGuard A
@@ -192,13 +193,15 @@ def identityActions : @Behaviour (S A) AnomaIdx.identity :=
       guard := identityEncryptResultGuard A
       action := identityEncryptResultAction A } ]
 
-private theorem identityNonOverlapping :
-    @NonOverlappingGuards (S A) _ (identityActions A) := by
+private
+theorem identityNonOverlapping
+    : @NonOverlappingGuards (S A) _ (identityActions A) := by
   letI := S A; intro inp
   simp only [identityActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def identityBehaviour : @WellFormedBehaviour (S A) AnomaIdx.identity :=
+def identityBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.identity :=
   letI := S A
   { actions := identityActions A
     nonOverlapping := identityNonOverlapping A }

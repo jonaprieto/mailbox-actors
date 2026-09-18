@@ -42,8 +42,8 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 def verificationAction
     (w : A.ExternalIdentity × A.Signable × A.Signature × Bool × Address)
     (inp : @GuardInput (S A) AnomaIdx.verification)
-    (_ : verificationGuard A inp = some w) :
-    @Effect (S A) AnomaIdx.verification :=
+    (_ : verificationGuard A inp = some w)
+    : @Effect (S A) AnomaIdx.verification :=
   letI := S A
   let eid := w.1
   let signable := w.2.1
@@ -53,19 +53,22 @@ def verificationAction
   let result := A.verify_ backend eid signable sig
   Effect.send AnomaIdx.identity replyTo (.verifyResult result)
 
-def verificationActions : @Behaviour (S A) AnomaIdx.verification :=
+def verificationActions
+    : @Behaviour (S A) AnomaIdx.verification :=
   letI := S A
   [ { Witness := A.ExternalIdentity × A.Signable × A.Signature × Bool × Address
       guard := verificationGuard A
       action := verificationAction A } ]
 
-private theorem verificationNonOverlapping :
-    @NonOverlappingGuards (S A) _ (verificationActions A) := by
+private
+theorem verificationNonOverlapping
+    : @NonOverlappingGuards (S A) _ (verificationActions A) := by
   letI := S A; intro inp
   simp only [verificationActions, List.filter]
   split <;> simp
 
-def verificationBehaviour : @WellFormedBehaviour (S A) AnomaIdx.verification :=
+def verificationBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.verification :=
   letI := S A
   { actions := verificationActions A
     nonOverlapping := verificationNonOverlapping A }
