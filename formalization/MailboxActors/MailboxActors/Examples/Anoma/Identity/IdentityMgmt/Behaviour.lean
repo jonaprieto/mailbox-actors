@@ -40,9 +40,11 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 -- ============================================================================
 
 /-- Guard for `generateReq` messages. -/
-@[simp] def identityGenerateGuard
-    (inp : @GuardInput (S A) AnomaIdx.identity) :
-    Option (A.Backend × Capability) :=
+@[simp]
+def identityGenerateGuard
+    (inp : @GuardInput (S A) AnomaIdx.identity)
+    : Option (A.Backend × Capability)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .generateReq backend cap => some (backend, cap)
   | _ => none
@@ -86,9 +88,11 @@ def identityGenerateAction
           ({ backend := backend } : DecryptionCfg A) ()))
 
 /-- Guard for `deleteReq` messages. -/
-@[simp] def identityDeleteGuard
-    (inp : @GuardInput (S A) AnomaIdx.identity) :
-    Option A.ExternalIdentity :=
+@[simp]
+def identityDeleteGuard
+    (inp : @GuardInput (S A) AnomaIdx.identity)
+    : Option A.ExternalIdentity
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .deleteReq eid => some eid
   | _ => none
@@ -105,9 +109,11 @@ def identityDeleteAction
   letI := S A; Effect.noop
 
 /-- Guard for `signResult` messages from commitment sub-engines. -/
-@[simp] def identitySignResultGuard
-    (inp : @GuardInput (S A) AnomaIdx.identity) :
-    Option A.Signature :=
+@[simp]
+def identitySignResultGuard
+    (inp : @GuardInput (S A) AnomaIdx.identity)
+    : Option A.Signature
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .signResult sig => some sig
   | _ => none
@@ -123,9 +129,11 @@ def identitySignResultAction
   letI := S A; Effect.noop
 
 /-- Guard for `decryptResult` messages from decryption sub-engines. -/
-@[simp] def identityDecryptResultGuard
-    (inp : @GuardInput (S A) AnomaIdx.identity) :
-    Option A.Plaintext :=
+@[simp]
+def identityDecryptResultGuard
+    (inp : @GuardInput (S A) AnomaIdx.identity)
+    : Option A.Plaintext
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .decryptResult pt => some pt
   | _ => none
@@ -141,9 +149,11 @@ def identityDecryptResultAction
   letI := S A; Effect.noop
 
 /-- Guard for `verifyResult` messages from verification sub-engines. -/
-@[simp] def identityVerifyResultGuard
-    (inp : @GuardInput (S A) AnomaIdx.identity) :
-    Option Bool :=
+@[simp]
+def identityVerifyResultGuard
+    (inp : @GuardInput (S A) AnomaIdx.identity)
+    : Option Bool
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .verifyResult b => some b
   | _ => none
@@ -160,9 +170,11 @@ def identityVerifyResultAction
   letI := S A; Effect.noop
 
 /-- Guard for `encryptResult` messages from encryption sub-engines. -/
-@[simp] def identityEncryptResultGuard
-    (inp : @GuardInput (S A) AnomaIdx.identity) :
-    Option A.Ciphertext :=
+@[simp]
+def identityEncryptResultGuard
+    (inp : @GuardInput (S A) AnomaIdx.identity)
+    : Option A.Ciphertext
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .encryptResult ct => some ct
   | _ => none
@@ -177,7 +189,9 @@ def identityEncryptResultAction
     :=
   letI := S A; Effect.noop
 
-def identityActions : @Behaviour (S A) AnomaIdx.identity :=
+def identityActions
+    : @Behaviour (S A) AnomaIdx.identity
+    :=
   letI := S A
   [ { Witness := A.Backend × Capability
       guard := identityGenerateGuard A
@@ -198,13 +212,17 @@ def identityActions : @Behaviour (S A) AnomaIdx.identity :=
       guard := identityEncryptResultGuard A
       action := identityEncryptResultAction A } ]
 
-private theorem identityNonOverlapping :
-    @NonOverlappingGuards (S A) _ (identityActions A) := by
+private
+theorem identityNonOverlapping
+    : @NonOverlappingGuards (S A) _ (identityActions A)
+    := by
   letI := S A; intro inp
   simp only [identityActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def identityBehaviour : @WellFormedBehaviour (S A) AnomaIdx.identity :=
+def identityBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.identity
+    :=
   letI := S A
   { actions := identityActions A
     nonOverlapping := identityNonOverlapping A }

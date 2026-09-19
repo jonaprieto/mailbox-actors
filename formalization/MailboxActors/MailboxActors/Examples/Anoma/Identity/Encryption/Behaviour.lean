@@ -29,9 +29,11 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 
 /-- Guard for `encryptReq` messages. Extracts the target identity,
     plaintext, reads-for flag, and reply address. -/
-@[simp] def encryptionGuard
-    (inp : @GuardInput (S A) AnomaIdx.encryption) :
-    Option (A.ExternalIdentity × A.Plaintext × Bool × Address) :=
+@[simp]
+def encryptionGuard
+    (inp : @GuardInput (S A) AnomaIdx.encryption)
+    : Option (A.ExternalIdentity × A.Plaintext × Bool × Address)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .encryptReq eid pt useRF replyTo => some (eid, pt, useRF, replyTo)
   | _ => none
@@ -53,19 +55,25 @@ def encryptionAction
   let ct := A.encrypt_ backend eid pt
   Effect.send AnomaIdx.identity replyTo (.encryptResult ct)
 
-def encryptionActions : @Behaviour (S A) AnomaIdx.encryption :=
+def encryptionActions
+    : @Behaviour (S A) AnomaIdx.encryption
+    :=
   letI := S A
   [ { Witness := A.ExternalIdentity × A.Plaintext × Bool × Address
       guard := encryptionGuard A
       action := encryptionAction A } ]
 
-private theorem encryptionNonOverlapping :
-    @NonOverlappingGuards (S A) _ (encryptionActions A) := by
+private
+theorem encryptionNonOverlapping
+    : @NonOverlappingGuards (S A) _ (encryptionActions A)
+    := by
   letI := S A; intro inp
   simp only [encryptionActions, List.filter]
   split <;> simp
 
-def encryptionBehaviour : @WellFormedBehaviour (S A) AnomaIdx.encryption :=
+def encryptionBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.encryption
+    :=
   letI := S A
   { actions := encryptionActions A
     nonOverlapping := encryptionNonOverlapping A }

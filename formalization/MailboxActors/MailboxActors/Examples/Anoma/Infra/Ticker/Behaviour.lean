@@ -17,9 +17,11 @@ variable (A : AnomaTypes)
 private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 
 /-- Guard for `increment` messages. -/
-@[simp] def tickerIncrGuard
-    (inp : @GuardInput (S A) AnomaIdx.ticker) :
-    Option Unit :=
+@[simp]
+def tickerIncrGuard
+    (inp : @GuardInput (S A) AnomaIdx.ticker)
+    : Option Unit
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .increment => some ()
   | _ => none
@@ -36,9 +38,11 @@ def tickerIncrAction
   Effect.update { env with localState := { counter := env.localState.counter + 1 } }
 
 /-- Guard for `getCount` messages. -/
-@[simp] def tickerGetCountGuard
-    (inp : @GuardInput (S A) AnomaIdx.ticker) :
-    Option Unit :=
+@[simp]
+def tickerGetCountGuard
+    (inp : @GuardInput (S A) AnomaIdx.ticker)
+    : Option Unit
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .getCount => some ()
   | _ => none
@@ -53,9 +57,11 @@ def tickerGetCountAction
   letI := S A; Effect.noop
 
 /-- Guard for `count` reply messages. -/
-@[simp] def tickerCountGuard
-    (inp : @GuardInput (S A) AnomaIdx.ticker) :
-    Option Nat :=
+@[simp]
+def tickerCountGuard
+    (inp : @GuardInput (S A) AnomaIdx.ticker)
+    : Option Nat
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .count n => some n
   | _ => none
@@ -69,7 +75,9 @@ def tickerCountAction
     :=
   letI := S A; Effect.noop
 
-def tickerActions : @Behaviour (S A) AnomaIdx.ticker :=
+def tickerActions
+    : @Behaviour (S A) AnomaIdx.ticker
+    :=
   letI := S A
   [ { Witness := Unit
       guard := tickerIncrGuard A
@@ -81,13 +89,17 @@ def tickerActions : @Behaviour (S A) AnomaIdx.ticker :=
       guard := tickerCountGuard A
       action := tickerCountAction A } ]
 
-private theorem tickerNonOverlapping :
-    @NonOverlappingGuards (S A) _ (tickerActions A) := by
+private
+theorem tickerNonOverlapping
+    : @NonOverlappingGuards (S A) _ (tickerActions A)
+    := by
   letI := S A; intro inp
   simp only [tickerActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def tickerBehaviour : @WellFormedBehaviour (S A) AnomaIdx.ticker :=
+def tickerBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.ticker
+    :=
   letI := S A
   { actions := tickerActions A
     nonOverlapping := tickerNonOverlapping A }

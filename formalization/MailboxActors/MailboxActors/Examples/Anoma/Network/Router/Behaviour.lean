@@ -145,7 +145,9 @@ def routerConnectReplyAction
 -- § Behaviour assembly
 -- ============================================================================
 
-def routerActions : @Behaviour (S A) AnomaIdx.router :=
+def routerActions
+    : @Behaviour (S A) AnomaIdx.router
+    :=
   letI := S A
   [ { Witness := A.NodeID × A.ByteString
       guard := routerSendLocalGuard A
@@ -163,13 +165,17 @@ def routerActions : @Behaviour (S A) AnomaIdx.router :=
       guard := routerConnectReplyGuard A
       action := routerConnectReplyAction A } ]
 
-private theorem routerNonOverlapping :
-    @NonOverlappingGuards (S A) _ (routerActions A) := by
+private
+theorem routerNonOverlapping
+    : @NonOverlappingGuards (S A) _ (routerActions A)
+    := by
   letI := S A; intro inp
   simp only [routerActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def routerBehaviour : @WellFormedBehaviour (S A) AnomaIdx.router :=
+def routerBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.router
+    :=
   letI := S A
   { actions := routerActions A
     nonOverlapping := routerNonOverlapping A }

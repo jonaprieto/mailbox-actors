@@ -28,9 +28,11 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 -- ============================================================================
 
 /-- Guard for `query` messages. -/
-@[simp] def signDelegQueryGuard
-    (inp : @GuardInput (S A) AnomaIdx.signDeleg) :
-    Option A.ExternalIdentity :=
+@[simp]
+def signDelegQueryGuard
+    (inp : @GuardInput (S A) AnomaIdx.signDeleg)
+    : Option A.ExternalIdentity
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .query eid => some eid
   | _ => none
@@ -47,9 +49,11 @@ def signDelegQueryAction
   letI := S A; Effect.noop
 
 /-- Guard for `submit` messages. -/
-@[simp] def signDelegSubmitGuard
-    (inp : @GuardInput (S A) AnomaIdx.signDeleg) :
-    Option A.SignEvidence :=
+@[simp]
+def signDelegSubmitGuard
+    (inp : @GuardInput (S A) AnomaIdx.signDeleg)
+    : Option A.SignEvidence
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .submit ev => some ev
   | _ => none
@@ -68,7 +72,9 @@ def signDelegSubmitAction
   Effect.update { env with
     localState := { st with evidenceCount := st.evidenceCount + 1 } }
 
-def signDelegActions : @Behaviour (S A) AnomaIdx.signDeleg :=
+def signDelegActions
+    : @Behaviour (S A) AnomaIdx.signDeleg
+    :=
   letI := S A
   [ { Witness := A.ExternalIdentity
       guard := signDelegQueryGuard A
@@ -77,13 +83,17 @@ def signDelegActions : @Behaviour (S A) AnomaIdx.signDeleg :=
       guard := signDelegSubmitGuard A
       action := signDelegSubmitAction A } ]
 
-private theorem signDelegNonOverlapping :
-    @NonOverlappingGuards (S A) _ (signDelegActions A) := by
+private
+theorem signDelegNonOverlapping
+    : @NonOverlappingGuards (S A) _ (signDelegActions A)
+    := by
   letI := S A; intro inp
   simp only [signDelegActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def signDelegBehaviour : @WellFormedBehaviour (S A) AnomaIdx.signDeleg :=
+def signDelegBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.signDeleg
+    :=
   letI := S A
   { actions := signDelegActions A
     nonOverlapping := signDelegNonOverlapping A }

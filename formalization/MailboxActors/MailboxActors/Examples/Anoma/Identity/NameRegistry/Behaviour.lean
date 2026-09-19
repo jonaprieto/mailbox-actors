@@ -28,9 +28,11 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 -- ============================================================================
 
 /-- Guard for `query` messages. -/
-@[simp] def nameRegistryQueryGuard
-    (inp : @GuardInput (S A) AnomaIdx.nameRegistry) :
-    Option A.ExternalIdentity :=
+@[simp]
+def nameRegistryQueryGuard
+    (inp : @GuardInput (S A) AnomaIdx.nameRegistry)
+    : Option A.ExternalIdentity
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .query eid => some eid
   | _ => none
@@ -47,9 +49,11 @@ def nameRegistryQueryAction
   letI := S A; Effect.noop
 
 /-- Guard for `submit` messages. -/
-@[simp] def nameRegistrySubmitGuard
-    (inp : @GuardInput (S A) AnomaIdx.nameRegistry) :
-    Option A.NameEvidence :=
+@[simp]
+def nameRegistrySubmitGuard
+    (inp : @GuardInput (S A) AnomaIdx.nameRegistry)
+    : Option A.NameEvidence
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .submit ev => some ev
   | _ => none
@@ -68,7 +72,9 @@ def nameRegistrySubmitAction
   Effect.update { env with
     localState := { st with registrationCount := st.registrationCount + 1 } }
 
-def nameRegistryActions : @Behaviour (S A) AnomaIdx.nameRegistry :=
+def nameRegistryActions
+    : @Behaviour (S A) AnomaIdx.nameRegistry
+    :=
   letI := S A
   [ { Witness := A.ExternalIdentity
       guard := nameRegistryQueryGuard A
@@ -77,13 +83,17 @@ def nameRegistryActions : @Behaviour (S A) AnomaIdx.nameRegistry :=
       guard := nameRegistrySubmitGuard A
       action := nameRegistrySubmitAction A } ]
 
-private theorem nameRegistryNonOverlapping :
-    @NonOverlappingGuards (S A) _ (nameRegistryActions A) := by
+private
+theorem nameRegistryNonOverlapping
+    : @NonOverlappingGuards (S A) _ (nameRegistryActions A)
+    := by
   letI := S A; intro inp
   simp only [nameRegistryActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def nameRegistryBehaviour : @WellFormedBehaviour (S A) AnomaIdx.nameRegistry :=
+def nameRegistryBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.nameRegistry
+    :=
   letI := S A
   { actions := nameRegistryActions A
     nonOverlapping := nameRegistryNonOverlapping A }

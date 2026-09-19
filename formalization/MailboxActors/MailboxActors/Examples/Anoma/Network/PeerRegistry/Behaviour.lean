@@ -125,7 +125,9 @@ def peerRegistryLookupTopicAction
 -- § Behaviour assembly
 -- ============================================================================
 
-def peerRegistryActions : @Behaviour (S A) AnomaIdx.peerRegistry :=
+def peerRegistryActions
+    : @Behaviour (S A) AnomaIdx.peerRegistry
+    :=
   letI := S A
   [ { Witness := A.NodeID × A.TransportAddr
       guard := peerRegistryAdvertNodeGuard A
@@ -140,13 +142,17 @@ def peerRegistryActions : @Behaviour (S A) AnomaIdx.peerRegistry :=
       guard := peerRegistryLookupTopicGuard A
       action := peerRegistryLookupTopicAction A } ]
 
-private theorem peerRegistryNonOverlapping :
-    @NonOverlappingGuards (S A) _ (peerRegistryActions A) := by
+private
+theorem peerRegistryNonOverlapping
+    : @NonOverlappingGuards (S A) _ (peerRegistryActions A)
+    := by
   letI := S A; intro inp
   simp only [peerRegistryActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def peerRegistryBehaviour : @WellFormedBehaviour (S A) AnomaIdx.peerRegistry :=
+def peerRegistryBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.peerRegistry
+    :=
   letI := S A
   { actions := peerRegistryActions A
     nonOverlapping := peerRegistryNonOverlapping A }

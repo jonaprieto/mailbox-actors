@@ -15,9 +15,11 @@ open MailboxActors
 variable (A : AnomaTypes)
 private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 
-@[simp] def storageChunkGetGuard
-    (inp : @GuardInput (S A) AnomaIdx.storage) :
-    Option A.ChunkID :=
+@[simp]
+def storageChunkGetGuard
+    (inp : @GuardInput (S A) AnomaIdx.storage)
+    : Option A.ChunkID
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .chunkGet cid => some cid
   | _ => none
@@ -32,9 +34,11 @@ def storageChunkGetAction
     :=
   letI := S A; Effect.noop
 
-@[simp] def storageChunkPutGuard
-    (inp : @GuardInput (S A) AnomaIdx.storage) :
-    Option (A.ChunkID × A.Chunk) :=
+@[simp]
+def storageChunkPutGuard
+    (inp : @GuardInput (S A) AnomaIdx.storage)
+    : Option (A.ChunkID × A.Chunk)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .chunkPut cid chunk => some (cid, chunk)
   | _ => none
@@ -51,7 +55,9 @@ def storageChunkPutAction
   Effect.update { env with
     localState := { chunkCount := env.localState.chunkCount + 1 } }
 
-def storageActions : @Behaviour (S A) AnomaIdx.storage :=
+def storageActions
+    : @Behaviour (S A) AnomaIdx.storage
+    :=
   letI := S A
   [ { Witness := A.ChunkID
       guard := storageChunkGetGuard A
@@ -60,13 +66,17 @@ def storageActions : @Behaviour (S A) AnomaIdx.storage :=
       guard := storageChunkPutGuard A
       action := storageChunkPutAction A } ]
 
-private theorem storageNonOverlapping :
-    @NonOverlappingGuards (S A) _ (storageActions A) := by
+private
+theorem storageNonOverlapping
+    : @NonOverlappingGuards (S A) _ (storageActions A)
+    := by
   letI := S A; intro inp
   simp only [storageActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def storageBehaviour : @WellFormedBehaviour (S A) AnomaIdx.storage :=
+def storageBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.storage
+    :=
   letI := S A
   { actions := storageActions A
     nonOverlapping := storageNonOverlapping A }

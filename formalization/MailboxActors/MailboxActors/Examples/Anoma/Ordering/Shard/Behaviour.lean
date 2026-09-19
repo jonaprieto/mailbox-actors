@@ -44,9 +44,11 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 
 /-- Guard for `acquireLock` messages. Extracts the fingerprint, key,
     and mempool worker address. -/
-@[simp] def shardAcquireLockGuard
-    (inp : @GuardInput (S A) AnomaIdx.shard) :
-    Option (A.TxFingerprint × A.KVSKey × Address) :=
+@[simp]
+def shardAcquireLockGuard
+    (inp : @GuardInput (S A) AnomaIdx.shard)
+    : Option (A.TxFingerprint × A.KVSKey × Address)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .acquireLock fp key worker => some (fp, key, worker)
   | _ => none
@@ -79,9 +81,11 @@ def shardAcquireLockAction
 
 /-- Guard for `readRequest` messages. Extracts the fingerprint, key,
     and executor address. -/
-@[simp] def shardReadRequestGuard
-    (inp : @GuardInput (S A) AnomaIdx.shard) :
-    Option (A.TxFingerprint × A.KVSKey × Address) :=
+@[simp]
+def shardReadRequestGuard
+    (inp : @GuardInput (S A) AnomaIdx.shard)
+    : Option (A.TxFingerprint × A.KVSKey × Address)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .readRequest fp key executor => some (fp, key, executor)
   | _ => none
@@ -133,9 +137,11 @@ def shardReadRequestAction
           else entry } }
 
 /-- Guard for `write` messages. -/
-@[simp] def shardWriteGuard
-    (inp : @GuardInput (S A) AnomaIdx.shard) :
-    Option (A.TxFingerprint × A.KVSKey × A.KVSDatum) :=
+@[simp]
+def shardWriteGuard
+    (inp : @GuardInput (S A) AnomaIdx.shard)
+    : Option (A.TxFingerprint × A.KVSKey × A.KVSDatum)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .write fp key datum => some (fp, key, datum)
   | _ => none
@@ -163,9 +169,11 @@ def shardWriteAction
     localState := { st with keyAccesses := updatedAccesses } }
 
 /-- Guard for `updateSeenAll` messages. -/
-@[simp] def shardUpdateSeenAllGuard
-    (inp : @GuardInput (S A) AnomaIdx.shard) :
-    Option A.TxFingerprint :=
+@[simp]
+def shardUpdateSeenAllGuard
+    (inp : @GuardInput (S A) AnomaIdx.shard)
+    : Option A.TxFingerprint
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .updateSeenAll fp => some fp
   | _ => none
@@ -187,7 +195,9 @@ def shardUpdateSeenAllAction
       heardAllReads := w
       heardAllWrites := w } }
 
-def shardActions : @Behaviour (S A) AnomaIdx.shard :=
+def shardActions
+    : @Behaviour (S A) AnomaIdx.shard
+    :=
   letI := S A
   [ { Witness := A.TxFingerprint × A.KVSKey × Address
       guard := shardAcquireLockGuard A
@@ -202,14 +212,18 @@ def shardActions : @Behaviour (S A) AnomaIdx.shard :=
       guard := shardUpdateSeenAllGuard A
       action := shardUpdateSeenAllAction A } ]
 
-private theorem shardNonOverlapping :
-    @NonOverlappingGuards (S A) _ (shardActions A) := by
+private
+theorem shardNonOverlapping
+    : @NonOverlappingGuards (S A) _ (shardActions A)
+    := by
   letI := S A
   intro inp
   simp only [shardActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def shardBehaviour : @WellFormedBehaviour (S A) AnomaIdx.shard :=
+def shardBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.shard
+    :=
   letI := S A
   { actions := shardActions A
     nonOverlapping := shardNonOverlapping A }

@@ -71,7 +71,9 @@ inductive AnomaIdx where
   | kvStore | tsStore | storage
   deriving DecidableEq, Repr
 
-instance : Fintype AnomaIdx where
+instance
+    : Fintype AnomaIdx
+    where
   elems := { .txOrdering, .shard, .executor,
              .identity, .commitment, .decryption,
              .verification, .encryption,
