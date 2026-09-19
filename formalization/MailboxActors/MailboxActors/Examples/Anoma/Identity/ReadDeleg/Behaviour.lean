@@ -28,9 +28,11 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 -- ============================================================================
 
 /-- Guard for `query` messages. -/
-@[simp] def readDelegQueryGuard
-    (inp : @GuardInput (S A) AnomaIdx.readDeleg) :
-    Option A.ExternalIdentity :=
+@[simp]
+def readDelegQueryGuard
+    (inp : @GuardInput (S A) AnomaIdx.readDeleg)
+    : Option A.ExternalIdentity
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .query eid => some eid
   | _ => none
@@ -47,9 +49,11 @@ def readDelegQueryAction
   letI := S A; Effect.noop
 
 /-- Guard for `submit` messages. -/
-@[simp] def readDelegSubmitGuard
-    (inp : @GuardInput (S A) AnomaIdx.readDeleg) :
-    Option A.ReadEvidence :=
+@[simp]
+def readDelegSubmitGuard
+    (inp : @GuardInput (S A) AnomaIdx.readDeleg)
+    : Option A.ReadEvidence
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .submit ev => some ev
   | _ => none
@@ -68,7 +72,9 @@ def readDelegSubmitAction
   Effect.update { env with
     localState := { st with evidenceCount := st.evidenceCount + 1 } }
 
-def readDelegActions : @Behaviour (S A) AnomaIdx.readDeleg :=
+def readDelegActions
+    : @Behaviour (S A) AnomaIdx.readDeleg
+    :=
   letI := S A
   [ { Witness := A.ExternalIdentity
       guard := readDelegQueryGuard A
@@ -77,13 +83,17 @@ def readDelegActions : @Behaviour (S A) AnomaIdx.readDeleg :=
       guard := readDelegSubmitGuard A
       action := readDelegSubmitAction A } ]
 
-private theorem readDelegNonOverlapping :
-    @NonOverlappingGuards (S A) _ (readDelegActions A) := by
+private
+theorem readDelegNonOverlapping
+    : @NonOverlappingGuards (S A) _ (readDelegActions A)
+    := by
   letI := S A; intro inp
   simp only [readDelegActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def readDelegBehaviour : @WellFormedBehaviour (S A) AnomaIdx.readDeleg :=
+def readDelegBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.readDeleg
+    :=
   letI := S A
   { actions := readDelegActions A
     nonOverlapping := readDelegNonOverlapping A }

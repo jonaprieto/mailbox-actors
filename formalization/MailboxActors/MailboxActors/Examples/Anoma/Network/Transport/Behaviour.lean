@@ -87,7 +87,9 @@ def transportConnectionEstablishedAction
 -- § Behaviour assembly
 -- ============================================================================
 
-def transportActions : @Behaviour (S A) AnomaIdx.transport :=
+def transportActions
+    : @Behaviour (S A) AnomaIdx.transport
+    :=
   letI := S A
   [ { Witness := A.TransportAddr × A.ByteString
       guard := transportSendGuard A
@@ -99,13 +101,17 @@ def transportActions : @Behaviour (S A) AnomaIdx.transport :=
       guard := transportConnectionEstablishedGuard A
       action := transportConnectionEstablishedAction A } ]
 
-private theorem transportNonOverlapping :
-    @NonOverlappingGuards (S A) _ (transportActions A) := by
+private
+theorem transportNonOverlapping
+    : @NonOverlappingGuards (S A) _ (transportActions A)
+    := by
   letI := S A; intro inp
   simp only [transportActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def transportBehaviour : @WellFormedBehaviour (S A) AnomaIdx.transport :=
+def transportBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.transport
+    :=
   letI := S A
   { actions := transportActions A
     nonOverlapping := transportNonOverlapping A }

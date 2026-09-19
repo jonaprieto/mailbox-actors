@@ -127,7 +127,9 @@ def pubsubForwardAction
 -- § Behaviour assembly
 -- ============================================================================
 
-def pubsubActions : @Behaviour (S A) AnomaIdx.pubsub :=
+def pubsubActions
+    : @Behaviour (S A) AnomaIdx.pubsub
+    :=
   letI := S A
   [ { Witness := A.TopicID × A.ByteString
       guard := pubsubPublishGuard A
@@ -142,13 +144,17 @@ def pubsubActions : @Behaviour (S A) AnomaIdx.pubsub :=
       guard := pubsubForwardGuard A
       action := pubsubForwardAction A } ]
 
-private theorem pubsubNonOverlapping :
-    @NonOverlappingGuards (S A) _ (pubsubActions A) := by
+private
+theorem pubsubNonOverlapping
+    : @NonOverlappingGuards (S A) _ (pubsubActions A)
+    := by
   letI := S A; intro inp
   simp only [pubsubActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def pubsubBehaviour : @WellFormedBehaviour (S A) AnomaIdx.pubsub :=
+def pubsubBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.pubsub
+    :=
   letI := S A
   { actions := pubsubActions A
     nonOverlapping := pubsubNonOverlapping A }

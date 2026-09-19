@@ -12,9 +12,11 @@ open MailboxActors
 variable (A : AnomaTypes)
 private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 
-@[simp] def kvStoreGetGuard
-    (inp : @GuardInput (S A) AnomaIdx.kvStore) :
-    Option A.StorageKey :=
+@[simp]
+def kvStoreGetGuard
+    (inp : @GuardInput (S A) AnomaIdx.kvStore)
+    : Option A.StorageKey
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .getReq key => some key
   | _ => none
@@ -29,9 +31,11 @@ def kvStoreGetAction
     :=
   letI := S A; Effect.noop
 
-@[simp] def kvStoreSetGuard
-    (inp : @GuardInput (S A) AnomaIdx.kvStore) :
-    Option (A.StorageKey × A.StorageValue) :=
+@[simp]
+def kvStoreSetGuard
+    (inp : @GuardInput (S A) AnomaIdx.kvStore)
+    : Option (A.StorageKey × A.StorageValue)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .setReq key val => some (key, val)
   | _ => none
@@ -48,9 +52,11 @@ def kvStoreSetAction
   Effect.update { env with
     localState := { entryCount := env.localState.entryCount + 1 } }
 
-@[simp] def kvStoreDeleteGuard
-    (inp : @GuardInput (S A) AnomaIdx.kvStore) :
-    Option A.StorageKey :=
+@[simp]
+def kvStoreDeleteGuard
+    (inp : @GuardInput (S A) AnomaIdx.kvStore)
+    : Option A.StorageKey
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .deleteReq key => some key
   | _ => none
@@ -67,7 +73,9 @@ def kvStoreDeleteAction
   Effect.update { env with
     localState := { entryCount := env.localState.entryCount - 1 } }
 
-def kvStoreActions : @Behaviour (S A) AnomaIdx.kvStore :=
+def kvStoreActions
+    : @Behaviour (S A) AnomaIdx.kvStore
+    :=
   letI := S A
   [ { Witness := A.StorageKey
       guard := kvStoreGetGuard A
@@ -79,13 +87,17 @@ def kvStoreActions : @Behaviour (S A) AnomaIdx.kvStore :=
       guard := kvStoreDeleteGuard A
       action := kvStoreDeleteAction A } ]
 
-private theorem kvStoreNonOverlapping :
-    @NonOverlappingGuards (S A) _ (kvStoreActions A) := by
+private
+theorem kvStoreNonOverlapping
+    : @NonOverlappingGuards (S A) _ (kvStoreActions A)
+    := by
   letI := S A; intro inp
   simp only [kvStoreActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def kvStoreBehaviour : @WellFormedBehaviour (S A) AnomaIdx.kvStore :=
+def kvStoreBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.kvStore
+    :=
   letI := S A
   { actions := kvStoreActions A
     nonOverlapping := kvStoreNonOverlapping A }

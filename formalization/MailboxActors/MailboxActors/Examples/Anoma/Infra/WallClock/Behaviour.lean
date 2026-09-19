@@ -12,9 +12,11 @@ open MailboxActors
 variable (A : AnomaTypes)
 private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 
-@[simp] def wallClockGetTimeGuard
-    (inp : @GuardInput (S A) AnomaIdx.wallClock) :
-    Option Unit :=
+@[simp]
+def wallClockGetTimeGuard
+    (inp : @GuardInput (S A) AnomaIdx.wallClock)
+    : Option Unit
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .getTime => some ()
   | _ => none
@@ -29,9 +31,11 @@ def wallClockGetTimeAction
     :=
   letI := S A; Effect.noop
 
-@[simp] def wallClockTimeReplyGuard
-    (inp : @GuardInput (S A) AnomaIdx.wallClock) :
-    Option A.Epoch :=
+@[simp]
+def wallClockTimeReplyGuard
+    (inp : @GuardInput (S A) AnomaIdx.wallClock)
+    : Option A.Epoch
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .timeReply ep => some ep
   | _ => none
@@ -47,7 +51,9 @@ def wallClockTimeReplyAction
   let env := inp.env
   Effect.update { env with localState := { currentEpoch := w } }
 
-def wallClockActions : @Behaviour (S A) AnomaIdx.wallClock :=
+def wallClockActions
+    : @Behaviour (S A) AnomaIdx.wallClock
+    :=
   letI := S A
   [ { Witness := Unit
       guard := wallClockGetTimeGuard A
@@ -56,13 +62,17 @@ def wallClockActions : @Behaviour (S A) AnomaIdx.wallClock :=
       guard := wallClockTimeReplyGuard A
       action := wallClockTimeReplyAction A } ]
 
-private theorem wallClockNonOverlapping :
-    @NonOverlappingGuards (S A) _ (wallClockActions A) := by
+private
+theorem wallClockNonOverlapping
+    : @NonOverlappingGuards (S A) _ (wallClockActions A)
+    := by
   letI := S A; intro inp
   simp only [wallClockActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def wallClockBehaviour : @WellFormedBehaviour (S A) AnomaIdx.wallClock :=
+def wallClockBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.wallClock
+    :=
   letI := S A
   { actions := wallClockActions A
     nonOverlapping := wallClockNonOverlapping A }

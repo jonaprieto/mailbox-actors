@@ -16,9 +16,11 @@ variable (A : AnomaTypes)
 private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 
 /-- Guard for `append` messages. -/
-@[simp] def loggingAppendGuard
-    (inp : @GuardInput (S A) AnomaIdx.logging) :
-    Option String :=
+@[simp]
+def loggingAppendGuard
+    (inp : @GuardInput (S A) AnomaIdx.logging)
+    : Option String
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .append s => some s
 
@@ -35,19 +37,25 @@ def loggingAppendAction
     localState := { entries := env.localState.entries ++ [w]
                     position := env.localState.position + 1 } }
 
-def loggingActions : @Behaviour (S A) AnomaIdx.logging :=
+def loggingActions
+    : @Behaviour (S A) AnomaIdx.logging
+    :=
   letI := S A
   [ { Witness := String
       guard := loggingAppendGuard A
       action := loggingAppendAction A } ]
 
-private theorem loggingNonOverlapping :
-    @NonOverlappingGuards (S A) _ (loggingActions A) := by
+private
+theorem loggingNonOverlapping
+    : @NonOverlappingGuards (S A) _ (loggingActions A)
+    := by
   letI := S A; intro inp
   simp only [loggingActions, List.filter]
   split <;> simp
 
-def loggingBehaviour : @WellFormedBehaviour (S A) AnomaIdx.logging :=
+def loggingBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.logging
+    :=
   letI := S A
   { actions := loggingActions A
     nonOverlapping := loggingNonOverlapping A }

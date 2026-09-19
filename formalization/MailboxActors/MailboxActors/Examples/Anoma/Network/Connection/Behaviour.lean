@@ -77,7 +77,9 @@ def connectionRecvAction
 -- § Behaviour assembly
 -- ============================================================================
 
-def connectionActions : @Behaviour (S A) AnomaIdx.connection :=
+def connectionActions
+    : @Behaviour (S A) AnomaIdx.connection
+    :=
   letI := S A
   [ { Witness := A.ByteString
       guard := connectionSendGuard A
@@ -86,13 +88,17 @@ def connectionActions : @Behaviour (S A) AnomaIdx.connection :=
       guard := connectionRecvGuard A
       action := connectionRecvAction A } ]
 
-private theorem connectionNonOverlapping :
-    @NonOverlappingGuards (S A) _ (connectionActions A) := by
+private
+theorem connectionNonOverlapping
+    : @NonOverlappingGuards (S A) _ (connectionActions A)
+    := by
   letI := S A; intro inp
   simp only [connectionActions, List.filter]
   cases h : @GuardInput.msg (S A) _ inp <;> simp_all
 
-def connectionBehaviour : @WellFormedBehaviour (S A) AnomaIdx.connection :=
+def connectionBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.connection
+    :=
   letI := S A
   { actions := connectionActions A
     nonOverlapping := connectionNonOverlapping A }

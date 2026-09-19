@@ -29,9 +29,11 @@ private abbrev S (A : AnomaTypes) := anomaEngineSpec A
 
 /-- Guard for `verifyReq` messages. Extracts the external identity,
     signable data, signature, signs-for flag, and reply address. -/
-@[simp] def verificationGuard
-    (inp : @GuardInput (S A) AnomaIdx.verification) :
-    Option (A.ExternalIdentity × A.Signable × A.Signature × Bool × Address) :=
+@[simp]
+def verificationGuard
+    (inp : @GuardInput (S A) AnomaIdx.verification)
+    : Option (A.ExternalIdentity × A.Signable × A.Signature × Bool × Address)
+    :=
   match @GuardInput.msg (S A) _ inp with
   | .verifyReq eid s sig useSF replyTo => some (eid, s, sig, useSF, replyTo)
   | _ => none
@@ -54,19 +56,25 @@ def verificationAction
   let result := A.verify_ backend eid signable sig
   Effect.send AnomaIdx.identity replyTo (.verifyResult result)
 
-def verificationActions : @Behaviour (S A) AnomaIdx.verification :=
+def verificationActions
+    : @Behaviour (S A) AnomaIdx.verification
+    :=
   letI := S A
   [ { Witness := A.ExternalIdentity × A.Signable × A.Signature × Bool × Address
       guard := verificationGuard A
       action := verificationAction A } ]
 
-private theorem verificationNonOverlapping :
-    @NonOverlappingGuards (S A) _ (verificationActions A) := by
+private
+theorem verificationNonOverlapping
+    : @NonOverlappingGuards (S A) _ (verificationActions A)
+    := by
   letI := S A; intro inp
   simp only [verificationActions, List.filter]
   split <;> simp
 
-def verificationBehaviour : @WellFormedBehaviour (S A) AnomaIdx.verification :=
+def verificationBehaviour
+    : @WellFormedBehaviour (S A) AnomaIdx.verification
+    :=
   letI := S A
   { actions := verificationActions A
     nonOverlapping := verificationNonOverlapping A }
